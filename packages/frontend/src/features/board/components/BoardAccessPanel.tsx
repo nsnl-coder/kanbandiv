@@ -4,30 +4,30 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ProjectPermission,
-  grantAccessInput,
-  type GrantAccessInput,
-  type ProjectAccessEntry,
+  grantBoardAccessInput,
+  type GrantBoardAccessInput,
+  type BoardAccessEntry,
 } from "shared";
 import { useTRPC } from "../../../lib/trpc";
-import { projectErrorMessage } from "../errors";
+import { boardErrorMessage } from "../errors";
 
-export function AccessPanel({ projectId }: { projectId: string }) {
+export function BoardAccessPanel({ boardId }: { boardId: string }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [permission, setPermission] = useState<ProjectPermission>(ProjectPermission.View);
 
-  const accessQuery = useQuery(trpc.projects.accessList.queryOptions({ id: projectId }));
+  const accessQuery = useQuery(trpc.boards.accessList.queryOptions({ id: boardId }));
 
   const invalidate = () =>
     queryClient.invalidateQueries({
-      queryKey: trpc.projects.accessList.queryKey({ id: projectId }),
+      queryKey: trpc.boards.accessList.queryKey({ id: boardId }),
     });
 
   const grantMutation = useMutation(
-    trpc.projects.accessGrant.mutationOptions({ onSuccess: invalidate }),
+    trpc.boards.accessGrant.mutationOptions({ onSuccess: invalidate }),
   );
   const revokeMutation = useMutation(
-    trpc.projects.accessRevoke.mutationOptions({ onSuccess: invalidate }),
+    trpc.boards.accessRevoke.mutationOptions({ onSuccess: invalidate }),
   );
 
   const {
@@ -35,20 +35,20 @@ export function AccessPanel({ projectId }: { projectId: string }) {
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<GrantAccessInput>({
-    resolver: zodResolver(grantAccessInput),
+  } = useForm<GrantBoardAccessInput>({
+    resolver: zodResolver(grantBoardAccessInput),
     defaultValues: { email: "", permission: ProjectPermission.View },
   });
 
   const onGrant = handleSubmit((values) => {
     grantMutation.mutate(
-      { id: projectId, email: values.email, permission },
+      { id: boardId, email: values.email, permission },
       { onSuccess: () => reset({ email: "", permission }) },
     );
   });
 
-  const onChangePermission = (entry: ProjectAccessEntry, next: ProjectPermission) => {
-    grantMutation.mutate({ id: projectId, email: entry.email, permission: next });
+  const onChangePermission = (entry: BoardAccessEntry, next: ProjectPermission) => {
+    grantMutation.mutate({ id: boardId, email: entry.email, permission: next });
   };
 
   const entries = accessQuery.data ?? [];
@@ -86,7 +86,7 @@ export function AccessPanel({ projectId }: { projectId: string }) {
       </form>
 
       {grantMutation.error ? (
-        <p className="mt-2 text-sm text-red-600">{projectErrorMessage(grantMutation.error)}</p>
+        <p className="mt-2 text-sm text-red-600">{boardErrorMessage(grantMutation.error)}</p>
       ) : null}
 
       <ul className="mt-4 divide-y divide-slate-100 rounded border border-slate-200 bg-white">
@@ -107,7 +107,7 @@ export function AccessPanel({ projectId }: { projectId: string }) {
               </select>
               <button
                 type="button"
-                onClick={() => revokeMutation.mutate({ id: projectId, userId: entry.userId })}
+                onClick={() => revokeMutation.mutate({ id: boardId, userId: entry.userId })}
                 className="font-medium text-red-600 hover:text-red-700"
               >
                 Remove

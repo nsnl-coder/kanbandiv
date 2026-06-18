@@ -11,10 +11,11 @@ import { LoginPage } from "./pages/auth/LoginPage";
 import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
 import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
-import { ChangePasswordPage } from "./pages/user/ChangePasswordPage";
 import { ProjectsListPage } from "./pages/user/projects/ProjectsListPage";
 import { ProjectFormPage } from "./pages/user/projects/ProjectFormPage";
 import { ProjectDetailPage } from "./pages/user/projects/ProjectDetailPage";
+import { BoardFormPage } from "./pages/user/projects/BoardFormPage";
+import { BoardDetailPage } from "./pages/user/projects/BoardDetailPage";
 import { AdminLayout } from "./pages/admin/AdminLayout";
 import { RolesListPage } from "./pages/admin/roles/RolesListPage";
 import { RoleFormPage } from "./pages/admin/roles/RoleFormPage";
@@ -72,7 +73,9 @@ export function App() {
         <Route path="/projects/new" element={<ProjectFormPage />} />
         <Route path="/projects/:id" element={<ProjectDetailPage />} />
         <Route path="/projects/:id/edit" element={<ProjectFormPage />} />
-        <Route path="/settings/password" element={<ChangePasswordPage />} />
+        <Route path="/projects/:id/boards/new" element={<BoardFormPage />} />
+        <Route path="/projects/:id/boards/:boardId" element={<BoardDetailPage />} />
+        <Route path="/projects/:id/boards/:boardId/edit" element={<BoardFormPage />} />
       </Route>
 
       <Route

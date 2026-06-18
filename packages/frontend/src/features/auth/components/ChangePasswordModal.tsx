@@ -2,10 +2,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { z, changePasswordInput } from "shared";
-import { useTRPC } from "../../lib/trpc";
-import { AuthForm } from "../../features/auth/components/AuthForm";
-import { PasswordField } from "../../features/auth/components/PasswordField";
-import { authErrorMessage } from "../../features/auth/utils";
+import { useTRPC } from "../../../lib/trpc";
+import { Modal } from "../../../components/Modal";
+import { PasswordField } from "./PasswordField";
+import { authErrorMessage } from "../utils";
 
 const schema = changePasswordInput
   .extend({ confirm: z.string() })
@@ -15,7 +15,7 @@ const schema = changePasswordInput
   });
 type FormValues = z.infer<typeof schema>;
 
-export function ChangePasswordPage() {
+export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
   const trpc = useTRPC();
   const {
     register,
@@ -34,14 +34,16 @@ export function ChangePasswordPage() {
   });
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
-      <AuthForm
-        title="Change password"
-        submitLabel="Update password"
-        submitting={mutation.isPending}
-        error={mutation.error ? authErrorMessage(mutation.error) : null}
-        onSubmit={onSubmit}
-      >
+    <Modal open onClose={onClose} title="Change password">
+      <form onSubmit={onSubmit} className="flex flex-col gap-4">
+        {mutation.error ? (
+          <p
+            role="alert"
+            className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+          >
+            {authErrorMessage(mutation.error)}
+          </p>
+        ) : null}
         {mutation.isSuccess ? (
           <p
             role="status"
@@ -69,7 +71,15 @@ export function ChangePasswordPage() {
           error={errors.confirm?.message}
           {...register("confirm")}
         />
-      </AuthForm>
-    </div>
+
+        <button
+          type="submit"
+          disabled={mutation.isPending}
+          className="mt-2 rounded bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {mutation.isPending ? "Please wait..." : "Update password"}
+        </button>
+      </form>
+    </Modal>
   );
 }
