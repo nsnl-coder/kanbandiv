@@ -12,8 +12,10 @@ paths:
 - mjml + nodemailer + mailtrap
 - pg (postgresql)
 - zod
-- bcrypt
+- bcryptjs
 - dotenv
+- swagger for api docs
+- use in memory postgresql for testing
 
 ## Folder Structure: Feature-based structure
 
@@ -29,6 +31,8 @@ src/
 
   features/
     <feature>/
+      test/
+        <endpoint>.spec.ts      # integration test for each endpoint in router
       <feature>.service.ts     # Business logic
       <feature>.repo.ts        # Database access / Kysely queries
       <feature>.router.ts      # tRPC router for this feature

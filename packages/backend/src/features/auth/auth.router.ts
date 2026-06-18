@@ -1,0 +1,137 @@
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+import {
+  authTokensSchema,
+  changePasswordInput,
+  forgotPasswordInput,
+  loginInput,
+  logoutInput,
+  okSchema,
+  publicUserSchema,
+  refreshInput,
+  registerInput,
+  resendVerifyOtpInput,
+  resetPasswordInput,
+  verifyEmailInput,
+} from "shared";
+import { env } from "../../config/env.config.js";
+import {
+  protectedProcedure,
+  publicProcedure,
+  rateLimitedProcedure,
+  router,
+} from "../../trpc/trpc.js";
+import type { Context } from "../../trpc/context.js";
+import * as auth from "./auth.service.js";
+
+// Per-IP limits (per minute) on sensitive endpoints.
+const registerProc = rateLimitedProcedure(5);
+const loginProc = rateLimitedProcedure(10);
+const verifyProc = rateLimitedProcedure(10);
+const resendProc = rateLimitedProcedure(5);
+const refreshProc = rateLimitedProcedure(20);
+const forgotProc = rateLimitedProcedure(5);
+const resetProc = rateLimitedProcedure(10);
+
+function deps(ctx: Context): auth.AuthDeps {
+  return { db: ctx.db, email: ctx.email, ip: ctx.ip, userAgent: ctx.userAgent };
+}
+
+function setRefreshCookie(ctx: Context, token: string): void {
+  ctx.res?.cookie("refresh_token", token, {
+    httpOnly: true,
+    secure: env.COOKIE_SECURE,
+    sameSite: "strict",
+    maxAge: env.REFRESH_TTL_MS,
+    path: "/",
+  });
+}
+
+function clearRefreshCookie(ctx: Context): void {
+  ctx.res?.clearCookie("refresh_token", { path: "/" });
+}
+
+function refreshTokenFrom(ctx: Context, input: { refreshToken?: string }): string {
+  const token = input.refreshToken ?? ctx.refreshCookie;
+  if (!token) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: auth.AuthError.INVALID_REFRESH_TOKEN,
+    });
+  }
+  return token;
+}
+
+export const authRouter = router({
+  register: registerProc
+    .meta({ openapi: { method: "POST", path: "/auth/register", tags: ["auth"], summary: "Register a new account and send a verification OTP" } })
+    .input(registerInput)
+    .output(okSchema)
+    .mutation(({ ctx, input }) => auth.register(deps(ctx), input)),
+
+  verifyEmail: verifyProc
+    .meta({ openapi: { method: "POST", path: "/auth/verify-email", tags: ["auth"], summary: "Verify an email address with an OTP" } })
+    .input(verifyEmailInput)
+    .output(okSchema)
+    .mutation(({ ctx, input }) => auth.verifyEmail(deps(ctx), input)),
+
+  resendVerifyOtp: resendProc
+    .meta({ openapi: { method: "POST", path: "/auth/resend-verify-otp", tags: ["auth"], summary: "Re-issue an email verification OTP" } })
+    .input(resendVerifyOtpInput)
+    .output(okSchema)
+    .mutation(({ ctx, input }) => auth.resendVerifyOtp(deps(ctx), input)),
+
+  login: loginProc
+    .meta({ openapi: { method: "POST", path: "/auth/login", tags: ["auth"], summary: "Log in with email and password" } })
+    .input(loginInput)
+    .output(authTokensSchema)
+    .mutation(async ({ ctx, input }) => {
+      const tokens = await auth.login(deps(ctx), input);
+      setRefreshCookie(ctx, tokens.refreshToken);
+      return tokens;
+    }),
+
+  refresh: refreshProc
+    .meta({ openapi: { method: "POST", path: "/auth/refresh", tags: ["auth"], summary: "Rotate the refresh token and issue a new access token" } })
+    .input(refreshInput)
+    .output(authTokensSchema)
+    .mutation(async ({ ctx, input }) => {
+      const tokens = await auth.refresh(deps(ctx), refreshTokenFrom(ctx, input));
+      setRefreshCookie(ctx, tokens.refreshToken);
+      return tokens;
+    }),
+
+  logout: publicProcedure
+    .meta({ openapi: { method: "POST", path: "/auth/logout", tags: ["auth"], summary: "Revoke a refresh token" } })
+    .input(logoutInput)
+    .output(okSchema)
+    .mutation(async ({ ctx, input }) => {
+      const result = await auth.logout(deps(ctx), refreshTokenFrom(ctx, input));
+      clearRefreshCookie(ctx);
+      return result;
+    }),
+
+  forgotPassword: forgotProc
+    .meta({ openapi: { method: "POST", path: "/auth/forgot-password", tags: ["auth"], summary: "Send a password-reset OTP (always succeeds)" } })
+    .input(forgotPasswordInput)
+    .output(okSchema)
+    .mutation(({ ctx, input }) => auth.forgotPassword(deps(ctx), input)),
+
+  resetPassword: resetProc
+    .meta({ openapi: { method: "POST", path: "/auth/reset-password", tags: ["auth"], summary: "Reset the password with an OTP and revoke all sessions" } })
+    .input(resetPasswordInput)
+    .output(okSchema)
+    .mutation(({ ctx, input }) => auth.resetPassword(deps(ctx), input)),
+
+  changePassword: protectedProcedure
+    .meta({ openapi: { method: "POST", path: "/auth/change-password", tags: ["auth"], protect: true, summary: "Change the password for the authenticated user" } })
+    .input(changePasswordInput)
+    .output(okSchema)
+    .mutation(({ ctx, input }) => auth.changePassword(deps(ctx), ctx.user.id, input)),
+
+  me: protectedProcedure
+    .meta({ openapi: { method: "GET", path: "/auth/me", tags: ["auth"], protect: true, summary: "Get the current authenticated user" } })
+    .input(z.object({}))
+    .output(publicUserSchema)
+    .query(({ ctx }) => auth.getMe(deps(ctx), ctx.user.id)),
+});
