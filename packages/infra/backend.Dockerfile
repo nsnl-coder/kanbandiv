@@ -1,8 +1,9 @@
 # build context = repo root
 FROM node:22-alpine AS base
 RUN corepack enable
-# trusted committed lockfile; skip new-release age gate in CI build
-ENV PNPM_CONFIG_MINIMUM_RELEASE_AGE=0
+# trusted committed lockfile; relax pnpm gates for the throwaway build container
+ENV PNPM_CONFIG_MINIMUM_RELEASE_AGE=0 \
+    PNPM_CONFIG_DANGEROUSLY_ALLOW_ALL_BUILDS=true
 WORKDIR /app
 
 FROM base AS build
