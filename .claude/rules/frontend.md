@@ -1,5 +1,6 @@
 ---
-paths: ["packages/frontend"]
+paths:
+  - "packages/frontend/**/*"
 ---
 
 ## Required library:

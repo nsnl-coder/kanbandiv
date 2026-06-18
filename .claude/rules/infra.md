@@ -1,5 +1,6 @@
 ---
-paths: ["./packages/infra"]
+paths:
+  - "packages/infra/**/*"
 ---
 
 - Use docker for dev & prod environment only

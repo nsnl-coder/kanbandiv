@@ -1,4 +1,5 @@
 ---
+name: token
 description: Token discipline — short replies, scoped file reads, no rambling
 ---
 

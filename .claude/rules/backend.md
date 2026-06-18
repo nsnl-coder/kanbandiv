@@ -1,5 +1,6 @@
 ---
-paths: ["packages/backend"]
+paths:
+  - "packages/backend/**/*"
 ---
 
 ## Required Library:
