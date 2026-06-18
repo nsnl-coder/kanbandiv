@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Pencil, Users, Trash2, Plus } from "lucide-react";
 import { useTRPC } from "../../../lib/trpc";
 import { Nav } from "../../../components/Nav";
+import { Modal } from "../../../components/Modal";
 import { AccessPanel } from "../../../features/project/components/AccessPanel";
 import { canEdit, isOwner, PERMISSION_LABELS, VISIBILITY_LABELS } from "../../../features/project/utils";
 import { projectErrorMessage } from "../../../features/project/errors";
+import { BoardCard } from "../../../features/board/components/BoardCard";
 
 export function ProjectDetailPage() {
   const trpc = useTRPC();
@@ -13,9 +16,13 @@ export function ProjectDetailPage() {
   const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showAccess, setShowAccess] = useState(false);
 
   const projectQuery = useQuery(trpc.projects.get.queryOptions({ id: id! }));
   const project = projectQuery.data;
+
+  const boardsQuery = useQuery(trpc.boards.list.queryOptions({ projectId: id! }));
+  const boards = boardsQuery.data ?? [];
 
   const deleteMutation = useMutation(
     trpc.projects.delete.mutationOptions({
@@ -30,7 +37,7 @@ export function ProjectDetailPage() {
     return (
       <div className="min-h-screen bg-slate-50">
         <Nav />
-        <main className="mx-auto max-w-3xl p-6">
+        <main className="w-full p-6">
           <p className="text-sm text-slate-600">Project not found or no access.</p>
           <Link to="/projects" className="text-sm font-medium text-slate-700 hover:text-slate-900">
             Back to projects
@@ -44,7 +51,7 @@ export function ProjectDetailPage() {
     return (
       <div className="min-h-screen bg-slate-50">
         <Nav />
-        <main className="mx-auto max-w-3xl p-6">
+        <main className="w-full p-6">
           <p className="text-sm text-slate-500">Loading...</p>
         </main>
       </div>
@@ -55,6 +62,13 @@ export function ProjectDetailPage() {
     <div className="min-h-screen bg-slate-50">
       <Nav />
       <main className="mx-auto max-w-3xl p-6">
+        <Link
+          to="/projects"
+          className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-700"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to projects
+        </Link>
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
             <span
@@ -78,17 +92,29 @@ export function ProjectDetailPage() {
             {canEdit(project) ? (
               <Link
                 to={`/projects/${project.id}/edit`}
-                className="rounded border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
+                className="flex items-center gap-1.5 rounded border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
               >
+                <Pencil className="h-4 w-4" />
                 Edit
               </Link>
             ) : null}
             {isOwner(project) ? (
               <button
                 type="button"
-                onClick={() => setConfirmDelete(true)}
-                className="rounded border border-red-300 px-3 py-1.5 font-medium text-red-600 hover:bg-red-50"
+                onClick={() => setShowAccess(true)}
+                className="flex items-center gap-1.5 rounded border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
               >
+                <Users className="h-4 w-4" />
+                Manage access
+              </button>
+            ) : null}
+            {isOwner(project) ? (
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                className="flex items-center gap-1.5 rounded border border-red-300 px-3 py-1.5 font-medium text-red-600 hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4" />
                 Delete
               </button>
             ) : null}
@@ -99,18 +125,58 @@ export function ProjectDetailPage() {
           {project.description || "No description"}
         </p>
 
-        <section className="mt-8 rounded border border-dashed border-slate-300 p-8 text-center text-sm text-slate-400">
-          Boards and cards coming soon.
-        </section>
+        <section className="mt-8">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-800">Boards</h2>
+              <p className="text-sm text-slate-500">Organize work into kanban boards.</p>
+            </div>
+            {canEdit(project) ? (
+              <Link
+                to={`/projects/${project.id}/boards/new`}
+                className="flex items-center gap-1.5 rounded bg-slate-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700"
+              >
+                <Plus className="h-4 w-4" />
+                New board
+              </Link>
+            ) : null}
+          </div>
 
-        {isOwner(project) ? <AccessPanel projectId={project.id} /> : null}
+          {boardsQuery.isLoading ? (
+            <p className="text-sm text-slate-500">Loading...</p>
+          ) : boards.length === 0 ? (
+            <p className="rounded border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
+              No boards yet. Create your first one.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {boards.map((b) => (
+                <BoardCard key={b.id} board={b} />
+              ))}
+            </div>
+          )}
+        </section>
       </main>
 
+      {isOwner(project) ? (
+        <Modal
+          open={showAccess}
+          onClose={() => setShowAccess(false)}
+          title="Project access"
+          widthClassName="max-w-lg"
+        >
+          <AccessPanel projectId={project.id} />
+        </Modal>
+      ) : null}
+
       {confirmDelete ? (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/30 p-4">
-          <div className="w-full max-w-sm rounded bg-white p-5 shadow-lg">
-            <h2 className="text-lg font-semibold text-slate-800">Delete project</h2>
-            <p className="mt-2 text-sm text-slate-600">
+        <Modal
+          open={confirmDelete}
+          onClose={() => setConfirmDelete(false)}
+          title="Delete project"
+        >
+          <div>
+            <p className="text-sm text-slate-600">
               Delete <strong>{project.name}</strong>? This cannot be undone.
             </p>
             {deleteMutation.error ? (
@@ -136,7 +202,7 @@ export function ProjectDetailPage() {
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       ) : null}
     </div>
   );

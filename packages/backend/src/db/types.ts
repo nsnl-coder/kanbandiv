@@ -87,6 +87,42 @@ export interface ProjectAccessTable {
   permission: ProjectPermission;
 }
 
+export interface BoardsTable {
+  id: Generated<string>;
+  project_id: string;
+  owner_id: string;
+  name: string;
+  description: string | null;
+  color: string;
+  created_at: GeneratedTimestamp;
+  updated_at: GeneratedTimestamp;
+}
+
+export interface BoardAccessTable {
+  board_id: string;
+  user_id: string;
+  permission: ProjectPermission;
+}
+
+export interface ColumnsTable {
+  id: Generated<string>;
+  board_id: string;
+  name: string;
+  position: number;
+  created_at: GeneratedTimestamp;
+  updated_at: GeneratedTimestamp;
+}
+
+export interface CardsTable {
+  id: Generated<string>;
+  column_id: string;
+  title: string;
+  description: string | null;
+  position: number;
+  created_at: GeneratedTimestamp;
+  updated_at: GeneratedTimestamp;
+}
+
 export interface Database {
   users: UsersTable;
   roles: RolesTable;
@@ -96,4 +132,8 @@ export interface Database {
   auth_events: AuthEventsTable;
   projects: ProjectsTable;
   project_access: ProjectAccessTable;
+  boards: BoardsTable;
+  board_access: BoardAccessTable;
+  columns: ColumnsTable;
+  cards: CardsTable;
 }

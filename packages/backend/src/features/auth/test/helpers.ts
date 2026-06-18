@@ -10,6 +10,9 @@ import type { Context } from "../../../trpc/context.js";
 import { up as up001 } from "../../../migrations/001.auth.js";
 import { up as up002 } from "../../../migrations/002.rbac.js";
 import { up as up003 } from "../../../migrations/003.project.js";
+import { up as up004 } from "../../../migrations/004.board.js";
+import { up as up005 } from "../../../migrations/005.column.js";
+import { up as up006 } from "../../../migrations/006.card.js";
 import type { EmailPort } from "../../email/email.service.js";
 
 export type TestDb = Kysely<Database>;
@@ -30,6 +33,9 @@ export async function newTestDb(): Promise<TestDb> {
   await up001(db);
   await up002(db);
   await up003(db);
+  await up004(db);
+  await up005(db);
+  await up006(db);
   return db;
 }
 

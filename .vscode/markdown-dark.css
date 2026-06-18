@@ -1,0 +1,26 @@
+/* Force the built-in Markdown preview into dark mode. */
+body.vscode-body,
+body {
+  background-color: #1e1e1e !important;
+  color: #d4d4d4 !important;
+}
+
+body a { color: #4ea1f3 !important; }
+
+body h1, body h2, body h3, body h4, body h5, body h6 { color: #e6e6e6 !important; }
+body h1, body h2 { border-bottom: 1px solid #3a3a3a !important; }
+
+body hr { border-color: #3a3a3a !important; }
+
+body table td, body table th { border-color: #3a3a3a !important; }
+body table tr { background-color: #1e1e1e !important; border-top-color: #3a3a3a !important; }
+body table tr:nth-child(2n) { background-color: #252526 !important; }
+body table th { background-color: #2d2d2d !important; }
+
+body blockquote { color: #b0b0b0 !important; border-left-color: #3a3a3a !important; }
+
+body code { background-color: #2d2d2d !important; color: #ce9178 !important; }
+body pre, body pre > code {
+  background-color: #252526 !important;
+  color: #d4d4d4 !important;
+}

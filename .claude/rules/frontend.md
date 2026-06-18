@@ -16,6 +16,10 @@ paths:
 - vitest for unit testing
 - zustand
 - @tanstack/react-table
+- lucide-react
+- shadcn/ui
+- Radix UI
+- @radix-ui/react-dialog, @radix-ui/react-dropdown-menu, @radix-ui/react-popover, @radix-ui/react-select, @radix-ui/react-tabs, @radix-ui/react-toast
 
 ## Install if needed:
 
