@@ -60,9 +60,9 @@ export const loginInput = z.object({
 });
 export type LoginInput = z.infer<typeof loginInput>;
 
-export const refreshInput = z.object({
-  refreshToken: z.string().min(1).optional(),
-});
+// Refresh/logout read the rotating token from the httpOnly cookie only; never
+// from the request body (a body token would defeat the httpOnly protection).
+export const refreshInput = z.object({});
 export type RefreshInput = z.infer<typeof refreshInput>;
 
 export const logoutInput = refreshInput;

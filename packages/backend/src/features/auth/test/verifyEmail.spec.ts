@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { TRPCError } from "@trpc/server";
-import { OtpPurpose } from "shared";
-import { AUTH_CONSTANTS, AuthError } from "../auth.service.js";
+import { AuthError, OtpPurpose } from "shared";
+import { AUTH_CONSTANTS } from "../auth.service.js";
 import {
   createCaller,
   fakeEmail,

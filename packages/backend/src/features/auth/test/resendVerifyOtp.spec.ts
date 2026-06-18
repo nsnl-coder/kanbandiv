@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { OtpPurpose } from "shared";
-import { AUTH_CONSTANTS, AuthError } from "../auth.service.js";
+import { AuthError, OtpPurpose } from "shared";
+import { AUTH_CONSTANTS } from "../auth.service.js";
 import {
   createCaller,
   fakeEmail,

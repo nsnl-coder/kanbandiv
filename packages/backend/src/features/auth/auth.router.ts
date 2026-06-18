@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import {
-  authTokensSchema,
+  AuthError,
   changePasswordInput,
   forgotPasswordInput,
   loginInput,
@@ -37,6 +37,16 @@ function deps(ctx: Context): auth.AuthDeps {
   return { db: ctx.db, email: ctx.email, ip: ctx.ip, userAgent: ctx.userAgent };
 }
 
+function setAccessCookie(ctx: Context, token: string): void {
+  ctx.res?.cookie("access_token", token, {
+    httpOnly: true,
+    secure: env.COOKIE_SECURE,
+    sameSite: "strict",
+    maxAge: env.ACCESS_TTL_MS,
+    path: "/",
+  });
+}
+
 function setRefreshCookie(ctx: Context, token: string): void {
   ctx.res?.cookie("refresh_token", token, {
     httpOnly: true,
@@ -47,16 +57,25 @@ function setRefreshCookie(ctx: Context, token: string): void {
   });
 }
 
-function clearRefreshCookie(ctx: Context): void {
+function setSessionCookies(
+  ctx: Context,
+  tokens: { accessToken: string; refreshToken: string },
+): void {
+  setAccessCookie(ctx, tokens.accessToken);
+  setRefreshCookie(ctx, tokens.refreshToken);
+}
+
+function clearSessionCookies(ctx: Context): void {
+  ctx.res?.clearCookie("access_token", { path: "/" });
   ctx.res?.clearCookie("refresh_token", { path: "/" });
 }
 
-function refreshTokenFrom(ctx: Context, input: { refreshToken?: string }): string {
-  const token = input.refreshToken ?? ctx.refreshCookie;
+function refreshTokenFrom(ctx: Context): string {
+  const token = ctx.refreshCookie;
   if (!token) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
-      message: auth.AuthError.INVALID_REFRESH_TOKEN,
+      message: AuthError.INVALID_REFRESH_TOKEN,
     });
   }
   return token;
@@ -84,30 +103,30 @@ export const authRouter = router({
   login: loginProc
     .meta({ openapi: { method: "POST", path: "/auth/login", tags: ["auth"], summary: "Log in with email and password" } })
     .input(loginInput)
-    .output(authTokensSchema)
+    .output(publicUserSchema)
     .mutation(async ({ ctx, input }) => {
       const tokens = await auth.login(deps(ctx), input);
-      setRefreshCookie(ctx, tokens.refreshToken);
-      return tokens;
+      setSessionCookies(ctx, tokens);
+      return tokens.user;
     }),
 
   refresh: refreshProc
     .meta({ openapi: { method: "POST", path: "/auth/refresh", tags: ["auth"], summary: "Rotate the refresh token and issue a new access token" } })
     .input(refreshInput)
-    .output(authTokensSchema)
-    .mutation(async ({ ctx, input }) => {
-      const tokens = await auth.refresh(deps(ctx), refreshTokenFrom(ctx, input));
-      setRefreshCookie(ctx, tokens.refreshToken);
-      return tokens;
+    .output(publicUserSchema)
+    .mutation(async ({ ctx }) => {
+      const tokens = await auth.refresh(deps(ctx), refreshTokenFrom(ctx));
+      setSessionCookies(ctx, tokens);
+      return tokens.user;
     }),
 
   logout: publicProcedure
     .meta({ openapi: { method: "POST", path: "/auth/logout", tags: ["auth"], summary: "Revoke a refresh token" } })
     .input(logoutInput)
     .output(okSchema)
-    .mutation(async ({ ctx, input }) => {
-      const result = await auth.logout(deps(ctx), refreshTokenFrom(ctx, input));
-      clearRefreshCookie(ctx);
+    .mutation(async ({ ctx }) => {
+      const result = await auth.logout(deps(ctx), refreshTokenFrom(ctx));
+      clearSessionCookies(ctx);
       return result;
     }),
 

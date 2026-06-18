@@ -1,11 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { TRPCError } from "@trpc/server";
-import { AuthError, AUTH_CONSTANTS, verifyAccessToken } from "../auth.service.js";
+import { AUTH_CONSTANTS, verifyAccessToken } from "../auth.service.js";
+import { AuthError } from "shared";
+import { env } from "../../../config/env.config.js";
+import { createContext } from "../../../trpc/context.js";
 import {
   createCaller,
   fakeEmail,
   makeContext,
   newTestDb,
+  resSpy,
   seedUser,
   type FakeEmail,
   type TestDb,
@@ -26,45 +30,90 @@ describe("auth.login", () => {
 
   const caller = () => createCaller(makeContext({ db, email }));
 
-  it("returns access token, refresh token, and user on success", async () => {
+  it("returns the user and sets access + refresh cookies on success", async () => {
     const seeded = await seedUser(db, { email: "ok@example.com" });
-    const res = await caller().auth.login({
+    const res = resSpy();
+    const user = await createCaller(makeContext({ db, email, res })).auth.login({
       email: "ok@example.com",
       password: seeded.password,
     });
-    expect(res.accessToken).toBeTruthy();
-    expect(res.refreshToken).toBeTruthy();
-    expect(res.user).toMatchObject({
+    expect(user).toMatchObject({
       id: seeded.id,
       email: "ok@example.com",
       role: "user",
       emailVerified: true,
     });
+    const names = res.cookies.map((c) => c.name);
+    expect(names).toContain("access_token");
+    expect(names).toContain("refresh_token");
   });
 
-  it("persists the refresh token hashed (not equal to returned token)", async () => {
+  it("persists the refresh token hashed (not equal to the cookie token)", async () => {
     const seeded = await seedUser(db, { email: "hash@example.com" });
-    const res = await caller().auth.login({
+    const res = resSpy();
+    await createCaller(makeContext({ db, email, res })).auth.login({
       email: "hash@example.com",
       password: seeded.password,
     });
+    const rawRefresh = res.cookies.find((c) => c.name === "refresh_token")?.value;
     const row = await db
       .selectFrom("refresh_tokens")
       .select("token_hash")
       .where("user_id", "=", seeded.id)
       .executeTakeFirstOrThrow();
-    expect(row.token_hash).not.toBe(res.refreshToken);
+    expect(row.token_hash).not.toBe(rawRefresh);
   });
 
-  it("issues a verifiable access token carrying sub and role", async () => {
+  it("issues a verifiable access cookie carrying sub and role", async () => {
     const seeded = await seedUser(db, { email: "jwt@example.com" });
-    const res = await caller().auth.login({
+    const res = resSpy();
+    await createCaller(makeContext({ db, email, res })).auth.login({
       email: "jwt@example.com",
       password: seeded.password,
     });
-    const payload = verifyAccessToken(res.accessToken);
+    const accessToken = res.cookies.find((c) => c.name === "access_token")?.value;
+    expect(accessToken).toBeDefined();
+    const payload = verifyAccessToken(accessToken!);
     expect(payload.sub).toBe(seeded.id);
     expect(payload.role).toBe("user");
+  });
+
+  it("sets hardened access + refresh cookies with their configured lifetimes", async () => {
+    const seeded = await seedUser(db, { email: "cookie@example.com" });
+    const res = resSpy();
+    await createCaller(makeContext({ db, email, res })).auth.login({
+      email: "cookie@example.com",
+      password: seeded.password,
+    });
+
+    const hardened = { httpOnly: true, sameSite: "strict", path: "/", secure: env.COOKIE_SECURE };
+
+    const access = res.cookies.find((c) => c.name === "access_token");
+    expect(access?.options).toMatchObject({ ...hardened, maxAge: env.ACCESS_TTL_MS });
+
+    const refresh = res.cookies.find((c) => c.name === "refresh_token");
+    expect(refresh?.options).toMatchObject({ ...hardened, maxAge: env.REFRESH_TTL_MS });
+  });
+
+  it("issues an access cookie that authenticates a follow-up request (end-to-end)", async () => {
+    const seeded = await seedUser(db, { email: "e2e@example.com" });
+    const res = resSpy();
+    await createCaller(makeContext({ db, email, res })).auth.login({
+      email: "e2e@example.com",
+      password: seeded.password,
+    });
+    const accessToken = res.cookies.find((c) => c.name === "access_token")?.value;
+    expect(accessToken).toBeDefined();
+
+    // Feed the issued cookie back through the real context builder, then call a
+    // protected procedure. (createContext binds the prod db, so override it with
+    // the test db while keeping the userId derived from the cookie.)
+    const ctx = createContext({
+      req: { headers: { cookie: `access_token=${accessToken}` } },
+      res: {} as never,
+    } as never);
+    const me = await createCaller({ ...ctx, db }).auth.me({});
+    expect(me.id).toBe(seeded.id);
   });
 
   it("rejects a wrong password with INVALID_CREDENTIALS", async () => {

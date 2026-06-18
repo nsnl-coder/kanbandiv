@@ -1,6 +1,6 @@
 ---
 paths:
-  - "packages/frontend/**/*"
+  - 'packages/frontend/**/*'
 ---
 
 ## Required library:
@@ -51,7 +51,9 @@ src/
 
   styles/
     globals.css                # Global CSS / Tailwind imports
-
+e2e/                         # End-to-end tests
+  <feature>/
+    <flow-name>.e2e.spec.ts        # E2E tests for this feature
   App.tsx                     # Root app component
   main.tsx                     # Vite React entry point
   index.css                    # import tailwindcss
@@ -61,3 +63,10 @@ src/
 
 - Always use typescript & at strict mode
 - Always use @trpc/client to call backend
+- Do not create hook for api call - just use `<useQuery | useMutation>(trpc.<feature>.<endpoint>.queryOptions())` directly in components
+- access token and refresh token are http only cookie, do not store them in local storage
+
+## Testing rule
+
+- never call real db on e2e test, always mock the db calls
+- only call real db on mcp test

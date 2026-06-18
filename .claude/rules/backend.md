@@ -1,6 +1,6 @@
 ---
 paths:
-  - "packages/backend/**/*"
+  - 'packages/backend/**/*'
 ---
 
 ## Required Library:
@@ -47,3 +47,8 @@ src/
 
   index.ts                     # App entry point
 ```
+
+## Note:
+
+- frontend and backend are on same origin so no cors needed
+- access token and refresh token are http only cookie, do not store them in local storage

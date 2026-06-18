@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { TRPCError } from "@trpc/server";
-import { AuthError } from "../auth.service.js";
+import { AuthError } from "shared";
 import {
   createCaller,
   makeContext,
@@ -39,11 +39,11 @@ describe("auth.changePassword", () => {
       .executeTakeFirstOrThrow();
     expect(row.password_hash).not.toBe(before);
 
-    const tokens = await caller.auth.login({
+    const loggedIn = await caller.auth.login({
       email: user.email,
       password: "NewPassword123",
     });
-    expect(tokens.user.id).toBe(user.id);
+    expect(loggedIn.id).toBe(user.id);
   });
 
   it("rejects a wrong current password", async () => {

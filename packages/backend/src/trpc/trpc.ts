@@ -1,6 +1,7 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import type { OpenApiMeta } from "trpc-to-openapi";
+import { AuthError } from "shared";
 import { findPublicUserById } from "../features/auth/auth.repo.js";
 import type { Context } from "./context.js";
 
@@ -51,12 +52,15 @@ export const rateLimitedProcedure = (limit: number, windowMs = 60_000) =>
   t.procedure.use(rateLimit({ limit, windowMs }));
 
 export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
-  if (!ctx.userId) throw new TRPCError({ code: "UNAUTHORIZED" });
+  // SESSION_EXPIRED marks an access-token problem the client can fix by
+  // refreshing; domain UNAUTHORIZED errors (bad credentials) do not use it.
+  const expired = new TRPCError({ code: "UNAUTHORIZED", message: AuthError.SESSION_EXPIRED });
+  if (!ctx.userId) throw expired;
   const user = await findPublicUserById(ctx.db, ctx.userId);
-  if (!user) throw new TRPCError({ code: "UNAUTHORIZED" });
+  if (!user) throw expired;
   // Defense-in-depth: tokens are only issued post-verification, but never
   // trust a token for an unverified account.
-  if (!user.email_verified) throw new TRPCError({ code: "UNAUTHORIZED" });
+  if (!user.email_verified) throw expired;
   return next({
     ctx: {
       ...ctx,

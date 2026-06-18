@@ -9,7 +9,9 @@ COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 COPY packages/frontend/package.json packages/frontend/
 RUN pnpm install --frozen-lockfile --filter frontend...
 COPY . .
-RUN pnpm --filter frontend build
+# prod vps: build (mode prod -> .env.prod); dev vps: build:dev (mode dev -> .env.dev)
+ARG FRONTEND_BUILD=build
+RUN pnpm --filter frontend run "$FRONTEND_BUILD"
 
 FROM nginx:1.27-alpine AS runtime
 COPY packages/infra/nginx.conf /etc/nginx/conf.d/default.conf

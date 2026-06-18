@@ -39,6 +39,9 @@ services:
     build:
       context: ../..
       dockerfile: packages/infra/frontend.Dockerfile
+      args:
+        # dev vps: override with build:dev
+        FRONTEND_BUILD: ${FRONTEND_BUILD:-build}
     container_name: trelloclone3-web
     restart: unless-stopped
     depends_on:

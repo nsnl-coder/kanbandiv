@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { TRPCError } from "@trpc/server";
 import {
+  AuthError,
   AuthRole,
   OtpPurpose,
   RESET_OTP_LENGTH,
@@ -45,17 +46,6 @@ export const AUTH_CONSTANTS = {
   RESEND_CAP: 3,
   MAX_FAILED_LOGINS: 10,
   LOCK_MS: 15 * 60 * 1000,
-} as const;
-
-export const AuthError = {
-  EMAIL_TAKEN: "EMAIL_TAKEN",
-  INVALID_OTP: "INVALID_OTP",
-  ALREADY_VERIFIED: "ALREADY_VERIFIED",
-  INVALID_CREDENTIALS: "INVALID_CREDENTIALS",
-  EMAIL_NOT_VERIFIED: "EMAIL_NOT_VERIFIED",
-  ACCOUNT_LOCKED: "ACCOUNT_LOCKED",
-  INVALID_REFRESH_TOKEN: "INVALID_REFRESH_TOKEN",
-  RATE_LIMITED: "RATE_LIMITED",
 } as const;
 
 const DUMMY_HASH = bcrypt.hashSync("dummy-password-for-timing", env.BCRYPT_COST);

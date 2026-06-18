@@ -20,24 +20,39 @@ const user = {
 };
 
 describe("createContext", () => {
-  it("extracts userId from a valid Bearer token", () => {
+  it("extracts userId from a valid access_token cookie", () => {
     const token = signAccessToken(user);
-    const ctx = createContext(make({ authorization: `Bearer ${token}` }));
+    const ctx = createContext(make({ cookie: `access_token=${token}` }));
     expect(ctx.userId).toBe(user.id);
   });
 
-  it("returns null userId for a malformed Bearer token", () => {
-    const ctx = createContext(make({ authorization: "Bearer not-a-jwt" }));
+  it("returns null userId for a malformed access_token cookie", () => {
+    const ctx = createContext(make({ cookie: "access_token=not-a-jwt" }));
     expect(ctx.userId).toBeNull();
   });
 
-  it("returns null userId when there is no Authorization header", () => {
+  it("returns null userId when there is no access_token cookie", () => {
     const ctx = createContext(make({}));
     expect(ctx.userId).toBeNull();
   });
 
-  it("ignores a non-Bearer Authorization scheme", () => {
-    const ctx = createContext(make({ authorization: "Basic abc123" }));
+  it("returns null userId for an empty access_token cookie", () => {
+    const ctx = createContext(make({ cookie: "access_token=" }));
+    expect(ctx.userId).toBeNull();
+  });
+
+  it("parses access_token and refresh_token independently when both are present", () => {
+    const token = signAccessToken(user);
+    const ctx = createContext(
+      make({ cookie: `access_token=${token}; refresh_token=raw-refresh` }),
+    );
+    expect(ctx.userId).toBe(user.id);
+    expect(ctx.refreshCookie).toBe("raw-refresh");
+  });
+
+  it("ignores a Bearer Authorization header (cookie-only auth)", () => {
+    const token = signAccessToken(user);
+    const ctx = createContext(make({ authorization: `Bearer ${token}` }));
     expect(ctx.userId).toBeNull();
   });
 

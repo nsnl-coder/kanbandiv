@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { TRPCError } from "@trpc/server";
-import { AuthError } from "../auth.service.js";
+import { AuthError } from "shared";
 import {
   createCaller,
   fakeEmail,

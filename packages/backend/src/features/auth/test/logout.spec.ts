@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import crypto from "node:crypto";
-import { TRPCError } from "@trpc/server";
-import { AuthError } from "../auth.service.js";
+import { AuthError } from "shared";
 import {
   createCaller,
   makeContext,
   newTestDb,
+  resSpy,
   seedRefreshToken,
   seedUser,
   type TestDb,
@@ -26,13 +26,15 @@ describe("auth.logout", () => {
     await db.destroy();
   });
 
-  const caller = () => createCaller(makeContext({ db }));
+  // Logout reads the refresh token from the httpOnly cookie only.
+  const logout = (refreshCookie: string | null, res?: ReturnType<typeof resSpy>) =>
+    createCaller(makeContext({ db, refreshCookie, res })).auth.logout({});
 
-  it("revokes the provided token", async () => {
+  it("revokes the token from the cookie", async () => {
     const user = await seedUser(db);
     const raw = await seedRefreshToken(db, { userId: user.id });
 
-    const res = await caller().auth.logout({ refreshToken: raw });
+    const res = await logout(raw);
     expect(res).toEqual({ ok: true });
 
     const row = await db
@@ -43,13 +45,28 @@ describe("auth.logout", () => {
     expect(row.revoked_at).not.toBeNull();
   });
 
+  it("clears both the access and refresh cookies", async () => {
+    const user = await seedUser(db);
+    const raw = await seedRefreshToken(db, { userId: user.id });
+    const res = resSpy();
+
+    await logout(raw, res);
+
+    const clearedNames = res.cleared.map((c) => c.name);
+    expect(clearedNames).toContain("access_token");
+    expect(clearedNames).toContain("refresh_token");
+    for (const c of res.cleared) {
+      expect(c.options).toMatchObject({ path: "/" });
+    }
+  });
+
   it("makes the token unusable on refresh", async () => {
     const user = await seedUser(db);
     const raw = await seedRefreshToken(db, { userId: user.id });
 
-    await caller().auth.logout({ refreshToken: raw });
+    await logout(raw);
     await expect(
-      caller().auth.refresh({ refreshToken: raw }),
+      createCaller(makeContext({ db, refreshCookie: raw })).auth.refresh({}),
     ).rejects.toMatchObject({ message: AuthError.INVALID_REFRESH_TOKEN });
   });
 
@@ -58,7 +75,7 @@ describe("auth.logout", () => {
     const rawA = await seedRefreshToken(db, { userId: user.id });
     const rawB = await seedRefreshToken(db, { userId: user.id });
 
-    await caller().auth.logout({ refreshToken: rawA });
+    await logout(rawA);
 
     const rowB = await db
       .selectFrom("refresh_tokens")
@@ -73,20 +90,14 @@ describe("auth.logout", () => {
     const raw = await seedRefreshToken(db, { userId: user.id });
 
     const unknown = crypto.randomBytes(32).toString("base64url");
-    expect(await caller().auth.logout({ refreshToken: unknown })).toEqual({ ok: true });
+    expect(await logout(unknown)).toEqual({ ok: true });
 
-    expect(await caller().auth.logout({ refreshToken: raw })).toEqual({ ok: true });
-    expect(await caller().auth.logout({ refreshToken: raw })).toEqual({ ok: true });
+    expect(await logout(raw)).toEqual({ ok: true });
+    expect(await logout(raw)).toEqual({ ok: true });
   });
 
-  it("rejects an empty-string refreshToken", async () => {
-    await expect(
-      caller().auth.logout({ refreshToken: "" }),
-    ).rejects.toBeInstanceOf(TRPCError);
-  });
-
-  it("requires a token or cookie", async () => {
-    await expect(caller().auth.logout({})).rejects.toMatchObject({
+  it("requires a refresh cookie", async () => {
+    await expect(logout(null)).rejects.toMatchObject({
       message: AuthError.INVALID_REFRESH_TOKEN,
     });
   });

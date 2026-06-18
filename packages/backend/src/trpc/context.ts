@@ -16,17 +16,17 @@ export interface Context {
 }
 
 export function createContext({ req, res }: CreateExpressContextOptions): Context {
+  const cookies = req.headers.cookie ? parseCookie(req.headers.cookie) : {};
+
   let userId: string | null = null;
-  const auth = req.headers.authorization;
-  if (auth?.startsWith("Bearer ")) {
+  const access = cookies["access_token"];
+  if (access) {
     try {
-      userId = verifyAccessToken(auth.slice(7)).sub;
+      userId = verifyAccessToken(access).sub;
     } catch {
       userId = null;
     }
   }
-
-  const cookies = req.headers.cookie ? parseCookie(req.headers.cookie) : {};
 
   return {
     db: appDb,

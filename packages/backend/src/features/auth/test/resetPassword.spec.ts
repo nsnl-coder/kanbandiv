@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { TRPCError } from "@trpc/server";
-import { OtpPurpose } from "shared";
-import { AuthError, AUTH_CONSTANTS } from "../auth.service.js";
+import { AuthError, OtpPurpose } from "shared";
+import { AUTH_CONSTANTS } from "../auth.service.js";
 import {
   createCaller,
   makeContext,
@@ -61,11 +61,11 @@ describe("auth.resetPassword", () => {
       newPassword: "NewPassword123",
     });
 
-    const tokens = await caller().auth.login({
+    const loggedIn = await caller().auth.login({
       email: user.email,
       password: "NewPassword123",
     });
-    expect(tokens.user.id).toBe(user.id);
+    expect(loggedIn.id).toBe(user.id);
   });
 
   it("rejects the old password after reset", async () => {
