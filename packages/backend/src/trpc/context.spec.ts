@@ -17,6 +17,7 @@ const user = {
   email: "ctx@example.com",
   isSuperuser: false,
   emailVerified: true,
+  permissions: [],
 };
 
 describe("createContext", () => {

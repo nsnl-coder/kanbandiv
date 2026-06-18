@@ -2,12 +2,15 @@ import { useMutation } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { useTRPC } from "../lib/trpc";
 import { useAuthStore } from "../hooks/useAuthStore";
+import { useCanAny } from "../features/rbac/hooks/useCan";
+import { ADMIN_READ_PERMS } from "../features/rbac/constants";
 
 export function Nav() {
   const trpc = useTRPC();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const clearAuth = useAuthStore((s) => s.clearAuth);
+  const canAdmin = useCanAny(ADMIN_READ_PERMS);
 
   const logout = useMutation(trpc.auth.logout.mutationOptions());
 
@@ -32,6 +35,11 @@ export function Nav() {
         <Link to="/settings/password" className="text-slate-600 hover:text-slate-900">
           Settings
         </Link>
+        {canAdmin ? (
+          <Link to="/admin" className="text-slate-600 hover:text-slate-900">
+            Admin
+          </Link>
+        ) : null}
       </div>
       <div className="flex items-center gap-3 text-sm">
         {user ? <span className="text-slate-500">{user.email}</span> : null}

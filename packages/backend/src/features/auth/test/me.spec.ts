@@ -27,6 +27,7 @@ describe("auth.me", () => {
         isSuperuser: false,
         roleId: null,
         emailVerified: true,
+        permissions: [],
       });
     });
 
@@ -40,6 +41,7 @@ describe("auth.me", () => {
         "emailVerified",
         "id",
         "isSuperuser",
+        "permissions",
         "roleId",
       ]);
     });
@@ -68,6 +70,7 @@ describe("auth.me", () => {
       email: "tok@example.com",
       isSuperuser: false,
       emailVerified: true,
+      permissions: [],
     };
 
     it("accepts a token from signAccessToken (sub matches user id)", () => {

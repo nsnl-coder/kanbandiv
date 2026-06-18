@@ -1,9 +1,7 @@
 import { type ReactNode } from "react";
 import { Navigate, Outlet, useSearchParams } from "react-router-dom";
-import type { AuthRole } from "shared";
 import { useAuthStore } from "../hooks/useAuthStore";
-
-const roleHome: Record<AuthRole, string> = { admin: "/admin", user: "/" };
+import { homeFor } from "../features/rbac/utils";
 
 interface GuestRouteProps {
   children?: ReactNode;
@@ -19,5 +17,5 @@ export function GuestRoute({ children }: GuestRouteProps) {
   }
 
   const next = params.get("next");
-  return <Navigate to={next ?? roleHome[user.role]} replace />;
+  return <Navigate to={next ?? homeFor(user)} replace />;
 }

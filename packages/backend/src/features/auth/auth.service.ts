@@ -16,6 +16,7 @@ import {
 } from "shared";
 import { env } from "../../config/env.config.js";
 import type { EmailPort } from "../email/email.service.js";
+import { findUserGlobalPerms } from "../rbac/rbac.repo.js";
 import * as repo from "./auth.repo.js";
 import type { Db } from "./auth.repo.js";
 
@@ -120,19 +121,24 @@ async function issueRefreshToken(
   return raw;
 }
 
-function toPublicUser(row: {
-  id: string;
-  email: string;
-  is_superuser: boolean;
-  role_id: string | null;
-  email_verified: boolean;
-}): PublicUser {
+async function toPublicUser(
+  db: Db,
+  row: {
+    id: string;
+    email: string;
+    is_superuser: boolean;
+    role_id: string | null;
+    email_verified: boolean;
+  },
+): Promise<PublicUser> {
+  const { isSuperuser, perms } = await findUserGlobalPerms(db, row.id);
   return {
     id: row.id,
     email: row.email,
-    isSuperuser: row.is_superuser,
+    isSuperuser,
     roleId: row.role_id,
     emailVerified: row.email_verified,
+    permissions: [...perms],
   };
 }
 
@@ -296,7 +302,7 @@ export async function login(
 
   await repo.resetFailedLogin(deps.db, user.id);
   await logEvent(deps, { userId: user.id, event: "login", outcome: "success" });
-  return issueTokens(deps.db, toPublicUser(user));
+  return issueTokens(deps.db, await toPublicUser(deps.db, user));
 }
 
 export async function refresh(
@@ -326,10 +332,11 @@ export async function refresh(
 
   await repo.revokeRefreshToken(deps.db, row.id);
   const newRaw = await issueRefreshToken(deps.db, user.id, row.family_id, row.id);
+  const publicUser = await toPublicUser(deps.db, user);
   return {
-    accessToken: signAccessToken(toPublicUser(user)),
+    accessToken: signAccessToken(publicUser),
     refreshToken: newRaw,
-    user: toPublicUser(user),
+    user: publicUser,
   };
 }
 
@@ -402,7 +409,7 @@ export async function cleanupExpired(
 export async function getMe(deps: AuthDeps, userId: string): Promise<PublicUser> {
   const user = await repo.findPublicUserById(deps.db, userId);
   if (!user) throw new TRPCError({ code: "UNAUTHORIZED" });
-  return toPublicUser(user);
+  return toPublicUser(deps.db, user);
 }
 
 function invalidCredentials() {

@@ -6,14 +6,13 @@ import {
   useNavigate,
   useSearchParams,
 } from "react-router-dom";
-import { AuthError, loginInput, type LoginInput, type AuthRole } from "shared";
+import { AuthError, loginInput, type LoginInput } from "shared";
 import { useTRPC } from "../../lib/trpc";
 import { useAuthStore } from "../../hooks/useAuthStore";
 import { AuthForm } from "../../features/auth/components/AuthForm";
 import { PasswordField } from "../../features/auth/components/PasswordField";
 import { authErrorKey, authErrorMessage } from "../../features/auth/utils";
-
-const roleHome: Record<AuthRole, string> = { admin: "/admin", user: "/" };
+import { homeFor } from "../../features/rbac/utils";
 
 export function LoginPage() {
   const trpc = useTRPC();
@@ -33,9 +32,8 @@ export function LoginPage() {
     mutation.mutate(values, {
       onSuccess: (user) => {
         setAuth(user);
-        const home = roleHome[user.role];
         const next = params.get("next");
-        navigate(next ?? home, { replace: true });
+        navigate(next ?? homeFor(user), { replace: true });
       },
     });
   });

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { permissionSchema } from "./rbac.schema.js";
 
 export const AuthRole = {
   Admin: "admin",
@@ -92,6 +93,7 @@ export const publicUserSchema = z.object({
   isSuperuser: z.boolean(),
   roleId: z.string().nullable().optional(),
   emailVerified: z.boolean(),
+  permissions: z.array(permissionSchema),
 });
 export type PublicUser = z.infer<typeof publicUserSchema>;
 

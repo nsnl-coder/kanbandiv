@@ -1,8 +1,6 @@
-import type { PublicUser, AuthRole } from "shared";
+import type { PublicUser } from "shared";
 
 export type AuthUser = PublicUser;
-
-export type { AuthRole };
 
 export interface AuthFormState {
   topError: string | null;
