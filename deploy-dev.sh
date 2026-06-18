@@ -2,7 +2,7 @@
 set -euo pipefail
 
 APP_DIR="/var/www/trelloclone3"
-BRANCH="master"
+BRANCH="main"
 
 cd "$APP_DIR"
 git pull origin "$BRANCH"
