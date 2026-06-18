@@ -1,15 +1,34 @@
 # run from repo root:
 #   docker compose -f packages/infra/docker-compose.yml up -d --build
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: trelloclone3-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: trelloclone
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d trelloclone"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   backend:
     build:
       context: ../..
       dockerfile: packages/infra/backend.Dockerfile
     container_name: trelloclone3-api
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
     env_file:
       - path: ../backend/.env.prod
-        required: false
+        required: true
     environment:
       - NODE_ENV=production
       - PORT=4000
@@ -26,3 +45,6 @@ services:
       - backend
     ports:
       - "8080:80"
+
+volumes:
+  pgdata:
