@@ -2,13 +2,14 @@ import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import { Kysely, PostgresDialect } from "kysely";
 import { DataType, newDb } from "pg-mem";
-import { OtpPurpose, type AuthRole } from "shared";
+import { OtpPurpose } from "shared";
 import { env } from "../../../config/env.config.js";
 import type { Database } from "../../../db/types.js";
 import { appRouter } from "../../../trpc/router.js";
 import type { Context } from "../../../trpc/context.js";
+import { up as up001 } from "../../../migrations/001.auth.js";
+import { up as up002 } from "../../../migrations/002.rbac.js";
 import type { EmailPort } from "../../email/email.service.js";
-import { up } from "../../../migrations/001.auth.js";
 
 export type TestDb = Kysely<Database>;
 
@@ -25,7 +26,8 @@ export async function newTestDb(): Promise<TestDb> {
   const db = new Kysely<Database>({
     dialect: new PostgresDialect({ pool: new Pool() }),
   });
-  await up(db);
+  await up001(db);
+  await up002(db);
   return db;
 }
 
@@ -122,7 +124,8 @@ export function createCaller(ctx: Context) {
 export interface SeedUserOpts {
   email?: string;
   password?: string;
-  role?: AuthRole;
+  isSuperuser?: boolean;
+  roleId?: string | null;
   verified?: boolean;
   lockedUntil?: Date | null;
   failedLoginCount?: number;
@@ -136,7 +139,8 @@ export async function seedUser(db: TestDb, opts: SeedUserOpts = {}) {
       email: opts.email ?? "user@example.com",
       password_hash: await bcrypt.hash(password, env.BCRYPT_COST),
       email_verified: opts.verified ?? true,
-      role: opts.role ?? "user",
+      is_superuser: opts.isSuperuser ?? false,
+      role_id: opts.roleId ?? null,
       failed_login_count: opts.failedLoginCount ?? 0,
       locked_until: opts.lockedUntil ?? null,
     })

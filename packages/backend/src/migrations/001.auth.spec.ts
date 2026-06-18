@@ -32,7 +32,7 @@ describe("001.auth migration", () => {
   async function seedUserWithChildren(): Promise<string> {
     const user = await db
       .insertInto("users")
-      .values({ email: "cascade@example.com", password_hash: "x", role: "user" })
+      .values({ email: "cascade@example.com", password_hash: "x" })
       .returning("id")
       .executeTakeFirstOrThrow();
     await db

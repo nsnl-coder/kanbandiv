@@ -40,7 +40,7 @@ describe("auth.login", () => {
     expect(user).toMatchObject({
       id: seeded.id,
       email: "ok@example.com",
-      role: "user",
+      isSuperuser: false,
       emailVerified: true,
     });
     const names = res.cookies.map((c) => c.name);
@@ -64,7 +64,7 @@ describe("auth.login", () => {
     expect(row.token_hash).not.toBe(rawRefresh);
   });
 
-  it("issues a verifiable access cookie carrying sub and role", async () => {
+  it("issues a verifiable access cookie carrying sub and email", async () => {
     const seeded = await seedUser(db, { email: "jwt@example.com" });
     const res = resSpy();
     await createCaller(makeContext({ db, email, res })).auth.login({
@@ -75,7 +75,7 @@ describe("auth.login", () => {
     expect(accessToken).toBeDefined();
     const payload = verifyAccessToken(accessToken!);
     expect(payload.sub).toBe(seeded.id);
-    expect(payload.role).toBe("user");
+    expect(payload.email).toBe("jwt@example.com");
   });
 
   it("sets hardened access + refresh cookies with their configured lifetimes", async () => {

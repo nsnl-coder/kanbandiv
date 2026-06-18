@@ -86,12 +86,11 @@ export const changePasswordInput = z.object({
 });
 export type ChangePasswordInput = z.infer<typeof changePasswordInput>;
 
-export const roleSchema = z.enum(["admin", "user"]);
-
 export const publicUserSchema = z.object({
   id: z.string(),
   email: z.string(),
-  role: roleSchema,
+  isSuperuser: z.boolean(),
+  roleId: z.string().nullable().optional(),
   emailVerified: z.boolean(),
 });
 export type PublicUser = z.infer<typeof publicUserSchema>;

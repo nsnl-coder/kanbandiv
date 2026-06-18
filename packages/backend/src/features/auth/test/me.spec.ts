@@ -17,14 +17,15 @@ describe("auth.me", () => {
   });
 
   describe("endpoint", () => {
-    it("returns {id,email,role,emailVerified} for the authed user", async () => {
-      const user = await seedUser(db, { email: "me@example.com", role: "user", verified: true });
+    it("returns {id,email,isSuperuser,roleId,emailVerified} for the authed user", async () => {
+      const user = await seedUser(db, { email: "me@example.com", verified: true });
       const caller = createCaller(makeContext({ db, userId: user.id }));
       const res = await caller.auth.me({});
       expect(res).toEqual({
         id: user.id,
         email: "me@example.com",
-        role: "user",
+        isSuperuser: false,
+        roleId: null,
         emailVerified: true,
       });
     });
@@ -34,14 +35,20 @@ describe("auth.me", () => {
       const caller = createCaller(makeContext({ db, userId: user.id }));
       const res = await caller.auth.me({});
       expect("password_hash" in res).toBe(false);
-      expect(Object.keys(res).sort()).toEqual(["email", "emailVerified", "id", "role"]);
+      expect(Object.keys(res).sort()).toEqual([
+        "email",
+        "emailVerified",
+        "id",
+        "isSuperuser",
+        "roleId",
+      ]);
     });
 
-    it("returns the correct role", async () => {
-      const user = await seedUser(db, { email: "admin@example.com", role: "admin" });
+    it("reflects the superuser flag", async () => {
+      const user = await seedUser(db, { email: "root@example.com", isSuperuser: true });
       const caller = createCaller(makeContext({ db, userId: user.id }));
       const res = await caller.auth.me({});
-      expect(res.role).toBe("admin");
+      expect(res.isSuperuser).toBe(true);
     });
 
     it("rejects an unauthenticated call (userId null) with UNAUTHORIZED", async () => {
@@ -59,7 +66,7 @@ describe("auth.me", () => {
     const user = {
       id: crypto.randomUUID(),
       email: "tok@example.com",
-      role: "user" as const,
+      isSuperuser: false,
       emailVerified: true,
     };
 

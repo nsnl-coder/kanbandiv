@@ -1,10 +1,10 @@
 import type { Kysely } from "kysely";
-import type { AuthRole, OtpPurpose } from "shared";
+import type { OtpPurpose } from "shared";
 import type { Database } from "../../db/types.js";
 
 export type Db = Kysely<Database>;
 
-const PUBLIC_USER = ["id", "email", "role", "email_verified"] as const;
+const PUBLIC_USER = ["id", "email", "is_superuser", "role_id", "email_verified"] as const;
 
 export function findUserByEmail(db: Db, email: string) {
   return db
@@ -32,14 +32,13 @@ export function findPublicUserById(db: Db, id: string) {
 
 export function createUser(
   db: Db,
-  input: { email: string; passwordHash: string; role?: AuthRole },
+  input: { email: string; passwordHash: string },
 ) {
   return db
     .insertInto("users")
     .values({
       email: input.email,
       password_hash: input.passwordHash,
-      role: input.role ?? "user",
     })
     .returningAll()
     .executeTakeFirstOrThrow();

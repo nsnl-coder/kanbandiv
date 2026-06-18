@@ -1,8 +1,9 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import type { OpenApiMeta } from "trpc-to-openapi";
-import { AuthError } from "shared";
+import { AuthError, RbacError, hasPermission, type Permission } from "shared";
 import { findPublicUserById } from "../features/auth/auth.repo.js";
+import { findUserGlobalPerms } from "../features/rbac/rbac.repo.js";
 import type { Context } from "./context.js";
 
 const t = initTRPC.context<Context>().meta<OpenApiMeta>().create({ transformer: superjson });
@@ -61,15 +62,29 @@ export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
   // Defense-in-depth: tokens are only issued post-verification, but never
   // trust a token for an unverified account.
   if (!user.email_verified) throw expired;
+  const { isSuperuser, perms } = await findUserGlobalPerms(ctx.db, user.id);
   return next({
     ctx: {
       ...ctx,
       user: {
         id: user.id,
         email: user.email,
-        role: user.role,
         emailVerified: user.email_verified,
+        isSuperuser,
+        permissions: perms,
       },
     },
   });
 });
+
+/**
+ * Protected procedure guarded by a global permission. Superusers bypass the
+ * check; everyone else must hold the permission or get FORBIDDEN.
+ */
+export const globalProcedure = (permission: Permission) =>
+  protectedProcedure.use(({ ctx, next }) => {
+    if (!ctx.user.isSuperuser && !hasPermission(ctx.user.permissions, permission)) {
+      throw new TRPCError({ code: "FORBIDDEN", message: RbacError.FORBIDDEN });
+    }
+    return next();
+  });

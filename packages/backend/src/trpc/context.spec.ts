@@ -15,7 +15,7 @@ function make(headers: Record<string, string>, ip?: string): Args {
 const user = {
   id: crypto.randomUUID(),
   email: "ctx@example.com",
-  role: "user" as const,
+  isSuperuser: false,
   emailVerified: true,
 };
 

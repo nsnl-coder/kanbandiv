@@ -4,7 +4,6 @@ import jwt from "jsonwebtoken";
 import { TRPCError } from "@trpc/server";
 import {
   AuthError,
-  AuthRole,
   OtpPurpose,
   RESET_OTP_LENGTH,
   VERIFY_OTP_LENGTH,
@@ -75,12 +74,11 @@ function hashOtp(code: string): Promise<string> {
 
 interface AccessPayload {
   sub: string;
-  role: AuthRole;
   email: string;
 }
 
 export function signAccessToken(user: PublicUser): string {
-  const payload: AccessPayload = { sub: user.id, role: user.role, email: user.email };
+  const payload: AccessPayload = { sub: user.id, email: user.email };
   return jwt.sign(payload, env.JWT_ACCESS_SECRET, {
     algorithm: "HS256",
     expiresIn: env.JWT_ACCESS_TTL,
@@ -125,13 +123,15 @@ async function issueRefreshToken(
 function toPublicUser(row: {
   id: string;
   email: string;
-  role: AuthRole;
+  is_superuser: boolean;
+  role_id: string | null;
   email_verified: boolean;
 }): PublicUser {
   return {
     id: row.id,
     email: row.email,
-    role: row.role,
+    isSuperuser: row.is_superuser,
+    roleId: row.role_id,
     emailVerified: row.email_verified,
   };
 }
