@@ -76,7 +76,6 @@ function renderAt(path: string) {
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path="/projects/new" element={<ProjectFormPage />} />
-        <Route path="/projects/:id/edit" element={<ProjectFormPage />} />
         <Route path="/projects/:id" element={<div>detail-page</div>} />
       </Routes>
     </MemoryRouter>,
@@ -124,52 +123,5 @@ describe("ProjectFormPage (create)", () => {
     renderAt("/projects/new");
     await u.click(screen.getByRole("button", { name: "Create project" }));
     expect(h.mutateCalls.create).toBeUndefined();
-  });
-});
-
-describe("ProjectFormPage (edit)", () => {
-  it("prefills from the loaded project", () => {
-    h.queryData = { get: makeProject() };
-    renderAt("/projects/p1/edit");
-    expect(screen.getByLabelText("Name")).toHaveValue("Roadmap");
-  });
-
-  it("disables fields for a viewer", () => {
-    h.queryData = { get: makeProject({ myPermission: "view" }) };
-    renderAt("/projects/p1/edit");
-    expect(screen.getByLabelText("Name")).toBeDisabled();
-    expect(screen.queryByRole("button", { name: "Save" })).toBeNull();
-  });
-
-  it("disables visibility for a non-owner editor", () => {
-    h.queryData = { get: makeProject({ myPermission: "edit" }) };
-    renderAt("/projects/p1/edit");
-    expect(screen.getByLabelText("Name")).not.toBeDisabled();
-    expect(screen.getByLabelText("Visibility")).toBeDisabled();
-  });
-
-  it("submits an update patch on save", async () => {
-    const u = userEvent.setup();
-    h.queryData = { get: makeProject() };
-    renderAt("/projects/p1/edit");
-    const name = screen.getByLabelText("Name");
-    await u.clear(name);
-    await u.type(name, "Renamed");
-    await u.click(screen.getByRole("button", { name: "Save" }));
-    expect(h.mutateCalls.update).toEqual([
-      {
-        id: "p1",
-        name: "Renamed",
-        description: "Q3",
-        color: "#10b981",
-        visibility: "private",
-      },
-    ]);
-  });
-
-  it("shows a no-access state on query error", () => {
-    h.queryError = { get: new Error("nope") };
-    renderAt("/projects/p1/edit");
-    expect(screen.getByText(/not found or no access/)).toBeInTheDocument();
   });
 });

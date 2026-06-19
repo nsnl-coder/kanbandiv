@@ -78,7 +78,6 @@ function renderAt(path: string) {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
-        <Route path="/projects/:id/boards/new" element={<BoardFormPage />} />
         <Route path="/projects/:id/boards/:boardId/edit" element={<BoardFormPage />} />
         <Route path="/projects/:id/boards/:boardId" element={<div>detail-page</div>} />
       </Routes>
@@ -95,52 +94,16 @@ beforeEach(() => {
   useAuthStore.getState().setAuth(user);
 });
 
-describe("BoardFormPage (create)", () => {
-  it("submits the create input shape with defaults", async () => {
-    const u = userEvent.setup();
-    h.mutationResult.create = { id: "b9" };
-    renderAt("/projects/p1/boards/new");
-
-    await u.type(screen.getByLabelText("Name"), "New board");
-    await u.click(screen.getByRole("button", { name: "Create board" }));
-
-    expect(h.mutateCalls.create).toEqual([
-      {
-        projectId: "p1",
-        name: "New board",
-        description: undefined,
-        color: "#2563eb",
-      },
-    ]);
-  });
-
-  it("navigates to the created board", async () => {
-    const u = userEvent.setup();
-    h.mutationResult.create = { id: "b9" };
-    renderAt("/projects/p1/boards/new");
-    await u.type(screen.getByLabelText("Name"), "New board");
-    await u.click(screen.getByRole("button", { name: "Create board" }));
-    expect(screen.getByText("detail-page")).toBeInTheDocument();
-  });
-
-  it("does not submit when the name is empty", async () => {
-    const u = userEvent.setup();
-    renderAt("/projects/p1/boards/new");
-    await u.click(screen.getByRole("button", { name: "Create board" }));
-    expect(h.mutateCalls.create).toBeUndefined();
-  });
-
+describe("BoardFormPage (edit)", () => {
   it("renders the mapped error message", async () => {
     const u = userEvent.setup();
-    h.mutationError.create = new TRPCClientError(BoardError.FORBIDDEN);
-    renderAt("/projects/p1/boards/new");
-    await u.type(screen.getByLabelText("Name"), "New board");
-    await u.click(screen.getByRole("button", { name: "Create board" }));
+    h.queryData = { get: makeBoard() };
+    h.mutationError.update = new TRPCClientError(BoardError.FORBIDDEN);
+    renderAt("/projects/p1/boards/b1/edit");
+    await u.click(screen.getByRole("button", { name: "Save" }));
     expect(screen.getByText("You do not have permission to do that.")).toBeInTheDocument();
   });
-});
 
-describe("BoardFormPage (edit)", () => {
   it("prefills from the loaded board", () => {
     h.queryData = { get: makeBoard() };
     renderAt("/projects/p1/boards/b1/edit");

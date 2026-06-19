@@ -55,7 +55,6 @@ function renderAt(entry: string) {
     <MemoryRouter initialEntries={[entry]}>
       <Routes>
         <Route element={<ProtectedRoute />}>
-          <Route path="/projects/:id/boards/new" element={<BoardFormPage />} />
           <Route path="/projects/:id/boards/:boardId" element={<BoardDetailPage />} />
           <Route path="/projects/:id/boards/:boardId/edit" element={<BoardFormPage />} />
         </Route>
@@ -79,11 +78,6 @@ beforeEach(() => {
 });
 
 describe("boards routes", () => {
-  it("renders the new board form", () => {
-    renderAt("/projects/p1/boards/new");
-    expect(screen.getByRole("heading", { name: "New board" })).toBeInTheDocument();
-  });
-
   it("renders the board detail page", () => {
     h.queryData = {
       getData: {
@@ -130,7 +124,7 @@ describe("boards routes", () => {
 
   it("redirects an unauthenticated user to login", () => {
     useAuthStore.getState().clearAuth();
-    renderAt("/projects/p1/boards/new");
+    renderAt("/projects/p1/boards/b1");
     expect(screen.getByText("login-page")).toBeInTheDocument();
   });
 });

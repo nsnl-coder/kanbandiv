@@ -87,12 +87,12 @@ beforeEach(() => {
 });
 
 describe("ProjectDetailPage", () => {
-  it("shows Edit, Delete and Manage access for the owner", () => {
+  it("shows Project settings and Manage access for the owner", () => {
     h.queryData = { get: makeProject(), accessList: [] };
     renderPage();
-    expect(screen.getByRole("link", { name: "Edit" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Project settings" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Manage access" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Delete" })).toBeNull();
   });
 
   it("opens the access modal from Manage access", async () => {
@@ -105,31 +105,27 @@ describe("ProjectDetailPage", () => {
     expect(screen.getByRole("button", { name: "Share" })).toBeInTheDocument();
   });
 
-  it("shows Edit but no Delete or Manage access for an editor", () => {
-    h.queryData = { get: makeProject({ ownerId: "u2", myPermission: "edit" }), accessList: [] };
-    renderPage();
-    expect(screen.getByRole("link", { name: "Edit" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Delete" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Manage access" })).toBeNull();
-  });
-
-  it("hides Edit and Delete for a viewer", () => {
-    h.queryData = { get: makeProject({ ownerId: "u2", myPermission: "view" }), accessList: [] };
-    renderPage();
-    expect(screen.queryByRole("link", { name: "Edit" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Delete" })).toBeNull();
-  });
-
-  it("deletes and redirects to the list", async () => {
+  it("opens the edit modal from Project settings", async () => {
     const u = userEvent.setup();
     h.queryData = { get: makeProject(), accessList: [] };
     renderPage();
-    await u.click(screen.getByRole("button", { name: "Delete" }));
-    // confirm modal
-    const modalDelete = screen.getAllByRole("button", { name: "Delete" }).at(-1)!;
-    await u.click(modalDelete);
-    expect(h.mutateCalls.delete).toEqual([{ id: "p1" }]);
-    expect(screen.getByText("projects-list")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Edit project" })).toBeNull();
+    await u.click(screen.getByRole("button", { name: "Project settings" }));
+    expect(screen.getByRole("heading", { name: "Edit project" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
+  });
+
+  it("shows Project settings but no Manage access for an editor", () => {
+    h.queryData = { get: makeProject({ ownerId: "u2", myPermission: "edit" }), accessList: [] };
+    renderPage();
+    expect(screen.getByRole("button", { name: "Project settings" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Manage access" })).toBeNull();
+  });
+
+  it("hides Project settings for a viewer", () => {
+    h.queryData = { get: makeProject({ ownerId: "u2", myPermission: "view" }), accessList: [] };
+    renderPage();
+    expect(screen.queryByRole("button", { name: "Project settings" })).toBeNull();
   });
 
   it("shows a no-access state on query error", () => {

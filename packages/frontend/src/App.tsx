@@ -15,7 +15,7 @@ import { LoginPage } from "./pages/auth/LoginPage";
 import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
 import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
-import { ProjectsListPage } from "./pages/user/projects/ProjectsListPage";
+import { ProjectsLanding } from "./pages/user/projects/ProjectsLanding";
 import { ProjectFormPage } from "./pages/user/projects/ProjectFormPage";
 import { ProjectDetailPage } from "./pages/user/projects/ProjectDetailPage";
 import { BoardFormPage } from "./pages/user/projects/BoardFormPage";
@@ -84,11 +84,9 @@ export function App() {
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
-          <Route path="/projects" element={<ProjectsListPage />} />
+          <Route path="/projects" element={<ProjectsLanding />} />
           <Route path="/projects/new" element={<ProjectFormPage />} />
           <Route path="/projects/:id" element={<ProjectDetailPage />} />
-          <Route path="/projects/:id/edit" element={<ProjectFormPage />} />
-          <Route path="/projects/:id/boards/new" element={<BoardFormPage />} />
           <Route path="/projects/:id/boards/:boardId" element={<BoardDetailPage />} />
           <Route path="/projects/:id/boards/:boardId/edit" element={<BoardFormPage />} />
         </Route>

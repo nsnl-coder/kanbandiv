@@ -27,14 +27,10 @@ export function BoardFormPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { id, boardId } = useParams<{ id: string; boardId: string }>();
-  const isEdit = Boolean(boardId);
 
   const [color, setColor] = useState(DEFAULT_BOARD_COLOR);
 
-  const boardQuery = useQuery({
-    ...trpc.boards.get.queryOptions({ id: boardId! }),
-    enabled: isEdit,
-  });
+  const boardQuery = useQuery(trpc.boards.get.queryOptions({ id: boardId! }));
 
   const {
     register,
@@ -47,7 +43,7 @@ export function BoardFormPage() {
   });
 
   const board = boardQuery.data;
-  const readOnly = isEdit && !!board && !canEdit(board);
+  const readOnly = !!board && !canEdit(board);
 
   useEffect(() => {
     if (board) {
@@ -56,26 +52,11 @@ export function BoardFormPage() {
     }
   }, [board, reset]);
 
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: trpc.boards.list.queryKey({ projectId: id }) });
-    if (boardId) {
-      queryClient.invalidateQueries({ queryKey: trpc.boards.get.queryKey({ id: boardId }) });
-    }
-  };
-
-  const createMutation = useMutation(
-    trpc.boards.create.mutationOptions({
-      onSuccess: (created: { id: string }) => {
-        invalidate();
-        navigate(`/projects/${id}/boards/${created.id}`);
-      },
-    }),
-  );
-
   const updateMutation = useMutation(
     trpc.boards.update.mutationOptions({
       onSuccess: () => {
-        invalidate();
+        queryClient.invalidateQueries({ queryKey: trpc.boards.list.queryKey({ projectId: id }) });
+        queryClient.invalidateQueries({ queryKey: trpc.boards.get.queryKey({ id: boardId }) });
         navigate(`/projects/${id}/boards/${boardId}`);
       },
     }),
@@ -83,78 +64,65 @@ export function BoardFormPage() {
 
   const onSubmit = handleSubmit((values) => {
     const description = values.description?.length ? values.description : undefined;
-    if (isEdit) {
-      updateMutation.mutate({
-        id: boardId!,
-        name: values.name,
-        description: description ?? null,
-        color,
-      });
-    } else {
-      createMutation.mutate({
-        projectId: id!,
-        name: values.name,
-        description,
-        color,
-      });
-    }
+    updateMutation.mutate({
+      id: boardId!,
+      name: values.name,
+      description: description ?? null,
+      color,
+    });
   });
 
-  const error = createMutation.error ?? updateMutation.error;
-
-  if (isEdit && boardQuery.error) {
+  if (boardQuery.error) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <main className="max-w-2xl p-6">
-          <p className="text-sm text-slate-600">Board not found or no access.</p>
-          <Link
-            to={`/projects/${id}`}
-            className="text-sm font-medium text-slate-700 hover:text-slate-900"
-          >
-            Back to project
-          </Link>
-        </main>
-      </div>
+      <main className="max-w-2xl p-6">
+        <p className="text-sm text-slate-600">Board not found or no access.</p>
+        <Link
+          to={`/projects/${id}`}
+          className="text-sm font-medium text-slate-700 hover:text-slate-900"
+        >
+          Back to project
+        </Link>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <main className="max-w-2xl p-6">
-        <h1 className="mb-4 text-2xl font-bold text-slate-800">
-          {isEdit ? (readOnly ? "Board" : "Edit board") : "New board"}
-        </h1>
+    <main className="max-w-2xl p-6">
+      <h1 className="mb-4 text-2xl font-bold text-slate-800">
+        {readOnly ? "Board" : "Edit board"}
+      </h1>
 
-        <form onSubmit={onSubmit} className="space-y-4">
-          <BoardFormFields
-            register={register}
-            errors={errors}
-            color={color}
-            onColorChange={setColor}
-            disabled={readOnly}
-          />
+      <form onSubmit={onSubmit} className="space-y-4">
+        <BoardFormFields
+          register={register}
+          errors={errors}
+          color={color}
+          onColorChange={setColor}
+          disabled={readOnly}
+        />
 
-          {error ? <p className="text-sm text-red-600">{boardErrorMessage(error)}</p> : null}
+        {updateMutation.error ? (
+          <p className="text-sm text-red-600">{boardErrorMessage(updateMutation.error)}</p>
+        ) : null}
 
-          {!readOnly ? (
-            <div className="flex gap-2">
-              <button
-                type="submit"
-                disabled={createMutation.isPending || updateMutation.isPending}
-                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-              >
-                {isEdit ? "Save" : "Create board"}
-              </button>
-              <Link
-                to={isEdit ? `/projects/${id}/boards/${boardId}` : `/projects/${id}`}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
-              >
-                Cancel
-              </Link>
-            </div>
-          ) : null}
-        </form>
-      </main>
-    </div>
+        {!readOnly ? (
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={updateMutation.isPending}
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            >
+              Save
+            </button>
+            <Link
+              to={`/projects/${id}/boards/${boardId}`}
+              className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+            >
+              Cancel
+            </Link>
+          </div>
+        ) : null}
+      </form>
+    </main>
   );
 }
