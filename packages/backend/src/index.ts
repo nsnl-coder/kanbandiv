@@ -37,7 +37,9 @@ function reportTrpcError(opts: {
     { err: opts.error, cause, path: opts.path, type: opts.type },
     "trpc internal error",
   );
-  if (sentryEnabled) Sentry.captureException(cause ?? opts.error);
+  // Capture the TRPCError itself (keeps our throw site / source-mapped frame);
+  // Sentry follows error.cause to also show the underlying error in the chain.
+  if (sentryEnabled) Sentry.captureException(opts.error);
 }
 
 // Trust the single reverse-proxy hop (nginx) so req.ip is the real client IP
