@@ -7,6 +7,7 @@ export const AuthError = {
   ACCOUNT_LOCKED: "ACCOUNT_LOCKED",
   INVALID_REFRESH_TOKEN: "INVALID_REFRESH_TOKEN",
   RATE_LIMITED: "RATE_LIMITED",
+  EMAIL_SEND_FAILED: "EMAIL_SEND_FAILED",
   // Access token missing/expired on a protected procedure. Distinct from the
   // domain UNAUTHORIZED errors above so the client refreshes only on this one.
   SESSION_EXPIRED: "SESSION_EXPIRED",
