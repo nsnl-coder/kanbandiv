@@ -1,0 +1,15 @@
+apiVersion: 1
+
+# Telegram contact point. Secrets come from env (set in packages/infra/.env and
+# passed to the grafana container), never committed. Grafana interpolates ${VAR}
+# in provisioning files.
+contactPoints:
+  - orgId: 1
+    name: telegram
+    receivers:
+      - uid: telegram-default
+        type: telegram
+        settings:
+          bottoken: ${TELEGRAM_BOT_TOKEN}
+          chatid: "${TELEGRAM_CHAT_ID}"
+        disableResolveMessage: false
