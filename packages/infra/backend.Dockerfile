@@ -23,10 +23,10 @@ ENV SENTRY_URL=https://us.sentry.io
 RUN --mount=type=secret,id=sentry_auth_token \
     if [ -s /run/secrets/sentry_auth_token ]; then \
       export SENTRY_AUTH_TOKEN=$(cat /run/secrets/sentry_auth_token); \
-      pnpm --filter backend exec sentry-cli sourcemaps inject packages/backend/dist; \
+      pnpm --filter backend exec sentry-cli sourcemaps inject dist; \
       pnpm --filter backend exec sentry-cli sourcemaps upload \
         --org that-nails-tech --project node-express --release "$SENTRY_RELEASE" \
-        packages/backend/dist; \
+        dist; \
     fi; \
     find packages/backend/dist -name '*.map' -delete
 
