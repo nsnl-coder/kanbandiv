@@ -69,6 +69,7 @@ e2e/                         # End-to-end tests
 - Always use @trpc/client to call backend
 - Do not create hook for api call - just use `<useQuery | useMutation>(trpc.<feature>.<endpoint>.queryOptions())` directly in components
 - access token and refresh token are http only cookie, do not store them in local storage
+- prefer to use modal over new route, ask if not sure
 
 ## Testing rule
 

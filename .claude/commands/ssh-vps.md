@@ -10,7 +10,7 @@ Connect vps for the first time.
 
 ## Work flow
 
-1. Read @.claude/references/vps-info to know what are already connected.
+1. Read packages/vps-info.md to know what are already connected.
    Prompt user what environment they are setting up for: dev or prod.
    Warn user if they try to set up env already set up.
 
@@ -63,7 +63,7 @@ sudo sshd -t                                          # validate config first
 sudo systemctl restart ssh || sudo systemctl restart sshd
 ```
 
-10. Write vps info into @.claude/references/vps-info.md for future reference.
+10. Write vps info into packages/infra/vps-info.md for future reference.
 
 - ssh alias: {project_name}-{prod or dev}-vps
 - domain: {domain_name}
