@@ -14,7 +14,8 @@ import { resourceFromAttributes } from "@opentelemetry/resources";
 const vpsEnv = process.env.VPS_ENV ?? "local";
 // Derive NODE_ENV (library mode) from the single VPS_ENV knob, before express/pg
 // are imported - so we never have to set NODE_ENV by hand anywhere.
-process.env.NODE_ENV = vpsEnv === "local" ? "development" : "production";
+(process.env as { NODE_ENV?: string }).NODE_ENV =
+  vpsEnv === "local" ? "development" : "production";
 
 const hasTempo = !!process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
 // 1.0 local/dev, ~0.1 prod. 100% spans at prod traffic is costly; head-sample
