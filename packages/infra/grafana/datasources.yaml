@@ -4,6 +4,7 @@ datasources:
   - name: Loki
     type: loki
     access: proxy
+    uid: loki
     url: http://loki:3100
     jsonData:
       # Click a log's traceId -> jump to the trace in Tempo.
@@ -22,5 +23,6 @@ datasources:
   - name: Prometheus
     type: prometheus
     access: proxy
+    uid: prometheus
     url: http://prometheus:9090
     isDefault: true

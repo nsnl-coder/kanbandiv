@@ -1,0 +1,15 @@
+apiVersion: 1
+
+# Load versioned dashboard JSON from the mounted folder. Files under
+# grafana/dashboards/ are auto-imported on startup (no manual import needed).
+providers:
+  - name: trelloclone
+    orgId: 1
+    folder: trelloclone
+    type: file
+    disableDeletion: false
+    allowUiUpdates: true
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

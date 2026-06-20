@@ -164,6 +164,21 @@ Plus: all BE + FE exceptions go directly to **Sentry** (carry `traceId` for cros
 - Release Health: error rate by deploy version.
 - **Quota guard**: free tier is 5k events/mo (8). Set `sampleRate` + `tracesSampleRate`
   < 1 and client-side dedupe so one error storm does not exhaust the month.
+- **Source maps (required)**: prod bundles are minified, so Sentry stack traces are
+  useless without source maps. Generate them at build and **upload to Sentry**, tied to
+  a `release` (git sha) that matches `Sentry.init({ release })`.
+  - **Frontend**: `@sentry/vite-plugin` (`build.sourcemap: true`) uploads then
+    `sourcemaps.filesToDeleteAfterUpload` removes the `.map` from `dist`.
+  - **Backend**: `tsc` `sourceMap: true` + `sentry-cli sourcemaps inject && upload`,
+    then strip `.map` from the runtime image.
+  - **NEVER serve `.map` to the client.** Maps reveal full source. Delete them from the
+    bundle after upload (plus a `find dist -name '*.map' -delete` safety net) so nginx
+    never serves them; maps live only in Sentry. Source maps are useless when the stack
+    has no first-party frame (e.g. a library throws across an async boundary) - wrap and
+    re-throw a `TRPCError` so your own frame is on the stack, and capture that error
+    (not its `cause`) so the source-mapped frame is the culprit.
+  - **Auth token**: use a Sentry **Organization Token** (scope `org:ci`) passed via a
+    BuildKit secret at build time, never baked into an image layer or committed.
 
 ### 4.10 Tempo
 
@@ -591,7 +606,7 @@ services:
 - OpenTelemetry instruments everything; one `traceId` across logs, traces, errors.
 - Three pillars: Loki (logs) + Tempo (traces) + Prometheus (metrics).
 - Vector ships logs; Grafana views, correlates, and alerts across all three.
-- Sentry for errors + crashes.
+- Sentry for errors + crashes; upload source maps (BE + FE) but never serve `.map` to the client.
 - Minio for long-term log + trace storage.
 - Roll out in phases; tune alerts to fit the project.
 
