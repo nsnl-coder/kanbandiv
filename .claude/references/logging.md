@@ -146,15 +146,30 @@ Plus: all BE + FE exceptions go directly to **Sentry** (carry `traceId` for cros
 
 ### 4.8 Grafana
 
-- Datasources: Loki + Tempo + Prometheus + Sentry (plugin).
-- Dashboards: logs by `traceId`, traces by service, metrics (RED/USE), errors over time.
+- Datasources: Loki + Tempo + Prometheus (provisioned with stable `uid`s
+  `loki`/`tempo`/`prometheus` so dashboards + alerts can reference them). Sentry plugin optional.
 - Enable Loki "derived field" -> Tempo so a log's `traceId` links to its trace.
-- Alert rules (SLO-based, not just thresholds):
-  - Error rate (errors / total requests) with burn-rate alerts.
-  - Slow query > 2s.
-  - API p95 latency regression > 30%.
-  - Absolute count (> 5 errors/min) only for low-traffic services.
-- Send alerts via Slack / Telegram.
+- **Dashboards (provisioned, versioned in `grafana/dashboards/`):**
+  - Backend RED (`http_request_duration_seconds`): rate, 5xx rate, error %, p50/p95/p99, by route.
+  - Containers & Host USE: per-container CPU/RAM (cAdvisor), host CPU/mem/disk (node-exporter), targets up.
+  - Logs overview (Loki): error rate + log panels with a `service` dropdown.
+  - Exhaustive community dashboards (Node Exporter Full `1860`, cAdvisor) are imported via the UI by id.
+- **Alert rules (provisioned, `grafana/alerting/rules.yaml`):** backend down
+  (`up{job="backend"}<1`), 5xx error rate > 5%, p95 latency > 1s, error-log volume > 10/min.
+  Each rule: refId `A` = query, refId `C` = threshold expression (the `condition`).
+- **Notifications -> Telegram** (`grafana/alerting/contactpoints.yaml` + `policies.yaml`):
+  a Telegram contact point + a root notification policy routing all alerts to it.
+  - Bot token + chat id come from env (`TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` in
+    `packages/infra/.env`, passed to the grafana container), never committed.
+  - **Gotcha**: Grafana interpolates `${VAR}` as raw text BEFORE parsing YAML, so both
+    values MUST be quoted (`"${TELEGRAM_BOT_TOKEN}"`) - the bot token's `:` otherwise
+    breaks YAML and mis-parses `chatid` as a number.
+  - Provisioned alert rules are NOT deleted by removing their file; use a `deleteRules:`
+    provisioning entry (or the API) to remove one.
+- Get a bot token from `@BotFather`; get the chat id from
+  `https://api.telegram.org/bot<TOKEN>/getUpdates` after messaging the bot.
+- See [packages/infra/MONITORING.md](../../packages/infra/MONITORING.md) (team runbook)
+  and [how-to-monitor.md](./how-to-monitor.md) (query cheatsheets + incident workflow).
 
 ### 4.9 Sentry (SaaS)
 
@@ -606,6 +621,7 @@ services:
 - OpenTelemetry instruments everything; one `traceId` across logs, traces, errors.
 - Three pillars: Loki (logs) + Tempo (traces) + Prometheus (metrics).
 - Vector ships logs; Grafana views, correlates, and alerts across all three.
+- Grafana dashboards (RED/USE/logs) + alert rules are provisioned; alerts route to Telegram.
 - Sentry for errors + crashes; upload source maps (BE + FE) but never serve `.map` to the client.
 - Minio for long-term log + trace storage.
 - Roll out in phases; tune alerts to fit the project.
