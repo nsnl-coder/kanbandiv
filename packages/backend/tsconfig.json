@@ -8,6 +8,7 @@
     "skipLibCheck": true,
     "outDir": "dist",
     "rootDir": "src",
+    "sourceMap": true,
     "verbatimModuleSyntax": true
   },
   "include": ["src"]

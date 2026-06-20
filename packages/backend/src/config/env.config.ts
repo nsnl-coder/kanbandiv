@@ -56,6 +56,8 @@ const schema = z.object({
   // Sentry DSN. Empty -> Sentry disabled (local).
   SENTRY_DSN: z.string().default(""),
   SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().default(0.1),
+  // Release id (git sha), set at deploy; ties errors to uploaded source maps.
+  SENTRY_RELEASE: z.string().default(""),
   // Readiness deps. Only checked in /health/ready when the URL is set.
   REDIS_URL: z.string().default(""),
   MINIO_ENDPOINT: z.string().default(""),

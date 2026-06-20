@@ -70,6 +70,10 @@ services:
     build:
       context: ../..
       dockerfile: packages/infra/backend.Dockerfile
+      args:
+        SENTRY_RELEASE: ${SENTRY_RELEASE:-dev}
+      secrets:
+        - sentry_auth_token
     container_name: trelloclone3-api
     restart: unless-stopped
     depends_on:
@@ -85,6 +89,7 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4318
       - REDIS_URL=redis://redis:6379
       - MINIO_ENDPOINT=http://minio:9000
+      - SENTRY_RELEASE=${SENTRY_RELEASE:-dev}
     expose:
       - "4000"
       - "9464" # OTel Prometheus metrics
@@ -104,6 +109,9 @@ services:
       args:
         # dev vps: override with build:dev
         FRONTEND_BUILD: ${FRONTEND_BUILD:-build}
+        SENTRY_RELEASE: ${SENTRY_RELEASE:-dev}
+      secrets:
+        - sentry_auth_token
     container_name: trelloclone3-web
     restart: unless-stopped
     depends_on:
@@ -211,3 +219,10 @@ volumes:
   tempodata:
   promdata:
   grafanadata:
+
+secrets:
+  # Sentry org token for source-map upload at build time. Sourced from the
+  # SENTRY_AUTH_TOKEN env var (set in packages/infra/.env); mounted only into the
+  # build step via BuildKit, never baked into an image layer.
+  sentry_auth_token:
+    environment: SENTRY_AUTH_TOKEN

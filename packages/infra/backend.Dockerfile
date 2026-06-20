@@ -15,6 +15,21 @@ COPY . .
 RUN pnpm --filter shared build
 RUN pnpm --filter backend build
 
+# Upload source maps to Sentry, then strip .map so they never ship in the runtime
+# image. Token comes via a BuildKit secret (never baked into an image layer); when
+# absent (e.g. local build) the upload is skipped but maps are still removed.
+ARG SENTRY_RELEASE=dev
+ENV SENTRY_URL=https://us.sentry.io
+RUN --mount=type=secret,id=sentry_auth_token \
+    if [ -s /run/secrets/sentry_auth_token ]; then \
+      export SENTRY_AUTH_TOKEN=$(cat /run/secrets/sentry_auth_token); \
+      pnpm --filter backend exec sentry-cli sourcemaps inject packages/backend/dist; \
+      pnpm --filter backend exec sentry-cli sourcemaps upload \
+        --org that-nails-tech --project node-express --release "$SENTRY_RELEASE" \
+        packages/backend/dist; \
+    fi; \
+    find packages/backend/dist -name '*.map' -delete
+
 FROM base AS runtime
 ENV NODE_ENV=production
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./

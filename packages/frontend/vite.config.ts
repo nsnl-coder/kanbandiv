@@ -1,9 +1,34 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import { sentryVitePlugin } from "@sentry/vite-plugin";
+
+// Token only present in CI/Docker build; local builds skip upload.
+const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN;
+const sentryRelease = process.env.SENTRY_RELEASE;
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  // Emit source maps so Sentry can de-minify stack traces. The Sentry plugin
+  // uploads them then deletes them from dist (filesToDeleteAfterUpload), so they
+  // are never served to the browser. The Dockerfile also strips any leftover .map.
+  build: { sourcemap: true },
+  plugins: [
+    react(),
+    tailwindcss(),
+    ...(sentryAuthToken
+      ? [
+          sentryVitePlugin({
+            org: "that-nails-tech",
+            project: "javascript-react",
+            url: "https://us.sentry.io",
+            authToken: sentryAuthToken,
+            telemetry: false,
+            release: sentryRelease ? { name: sentryRelease } : undefined,
+            sourcemaps: { filesToDeleteAfterUpload: ["./dist/**/*.map"] },
+          }),
+        ]
+      : []),
+  ],
   server: {
     // Pin the port so the dev origin never drifts (5173 -> 5174 -> ...). A
     // stale tab on an old port talking to a proxy on a new port is what shows

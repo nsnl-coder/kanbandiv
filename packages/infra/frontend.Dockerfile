@@ -16,7 +16,15 @@ COPY . .
 RUN pnpm --filter shared build
 # prod vps: build (mode prod -> .env.prod); dev vps: build:dev (mode dev -> .env.dev)
 ARG FRONTEND_BUILD=build
-RUN pnpm --filter frontend run "$FRONTEND_BUILD"
+ARG SENTRY_RELEASE=dev
+# Token via BuildKit secret (not baked into the image). The Sentry vite plugin
+# uploads source maps then deletes them; the find is a belt-and-suspenders so no
+# .map is ever copied into the nginx image / served to the browser.
+RUN --mount=type=secret,id=sentry_auth_token \
+    if [ -s /run/secrets/sentry_auth_token ]; then export SENTRY_AUTH_TOKEN=$(cat /run/secrets/sentry_auth_token); fi; \
+    export SENTRY_RELEASE="$SENTRY_RELEASE"; \
+    pnpm --filter frontend run "$FRONTEND_BUILD"; \
+    find packages/frontend/dist -name '*.map' -delete
 
 FROM nginx:1.27-alpine AS runtime
 COPY packages/infra/nginx.conf /etc/nginx/conf.d/default.conf
