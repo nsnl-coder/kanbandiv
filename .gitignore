@@ -8,3 +8,4 @@ dist/
 
 # Local MCP server config holds API tokens; commit .mcp.json.example instead.
 .mcp.json
+vps-info.md

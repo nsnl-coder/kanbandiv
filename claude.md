@@ -18,7 +18,7 @@ e2e/landing: store all e2e tests from packages/landing
 - Postgres: for database -> in docker container
 - Required for dev & prod vps but not for local env: docker, redis, loki, vector, grafana, sentry, open telemetery & grafana tempo
 
-# env rules
+# env rules for deploy to vps
 
 .env for client and server:
 

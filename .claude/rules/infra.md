@@ -35,10 +35,17 @@ Notes:
 - Deferred (not yet required): Alertmanager, OTel Collector, Pyroscope, Grafana Faro. See [.claude/references/logging.md](../references/logging.md) section 12.
 - See logging details in [.claude/references/logging.md](../references/logging.md) if needed
 
-## Infra Folder Structure: Feature-based
-
-This project uses a **feature-based structure** for React.
+## Infra Folder Structure
 
 ```txt
+  /grafana                                  # grafana config file
+  /loki                                     # loki config file
+  /prometheus                               # prometheus config file
+  /docker                                   # docker config file
+  /tempo                                    # tempo config file
+  /vector                                   # vector config file
+  /nginx                                    # nginx config file
+  /deploy-scripts                           # contain deploy scripts
+  vps-info.md                               # contain dev vps, prod vps info, should be ignored
 
 ```

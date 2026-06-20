@@ -52,3 +52,4 @@ src/
 
 - frontend and backend are on same origin so no cors needed
 - access token and refresh token are http only cookie, do not store them in local storage
+- do not use string literal for logging event, instead use variable & centralize in on place at /configs/const.config.ts

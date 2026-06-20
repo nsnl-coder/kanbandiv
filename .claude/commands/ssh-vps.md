@@ -10,7 +10,7 @@ Connect vps for the first time.
 
 ## Work flow
 
-1. Read packages/vps-info.md to know what are already connected.
+1. Read packages/infra/vps-info.md to know what are already connected.
    Prompt user what environment they are setting up for: dev or prod.
    Warn user if they try to set up env already set up.
 
