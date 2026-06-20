@@ -30,8 +30,13 @@ storage_config:
     active_index_directory: /loki/tsdb-index
     cache_location: /loki/tsdb-cache
   aws:
-    s3: http://${MINIO_ACCESS_KEY}:${MINIO_SECRET_KEY}@minio:9000/loki-data
+    endpoint: minio:9000
+    bucketnames: loki-data
+    access_key_id: ${MINIO_ACCESS_KEY}
+    secret_access_key: ${MINIO_SECRET_KEY}
     s3forcepathstyle: true
+    insecure: true
+    region: us-east-1
 
 limits_config:
   retention_period: 720h # 30d global; dev overrides to 168h via env if needed
