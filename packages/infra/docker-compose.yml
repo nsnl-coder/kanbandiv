@@ -175,6 +175,8 @@ services:
     image: timberio/vector:0.44.0-alpine
     container_name: trelloclone3-vector
     restart: unless-stopped
+    # Point at our config explicitly; otherwise the image runs its demo config.
+    command: ["--config", "/etc/vector/vector.toml"]
     volumes:
       - ./vector/vector.toml:/etc/vector/vector.toml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
