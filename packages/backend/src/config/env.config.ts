@@ -1,19 +1,27 @@
 import "dotenv/config";
 import { z } from "zod";
 
-const isProd = process.env.NODE_ENV === "production";
+// Single deployment-tier knob (root .env.{local,dev,prod}). Drives log format,
+// docs, Sentry env, and trace sampling. NODE_ENV is left to libraries only.
+const VPS_ENVS = ["local", "dev", "prod"] as const;
+type VpsEnv = (typeof VPS_ENVS)[number];
+const vpsEnv = (process.env.VPS_ENV ?? "local") as VpsEnv;
+if (!VPS_ENVS.includes(vpsEnv)) {
+  throw new Error(`Invalid VPS_ENV: ${process.env.VPS_ENV} (expected local|dev|prod)`);
+}
+const isLocal = vpsEnv === "local";
 
+// Convenience defaults only exist locally; any deployed tier must set real URLs.
 const url = (def: string) =>
-  isProd ? z.string().url() : z.string().url().default(def);
+  isLocal ? z.string().url().default(def) : z.string().url();
 
 const schema = z.object({
-  NODE_ENV: z.string().default("development"),
   PORT: z.coerce.number().default(4000),
 
   DATABASE_URL: url("postgres://postgres:postgres@localhost:5432/trelloclone"),
 
   // Secrets are ALWAYS required (no env-gated default) so a misconfigured
-  // NODE_ENV can never fall back to a committed signing key. Set them in
+  // tier can never fall back to a committed signing key. Set them in
   // .env.local for dev; tests inject them via vitest.config.ts.
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_REFRESH_SECRET: z.string().min(32),
@@ -39,6 +47,18 @@ const schema = z.object({
   MAIL_USER: z.string().default(""),
   MAIL_PASS: z.string().default(""),
   MAIL_FROM: z.string().default("no-reply@trelloclone.dev"),
+
+  // --- Observability (all optional; absence = local/off behaviour) ---
+  // Override Pino level; empty -> derived from VPS_ENV (debug local/dev, info prod).
+  LOG_LEVEL: z.string().default(""),
+  // OTLP traces endpoint (Tempo). Empty -> ConsoleSpanExporter, no Tempo (local).
+  OTEL_EXPORTER_OTLP_ENDPOINT: z.string().default(""),
+  // Sentry DSN. Empty -> Sentry disabled (local).
+  SENTRY_DSN: z.string().default(""),
+  SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().default(0.1),
+  // Readiness deps. Only checked in /health/ready when the URL is set.
+  REDIS_URL: z.string().default(""),
+  MINIO_ENDPOINT: z.string().default(""),
 });
 
 const parsed = schema.safeParse(process.env);
@@ -59,4 +79,10 @@ export const env = {
   ...parsed.data,
   // Access cookie maxAge, derived from JWT_ACCESS_TTL (no separate env var).
   ACCESS_TTL_MS: parseDurationMs(parsed.data.JWT_ACCESS_TTL),
+  // Everything below is derived from the single VPS_ENV knob.
+  VPS_ENV: vpsEnv,
+  isLocal,
+  LOG_LEVEL: parsed.data.LOG_LEVEL || (vpsEnv === "prod" ? "info" : "debug"),
+  SENTRY_ENV: vpsEnv,
+  OTEL_SAMPLE_RATIO: vpsEnv === "prod" ? 0.1 : 1,
 };

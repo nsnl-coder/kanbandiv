@@ -1,5 +1,8 @@
-# run from repo root:
-#   docker compose -f packages/infra/docker-compose.yml up -d --build
+# run from repo root, choosing the tier on the command line:
+#   dev VPS : VPS_ENV=dev  FRONTEND_BUILD=build:dev docker compose -f packages/infra/docker-compose.yml up -d --build
+#   prod VPS: VPS_ENV=prod docker compose -f packages/infra/docker-compose.yml up -d --build
+# Secrets come from the shell / an .env next to this file:
+#   MINIO_ACCESS_KEY, MINIO_SECRET_KEY, GRAFANA_PASSWORD
 services:
   db:
     image: postgres:16-alpine
@@ -11,11 +14,57 @@ services:
       POSTGRES_DB: trelloclone
     volumes:
       - pgdata:/var/lib/postgresql/data
+    labels:
+      com.project.service: db
+      com.project.env: ${VPS_ENV:-prod}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d trelloclone"]
       interval: 5s
       timeout: 5s
       retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: trelloclone3-redis
+    restart: unless-stopped
+    labels:
+      com.project.service: redis
+      com.project.env: ${VPS_ENV:-prod}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: trelloclone3-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+    volumes:
+      - miniodata:/data
+    labels:
+      com.project.service: minio
+      com.project.env: ${VPS_ENV:-prod}
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # One-shot: create the Loki + Tempo buckets, then exit.
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set m http://minio:9000 ${MINIO_ACCESS_KEY:-minioadmin} ${MINIO_SECRET_KEY:-minioadmin};
+      mc mb -p m/loki-data m/tempo-data; exit 0"
 
   backend:
     build:
@@ -30,10 +79,23 @@ services:
       - path: ../backend/.env.prod
         required: true
     environment:
-      - NODE_ENV=production
+      # VPS_ENV is the only tier knob; NODE_ENV is derived from it in tracing.ts.
+      - VPS_ENV=${VPS_ENV:-prod}
       - PORT=4000
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4318
+      - REDIS_URL=redis://redis:6379
+      - MINIO_ENDPOINT=http://minio:9000
     expose:
       - "4000"
+      - "9464" # OTel Prometheus metrics
+    labels:
+      com.project.service: backend
+      com.project.env: ${VPS_ENV:-prod}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:4000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
   frontend:
     build:
@@ -48,6 +110,102 @@ services:
       - backend
     ports:
       - "8080:80"
+    labels:
+      com.project.service: frontend
+      com.project.env: ${VPS_ENV:-prod}
+
+  loki:
+    image: grafana/loki:3.3.2
+    container_name: trelloclone3-loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki-config.yaml -config.expand-env=true
+    environment:
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+    volumes:
+      - ./loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - lokidata:/loki
+    depends_on:
+      createbuckets:
+        condition: service_completed_successfully
+
+  tempo:
+    image: grafana/tempo:2.7.0
+    container_name: trelloclone3-tempo
+    restart: unless-stopped
+    command: -config.file=/etc/tempo/tempo-config.yaml -config.expand-env=true
+    environment:
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+    volumes:
+      - ./tempo/tempo-config.yaml:/etc/tempo/tempo-config.yaml:ro
+      - tempodata:/var/tempo
+    depends_on:
+      createbuckets:
+        condition: service_completed_successfully
+
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    container_name: trelloclone3-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - promdata:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    container_name: trelloclone3-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - ./grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - grafanadata:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - loki
+      - tempo
+      - prometheus
+
+  vector:
+    image: timberio/vector:0.44.0-alpine
+    container_name: trelloclone3-vector
+    restart: unless-stopped
+    volumes:
+      - ./vector/vector.toml:/etc/vector/vector.toml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: trelloclone3-node-exporter
+    restart: unless-stopped
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+    command:
+      - --path.rootfs=/host
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: trelloclone3-cadvisor
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
 
 volumes:
   pgdata:
+  miniodata:
+  lokidata:
+  tempodata:
+  promdata:
+  grafanadata:

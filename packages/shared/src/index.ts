@@ -5,6 +5,7 @@ export * from "./project.schema.js";
 export * from "./card.schema.js";
 export * from "./column.schema.js";
 export * from "./board.schema.js";
+export * from "./logger.schema.js";
 export * from "./errors/auth.error.js";
 export * from "./errors/rbac.error.js";
 export * from "./errors/project.error.js";

@@ -1,0 +1,50 @@
+# Single-binary Loki. Index on local disk (tsdb), chunks in Minio (restart-safe).
+# ${MINIO_*} expand only because the container starts with -config.expand-env=true.
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9095
+  log_level: info
+
+common:
+  instance_addr: 127.0.0.1
+  path_prefix: /loki
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+schema_config:
+  configs:
+    - from: 2024-01-01
+      store: tsdb
+      object_store: s3
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+storage_config:
+  tsdb_shipper:
+    active_index_directory: /loki/tsdb-index
+    cache_location: /loki/tsdb-cache
+  aws:
+    s3: http://${MINIO_ACCESS_KEY}:${MINIO_SECRET_KEY}@minio:9000/loki-data
+    s3forcepathstyle: true
+
+limits_config:
+  retention_period: 720h # 30d global; dev overrides to 168h via env if needed
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h
+
+compactor:
+  working_directory: /loki/compactor
+  retention_enabled: true
+  delete_request_store: s3
+
+ruler:
+  storage:
+    type: local
+    local:
+      directory: /loki/rules

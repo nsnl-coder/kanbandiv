@@ -55,13 +55,12 @@ src/
 
   styles/
     globals.css                # Global CSS / Tailwind imports
-e2e/                         # End-to-end tests
-  <feature>/
-    <flow-name>.e2e.spec.ts        # E2E tests for this feature
   App.tsx                     # Root app component
   main.tsx                     # Vite React entry point
   index.css                    # import tailwindcss
 ```
+
+E2E tests live outside this package in `e2e/frontend/<feature>/<flow>.e2e.spec.ts` (own workspace package `e2e-frontend`).
 
 ## Coding rules:
 
@@ -73,5 +72,7 @@ e2e/                         # End-to-end tests
 
 ## Testing rule
 
-- never call real db on e2e test, always mock the db calls
-- only call real db on mcp test
+- e2e tests are real (non-mocked): hit the live API + test DB, no network/db mocking
+- run e2e only against the prod environment (dev + prod VPS), never local
+- e2e tests live in `e2e/frontend/`, not in this package
+- unit tests (vitest) stay in this package

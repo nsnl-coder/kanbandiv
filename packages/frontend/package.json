@@ -8,12 +8,20 @@
     "build": "tsc && vite build --mode prod",
     "build:dev": "tsc && vite build --mode dev",
     "preview": "vite preview",
-    "e2e": "playwright test",
-    "e2e:ui": "playwright test --ui",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/context-zone": "^2.1.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.205.0",
+    "@opentelemetry/instrumentation": "^0.205.0",
+    "@opentelemetry/instrumentation-fetch": "^0.205.0",
+    "@opentelemetry/instrumentation-xml-http-request": "^0.205.0",
+    "@opentelemetry/resources": "^2.1.0",
+    "@opentelemetry/sdk-trace-base": "^2.1.0",
+    "@opentelemetry/sdk-trace-web": "^2.1.0",
+    "@sentry/react": "^8.55.0",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
@@ -35,7 +43,6 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@playwright/test": "^1.61.0",
     "@tailwindcss/vite": "^4.0.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

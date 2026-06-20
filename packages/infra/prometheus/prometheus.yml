@@ -1,0 +1,18 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: backend # prom-client: request rate/latency/errors (same app port)
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["backend:4000"]
+  - job_name: backend-otel # OTel PrometheusExporter (tracing.ts, port 9464)
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["backend:9464"]
+  - job_name: node
+    static_configs:
+      - targets: ["node-exporter:9100"]
+  - job_name: cadvisor
+    static_configs:
+      - targets: ["cadvisor:8080"]

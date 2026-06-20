@@ -1,0 +1,36 @@
+# Tempo single-binary. OTLP in, chunks in Minio. Started with -config.expand-env=true.
+server:
+  http_listen_port: 3200
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+          # FE ships traces via nginx /otlp; allow the app origin's preflight.
+          cors:
+            allowed_origins:
+              - "*"
+
+ingester:
+  max_block_duration: 5m
+
+compactor:
+  compaction:
+    block_retention: 720h # 30d prod; dev overrides to 168h
+
+storage:
+  trace:
+    backend: s3
+    s3:
+      endpoint: minio:9000
+      bucket: tempo-data
+      insecure: true
+      forcepathstyle: true
+      access_key: ${MINIO_ACCESS_KEY}
+      secret_key: ${MINIO_SECRET_KEY}
+    wal:
+      path: /var/tempo/wal

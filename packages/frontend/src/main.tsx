@@ -1,3 +1,6 @@
+// OTel + Sentry first, before app code, so fetch/XHR are instrumented.
+import "./tracing";
+import "./sentry";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { QueryClientProvider } from "@tanstack/react-query";

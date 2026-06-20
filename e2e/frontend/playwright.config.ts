@@ -3,7 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 // Frontend-only E2E: the tRPC API is fully mocked at the network layer
 // (see e2e/auth/helpers.ts). No backend or DB is started.
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: ".",
   testMatch: "**/*.e2e.spec.ts",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,

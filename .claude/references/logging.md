@@ -3,8 +3,9 @@
 > Centralized logging, tracing, monitoring, and error tracking for the monorepo.
 > Stack: OpenTelemetry (instrumentation) + Pino (backend logger) + Vector + Loki
 > (logs) + Tempo (traces) + Prometheus (metrics) + Grafana (view/alert)
-> + Sentry (errors), Minio for long-term storage.
-> Three pillars: logs (Loki), traces (Tempo), metrics (Prometheus).
+>
+> - Sentry (errors), Minio for long-term storage.
+>   Three pillars: logs (Loki), traces (Tempo), metrics (Prometheus).
 
 ---
 
@@ -26,20 +27,20 @@ Two flows:
 
 ### Components
 
-| Component | Role |
-| --- | --- |
-| OpenTelemetry SDK | Instruments BE + FE; produces `traceId`/`spanId`, propagates W3C `traceparent` |
-| Application (BE, FE) | Generates logs + traces; sends errors to Sentry |
-| Nginx | Entry point; propagates trace context; logs access |
-| Postgres | DB; logs slow queries |
-| Redis, Minio | Cache/storage; logs errors + warnings |
-| Vector | Agent; collects container logs, forwards to Loki |
-| Loki | Centralized log store + query (indexes labels only) |
-| Tempo | Distributed trace store; queried by `traceId`, chunks in Minio |
-| Prometheus | Metrics store; scrapes app + infra, powers SLO/latency alerts |
-| Minio (reused) | Loki + Tempo chunk storage (object storage) |
-| Grafana | Dashboards, queries, alerting; correlates logs <-> traces <-> metrics |
-| Sentry | Error tracking; exceptions + breadcrumbs |
+| Component            | Role                                                                           |
+| -------------------- | ------------------------------------------------------------------------------ |
+| OpenTelemetry SDK    | Instruments BE + FE; produces `traceId`/`spanId`, propagates W3C `traceparent` |
+| Application (BE, FE) | Generates logs + traces; sends errors to Sentry                                |
+| Nginx                | Entry point; propagates trace context; logs access                             |
+| Postgres             | DB; logs slow queries                                                          |
+| Redis, Minio         | Cache/storage; logs errors + warnings                                          |
+| Vector               | Agent; collects container logs, forwards to Loki                               |
+| Loki                 | Centralized log store + query (indexes labels only)                            |
+| Tempo                | Distributed trace store; queried by `traceId`, chunks in Minio                 |
+| Prometheus           | Metrics store; scrapes app + infra, powers SLO/latency alerts                  |
+| Minio (reused)       | Loki + Tempo chunk storage (object storage)                                    |
+| Grafana              | Dashboards, queries, alerting; correlates logs <-> traces <-> metrics          |
+| Sentry               | Error tracking; exceptions + breadcrumbs                                       |
 
 ---
 
@@ -65,6 +66,7 @@ Plus: all BE + FE exceptions go directly to **Sentry** (carry `traceId` for cros
 ## 4. Component Details
 
 ### 4.0 OpenTelemetry (required, always on for VPS)
+
 - Standard instrumentation for BE + FE. Produces `traceId` / `spanId`, propagates
   W3C `traceparent` header across services.
 - `traceId` = OTel trace id. This is the single id used in logs, traces, and Sentry.
@@ -72,6 +74,7 @@ Plus: all BE + FE exceptions go directly to **Sentry** (carry `traceId` for cros
 - Replaces the old raw `$request_id` approach; we always wire OTel.
 
 ### 4.1 Nginx
+
 - Log format: JSON (easy Vector parsing).
 - **Trace context**: pass through W3C `traceparent` header to backend; if absent,
   fall back to `$request_id` so the edge always has an id.
@@ -79,6 +82,7 @@ Plus: all BE + FE exceptions go directly to **Sentry** (carry `traceId` for cros
 - Write logs to `stdout` / `stderr`.
 
 ### 4.2 Backend (Node.js)
+
 - **OTel SDK**: initialized before app code (see 6.2.0); auto-creates a server span
   per request and propagates context.
 - **Logger: Pino** (chosen over Winston for speed + native JSON). JSON output on
@@ -93,6 +97,7 @@ Plus: all BE + FE exceptions go directly to **Sentry** (carry `traceId` for cros
   (see 6.2). Policy alone is not enough; enforce in the pipeline.
 
 ### 4.3 Frontend
+
 - **OTel web SDK**: instruments fetch/XHR, injects `traceparent` into API calls so
   FE and BE spans join one trace.
 - **FE OTLP endpoint**: the browser cannot reach the internal `tempo:4318`. Export
@@ -108,13 +113,16 @@ Plus: all BE + FE exceptions go directly to **Sentry** (carry `traceId` for cros
   payload size, allowlist fields. Otherwise it is an open log-injection / flood endpoint.
 
 ### 4.4 Postgres
+
 - `log_min_duration_statement = 200ms` (log queries > 200ms).
 - Logs to `stdout` for Vector.
 
 ### 4.5 Redis + Minio
+
 - Log only `error` / `warning` level (avoid flooding).
 
 ### 4.6 Vector (replaces Promtail, which is EOL)
+
 - Lightweight Rust agent, runs as container.
 - Reads all container `stdout` / `stderr`, sends to Loki.
 - Watch via Docker logs driver or file reading.
@@ -125,17 +133,19 @@ Plus: all BE + FE exceptions go directly to **Sentry** (carry `traceId` for cros
   via `| json`), never as labels.
 - **PII scrubbing**: a `remap` step drops known secret fields as a second line of
   defence. This + Pino redact are both top-level/shallow; under strict compliance,
-  switch to a field *allowlist* (keep known-safe keys, drop the rest) instead of a denylist.
+  switch to a field _allowlist_ (keep known-safe keys, drop the rest) instead of a denylist.
 
 ### 4.7 Loki
+
 - Runs as a container service.
 - Storage: index on local disk; chunks in Minio (long-term, restart-safe).
-- **Retention**: Loki cannot retain by log *level*. Start with one global window
+- **Retention**: Loki cannot retain by log _level_. Start with one global window
   (30d). For tiered retention, split into streams via a `retention` label
   (`short` | `long`) and set per-stream rules in `limits_config`.
 - API port: 3100.
 
 ### 4.8 Grafana
+
 - Datasources: Loki + Tempo + Prometheus + Sentry (plugin).
 - Dashboards: logs by `traceId`, traces by service, metrics (RED/USE), errors over time.
 - Enable Loki "derived field" -> Tempo so a log's `traceId` links to its trace.
@@ -147,6 +157,7 @@ Plus: all BE + FE exceptions go directly to **Sentry** (carry `traceId` for cros
 - Send alerts via Slack / Telegram.
 
 ### 4.9 Sentry (SaaS)
+
 - SDK for backend + frontend.
 - Environments: `production`, `staging`, `development`.
 - Alert: new error, or affected users > 5 in 5 min.
@@ -155,6 +166,7 @@ Plus: all BE + FE exceptions go directly to **Sentry** (carry `traceId` for cros
   < 1 and client-side dedupe so one error storm does not exhaust the month.
 
 ### 4.10 Tempo
+
 - Distributed trace store; receives OTLP spans from the OTel SDKs.
 - Runs as a container service. Chunks stored in Minio (same as Loki).
 - Queried in Grafana by `traceId`; "Logs to Traces" links Loki <-> Tempo.
@@ -162,6 +174,7 @@ Plus: all BE + FE exceptions go directly to **Sentry** (carry `traceId` for cros
 - Ports: OTLP gRPC 4317, OTLP HTTP 4318, query 3200.
 
 ### 4.11 Prometheus (required)
+
 - Metrics store; scrapes targets on an interval (pull model).
 - Backend exposes `/metrics` (e.g. `prom-client`): request rate, latency histograms,
   error counts, plus OTel metrics. This is what powers the SLO alerts in 4.8.
@@ -173,13 +186,14 @@ Plus: all BE + FE exceptions go directly to **Sentry** (carry `traceId` for cros
 - Port: 9090. Grafana adds it as a datasource.
 
 ### 4.12 Health Checks
+
 - **Backend `/health` (liveness)**: returns `200 { status: 'ok' }`. No deps checked.
   Used by Docker `HEALTHCHECK` and Nginx upstream checks.
 - **Backend `/health/ready` (readiness)**: checks Postgres, Redis, Minio reachable;
   returns `200` only when all pass, else `503` with the failing dependency.
 - Do NOT log every health probe (floods logs). Set these routes to log only on failure.
 - Each infra container declares its own Compose `healthcheck` so `depends_on:
-  condition: service_healthy` gates startup order.
+condition: service_healthy` gates startup order.
 - Uptime alerting: Grafana (or external monitor) pings `/health` on an interval;
   alert if non-200 for > 1 min.
 
@@ -187,11 +201,11 @@ Plus: all BE + FE exceptions go directly to **Sentry** (carry `traceId` for cros
 
 ## 5. Environment Strategy
 
-| Env | Log Format | Level | Sentry | OTel / Tempo | Loki + Grafana | Log Storage |
-| --- | --- | --- | --- | --- | --- | --- |
-| Local | pretty (`pino-pretty`) | `debug` | Disabled | SDK on, console exporter (no Tempo) | Not running | `stdout` console |
-| Dev VPS | JSON | `debug` | On (tag `staging`) | Export to Tempo | Running, test pipeline | Minio (7d retention) |
-| Prod VPS | JSON | `info` | On (tag `production`) | Export to Tempo | Running, uses Minio | Persistent in Minio |
+| Env      | Log Format             | Level   | Sentry                | OTel / Tempo                        | Loki + Grafana         | Log Storage          |
+| -------- | ---------------------- | ------- | --------------------- | ----------------------------------- | ---------------------- | -------------------- |
+| Local    | pretty (`pino-pretty`) | `debug` | Disabled              | SDK on, console exporter (no Tempo) | Not running            | `stdout` console     |
+| Dev VPS  | JSON                   | `debug` | On (tag `staging`)    | Export to Tempo                     | Running, test pipeline | Minio (7d retention) |
+| Prod VPS | JSON                   | `info`  | On (tag `production`) | Export to Tempo                     | Running, uses Minio    | Persistent in Minio  |
 
 Trace sampling (`OTEL_TRACES_SAMPLER_ARG`): `1.0` Local/Dev VPS, ~`0.1` Prod VPS.
 
@@ -231,7 +245,10 @@ import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { ConsoleSpanExporter } from '@opentelemetry/sdk-trace-base';
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
-import { ParentBasedSampler, TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base';
+import {
+  ParentBasedSampler,
+  TraceIdRatioBasedSampler,
+} from '@opentelemetry/sdk-trace-base';
 import { resourceFromAttributes } from '@opentelemetry/resources';
 
 const hasTempo = !!process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
@@ -244,7 +261,9 @@ const sdk = new NodeSDK({
     'service.name': 'backend',
     'deployment.environment': process.env.NODE_ENV,
   }),
-  sampler: new ParentBasedSampler({ root: new TraceIdRatioBasedSampler(ratio) }),
+  sampler: new ParentBasedSampler({
+    root: new TraceIdRatioBasedSampler(ratio),
+  }),
   // Local: ConsoleSpanExporter prints spans to stdout (undefined = no output).
   // VPS: OTLPTraceExporter reads OTEL_EXPORTER_OTLP_ENDPOINT (Tempo 4318).
   traceExporter: hasTempo ? new OTLPTraceExporter() : new ConsoleSpanExporter(),
@@ -261,9 +280,10 @@ sdk.start();
 import { trace } from '@opentelemetry/api';
 
 const logger = pino({
-  transport: process.env.NODE_ENV === 'development'
-    ? { target: 'pino-pretty' }
-    : undefined,
+  transport:
+    process.env.NODE_ENV === 'development'
+      ? { target: 'pino-pretty' }
+      : undefined,
   level: process.env.LOG_LEVEL || 'info',
   base: { service: 'backend', env: process.env.NODE_ENV },
   // PII scrubbing enforced at the logger, not by policy.
@@ -271,10 +291,18 @@ const logger = pino({
   // secrets are caught by the Vector remap (6.5) as the second line of defence.
   redact: {
     paths: [
-      'req.headers.authorization', 'req.headers.cookie',
-      'password', 'token', 'accessToken', 'refreshToken',
-      '*.password', '*.token', '*.accessToken', '*.refreshToken',
-      '*.creditCard', '*.cardNumber',
+      'req.headers.authorization',
+      'req.headers.cookie',
+      'password',
+      'token',
+      'accessToken',
+      'refreshToken',
+      '*.password',
+      '*.token',
+      '*.accessToken',
+      '*.refreshToken',
+      '*.creditCard',
+      '*.cardNumber',
     ],
     censor: '[REDACTED]',
   },
@@ -358,18 +386,18 @@ storage_config:
     active_index_directory: /loki/tsdb-index
     cache_location: /loki/tsdb-cache
   aws:
-    s3: http://minio:9000/loki-data  # bucket in the path; path-style for Minio
+    s3: http://minio:9000/loki-data # bucket in the path; path-style for Minio
     s3forcepathstyle: true
     access_key_id: ${MINIO_ACCESS_KEY}
     secret_access_key: ${MINIO_SECRET_KEY}
 
 limits_config:
-  retention_period: 720h             # 30d global; tier via stream labels if needed
+  retention_period: 720h # 30d global; tier via stream labels if needed
 
 compactor:
   working_directory: /loki/compactor
   retention_enabled: true
-  delete_request_store: s3           # replaces the old shared_store key
+  delete_request_store: s3 # replaces the old shared_store key
 ```
 
 ### 6.4.1 Tempo (traces, chunks in Minio)
@@ -380,8 +408,8 @@ distributor:
   receivers:
     otlp:
       protocols:
-        grpc:   # 4317
-        http:   # 4318
+        grpc: # 4317
+        http: # 4318
 
 storage:
   trace:
@@ -396,10 +424,11 @@ storage:
 
 compactor:
   compaction:
-    block_retention: 720h   # 30d prod; 168h (7d) on dev
+    block_retention: 720h # 30d prod; 168h (7d) on dev
 ```
 
 Export endpoints differ by runtime:
+
 - **Backend** (container): `OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4318` (internal).
 - **Frontend** (browser): `https://monitoring.domain.com/otlp` -> Nginx -> Tempo. The
   internal hostname is unreachable from the browser and would hit CORS.
@@ -424,11 +453,11 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: backend            # prom-client: request rate/latency/errors
+  - job_name: backend # prom-client: request rate/latency/errors
     metrics_path: /metrics
     static_configs:
       - targets: ['backend:3000']
-  - job_name: backend-otel       # OTel PrometheusExporter (tracing.ts, port 9464)
+  - job_name: backend-otel # OTel PrometheusExporter (tracing.ts, port 9464)
     metrics_path: /metrics
     static_configs:
       - targets: ['backend:9464']
@@ -537,30 +566,17 @@ services:
 
 ## 8. Estimated Resources
 
-| Component | CPU | RAM |
-| --- | --- | --- |
-| Loki | ~0.1 core | ~128 MB |
-| Tempo | ~0.1 core | ~256 MB |
+| Component  | CPU       | RAM     |
+| ---------- | --------- | ------- |
+| Loki       | ~0.1 core | ~128 MB |
+| Tempo      | ~0.1 core | ~256 MB |
 | Prometheus | ~0.2 core | ~512 MB |
-| Grafana | ~0.5 core | ~512 MB |
-| Vector | ~0.1 core | <150 MB |
-| Total | ~1.5 core | ~1.7 GB |
+| Grafana    | ~0.5 core | ~512 MB |
+| Vector     | ~0.1 core | <150 MB |
+| Total      | ~1.5 core | ~1.7 GB |
 
 - Sentry: free tier (5k events/month).
 - Minio: reused, no extra cost.
-
----
-
-## 9. Roadmap
-
-| Phase | Tasks | Est. |
-| --- | --- | --- |
-| Week 1 | Logger on BE + FE; integrate Sentry | 2d |
-| Week 2 | Install Vector, Loki, Grafana on Dev VPS; test pipeline | 3d |
-| Week 3 | Grafana dashboards + alerting; deploy Prod with Minio | 3d |
-| Week 4 | Team training, debug docs; tune retention + alerts | 2d |
-
----
 
 ## 10. Security
 

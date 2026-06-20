@@ -1,0 +1,34 @@
+# Vector: read all container logs, scrub secrets, ship to Loki.
+[sources.docker_logs]
+type = "docker_logs"
+
+[transforms.add_labels]
+type = "remap"
+inputs = ["docker_logs"]
+source = '''
+# Explicit Compose labels, not a brittle container-name regex.
+.service = .label."com.project.service" || "unknown"
+.env = .label."com.project.env" || "production"
+
+# App logs arrive as a JSON string in .message; parse before scrubbing so
+# del() on top-level fields actually hits. Skip non-JSON lines.
+parsed, err = parse_json(.message)
+if err == null {
+  del(parsed.password); del(parsed.token); del(parsed.authorization)
+  del(parsed.accessToken); del(parsed.refreshToken)
+  .message = encode_json(parsed)
+}
+'''
+
+[sinks.loki]
+type = "loki"
+inputs = ["add_labels"]
+endpoint = "http://loki:3100"
+
+[sinks.loki.labels]
+# Low-cardinality only. traceId/userId stay in the line, queried via | json.
+service = "{{ service }}"
+env = "{{ env }}"
+
+[sinks.loki.encoding]
+codec = "text"
