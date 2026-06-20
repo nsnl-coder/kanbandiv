@@ -7,8 +7,13 @@ ENV PNPM_CONFIG_MINIMUM_RELEASE_AGE=0 \
 WORKDIR /app
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 COPY packages/frontend/package.json packages/frontend/
+# shared (dep) + backend (devDep, for AppRouter types) are needed to typecheck.
+COPY packages/shared/package.json packages/shared/
+COPY packages/backend/package.json packages/backend/
 RUN pnpm install --frozen-lockfile --filter frontend...
 COPY . .
+# Build shared first so its dist/types resolve during the frontend tsc step.
+RUN pnpm --filter shared build
 # prod vps: build (mode prod -> .env.prod); dev vps: build:dev (mode dev -> .env.dev)
 ARG FRONTEND_BUILD=build
 RUN pnpm --filter frontend run "$FRONTEND_BUILD"
