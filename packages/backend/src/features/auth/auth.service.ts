@@ -225,7 +225,11 @@ export async function register(
     // Resend cap bounds OTP re-minting so it can't reset the per-OTP attempt limit.
     await enforceResendLimit(deps.db, existing.id, OtpPurpose.VerifyEmail);
     const code = await issueOtp(deps, existing.id, OtpPurpose.VerifyEmail);
-    await deps.email.sendVerifyOtp(existing.email, code);
+    try {
+      await deps.email.sendVerifyOtp(existing.email, code);
+    } catch (cause) {
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: AuthError.EMAIL_SEND_FAILED, cause });
+    }
     return { ok: true };
   }
 
@@ -234,7 +238,11 @@ export async function register(
     passwordHash: await hashPassword(input.password),
   });
   const code = await issueOtp(deps, user.id, OtpPurpose.VerifyEmail);
-  await deps.email.sendVerifyOtp(user.email, code);
+  try {
+    await deps.email.sendVerifyOtp(user.email, code);
+  } catch (cause) {
+    throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: AuthError.EMAIL_SEND_FAILED, cause });
+  }
   await logEvent(deps, { userId: user.id, event: "register", outcome: "success" });
   return { ok: true };
 }
