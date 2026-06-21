@@ -13,5 +13,16 @@ cd "$REPO_ROOT"
 
 git pull --ff-only
 
-docker compose -f packages/infra/docker-compose.yml up -d --build
+COMPOSE="docker compose -f packages/infra/docker-compose.yml"
+
+# Build one image at a time. Parallel builds (compose's default) run tsc/vite/next
+# concurrently and exhaust the small VPS RAM, forcing swap thrash that freezes
+# sshd and can kill the BuildKit session (DeadlineExceeded). Serial keeps peak
+# memory to a single build.
+for svc in backend frontend landing; do
+  echo "=== building $svc ==="
+  $COMPOSE build "$svc"
+done
+
+$COMPOSE up -d
 docker image prune -f
