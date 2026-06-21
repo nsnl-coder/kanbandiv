@@ -97,7 +97,7 @@ services:
       - CORS_ORIGINS=${CORS_ORIGINS:-https://dev-app.trello-clone.shop}
       # Admin SSO gate: hosts it may mint tokens for + the app origin for login.
       # SSO_SECRET is omitted on purpose -> backend falls back to JWT_ACCESS_SECRET.
-      - SSO_ALLOWED_HOSTS=${MONITOR_DOMAIN:-dev-monitor.trello-clone.shop},${MINIO_DOMAIN:-dev-minio.trello-clone.shop}
+      - SSO_ALLOWED_HOSTS=${GRAFANA_DOMAIN:-dev-grafana.trello-clone.shop},${MINIO_DOMAIN:-dev-minio.trello-clone.shop}
       - SSO_APP_ORIGIN=https://${APP_DOMAIN:-dev-app.trello-clone.shop}
       # Backup: staging dir + MinIO creds for `mc` mirror. GDRIVE_*, APP_BASE_URL,
       # and BACKUP_ENCRYPTION_PASSPHRASE come from backend/.env.prod (env_file).
@@ -176,7 +176,7 @@ services:
       APP_DOMAIN: ${APP_DOMAIN:-dev-app.trello-clone.shop}
       API_DOMAIN: ${API_DOMAIN:-dev-api.trello-clone.shop}
       LANDING_DOMAIN: ${LANDING_DOMAIN:-dev.trello-clone.shop}
-      MONITOR_DOMAIN: ${MONITOR_DOMAIN:-dev-monitor.trello-clone.shop}
+      GRAFANA_DOMAIN: ${GRAFANA_DOMAIN:-dev-grafana.trello-clone.shop}
       MINIO_DOMAIN: ${MINIO_DOMAIN:-dev-minio.trello-clone.shop}
       # Only substitute *DOMAIN* vars; leave $host, $remote_addr, etc. intact.
       NGINX_ENVSUBST_FILTER: DOMAIN
@@ -240,8 +240,8 @@ services:
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
       # Served behind the proxy at the monitor subdomain (TLS terminated upstream).
-      GF_SERVER_ROOT_URL: https://${MONITOR_DOMAIN:-dev-monitor.trello-clone.shop}
-      GF_SERVER_DOMAIN: ${MONITOR_DOMAIN:-dev-monitor.trello-clone.shop}
+      GF_SERVER_ROOT_URL: https://${GRAFANA_DOMAIN:-dev-grafana.trello-clone.shop}
+      GF_SERVER_DOMAIN: ${GRAFANA_DOMAIN:-dev-grafana.trello-clone.shop}
       # Admin SSO: trust the X-WEBAUTH-User header, but ONLY from the proxy's
       # pinned IP (172.28.0.10). Without the whitelist any in-network container
       # could spoof the header. Login form stays available as a fallback.

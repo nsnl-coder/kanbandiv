@@ -49,3 +49,61 @@ Notes:
   vps-info.md                               # contain dev vps, prod vps info, should be ignored
 
 ```
+
+## Domain rule
+
+All public services sit behind the nginx `proxy` on per-tier subdomains of
+`trello-clone.shop`, fronted by Cloudflare (proxied/orange-cloud, SSL mode Full
+strict). The wildcard Cloudflare Origin CA cert (`*.trello-clone.shop`) covers
+every subdomain on both tiers.
+
+| Service  | Prod                       | Dev                            |
+| -------- | -------------------------- | ------------------------------ |
+| frontend | `app.trello-clone.shop`    | `dev-app.trello-clone.shop`    |
+| backend  | `api.trello-clone.shop`    | `dev-api.trello-clone.shop`    |
+| landing  | `trello-clone.shop` (apex) | `dev.trello-clone.shop`        |
+| grafana  | `grafana.trello-clone.shop`| `dev-grafana.trello-clone.shop`|
+| minio    | `minio.trello-clone.shop`  | `dev-minio.trello-clone.shop`  |
+
+- Each `*_DOMAIN` is set in `packages/infra/.env` on the box; the proxy template
+  (`packages/infra/proxy/default.conf.template`) renders one server block per
+  domain via nginx envsubst (`NGINX_ENVSUBST_FILTER=DOMAIN`).
+- Adding a subdomain = add a DNS A record (proxied) -> VPS IP + a `*_DOMAIN`
+  env + a server block. db/redis are never given a domain (internal only).
+
+## How to set up Minio in dev vps & prod vps
+
+The MinIO **admin console** (`:9001`) is published at the `minio` subdomain via
+the proxy; the S3 API (`:9000`) stays internal (backend backup + Loki/Tempo
+chunks only — no browser/presigned access).
+
+1. DNS: proxied A record `minio` (prod) / `dev-minio` (dev) -> VPS IP.
+2. `packages/infra/.env`: `MINIO_DOMAIN=...`, plus `MINIO_ACCESS_KEY` /
+   `MINIO_SECRET_KEY` (these are the console root login).
+3. compose sets `MINIO_BROWSER_REDIRECT_URL=https://${MINIO_DOMAIN}` so console
+   redirects/login work behind the proxy.
+4. Access is **admin-gated by SSO** (see Grafana section): only a super-admin app
+   session reaches the console; MinIO then prompts for its own root creds (it has
+   no header-trust/auto-login mode).
+5. Deploy: `bash /opt/trello/deploy.sh`.
+
+## How to set up grafana in dev vps & prod vps
+
+Grafana is published at the `grafana` subdomain with **admin SSO single sign-on**
+(no Grafana login for super-admins).
+
+1. DNS: proxied A record `grafana` (prod) / `dev-grafana` (dev) -> VPS IP.
+2. `packages/infra/.env`: `GRAFANA_DOMAIN=...`, `GRAFANA_PASSWORD` (fallback
+   login), `TELEGRAM_BOT_TOKEN` (alert contact point; chat id is hardcoded in
+   `grafana/alerting/contactpoints.yaml` because Grafana mis-types an all-digit
+   env value as a number and crashes provisioning).
+3. compose sets `GF_SERVER_ROOT_URL`/`GF_SERVER_DOMAIN` and the auth-proxy:
+   `GF_AUTH_PROXY_ENABLED`, header `X-WEBAUTH-User`, `GF_AUTH_PROXY_WHITELIST`
+   = the proxy's pinned IP `172.28.0.10` (network dynamic range is confined to
+   `172.28.1.0/24` so the static IP never collides). `GF_USERS_AUTO_ASSIGN_ORG_ROLE=Admin`.
+4. SSO flow (forward-auth): proxy `auth_request` -> backend `/api/sso/verify`;
+   missing cookie -> bounce to `app.` `/api/sso/authorize` (verifies super-admin
+   from the app session) -> host-bound token -> `/__sso/callback` sets a
+   per-host SSO cookie -> Grafana auto-logs-in from `X-WEBAUTH-User`.
+5. Still loopback-bound on `127.0.0.1:3000` for SSH-tunnel fallback.
+6. Deploy: `bash /opt/trello/deploy.sh`.
