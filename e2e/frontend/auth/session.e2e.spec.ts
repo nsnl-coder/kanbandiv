@@ -40,6 +40,7 @@ test.describe("session", () => {
   test("a signed-in user on /login?next= is sent to next", async ({ page }) => {
     const u = user();
     await login(page, u.email, u.password);
+    await expect(page).toHaveURL(/\/projects(\/|$)/);
 
     await page.goto("/login?next=%2Fprojects%2Fnew");
     await expect(page).toHaveURL(/\/projects\/new/);
