@@ -1,20 +1,25 @@
 import { EventEmitter } from "node:events";
 import Redis from "ioredis";
-import { type BoardEvent, boardEventSchema } from "shared";
+import { type BoardEvent, boardEventSchema, type UserEvent, userEventSchema } from "shared";
 import { env } from "../../config/env.config.js";
 import { LogEvent } from "../../config/const.config.js";
 import { logger } from "../../logger.js";
 
 export type BoardEventListener = (event: BoardEvent) => void;
+export type UserEventListener = (event: UserEvent) => void;
 
 export interface Bus {
   subscribe(boardId: string, listener: BoardEventListener): () => void;
   publish(event: BoardEvent): void;
+  subscribeUser(userId: string, listener: UserEventListener): () => void;
+  publishUser(event: UserEvent): void;
   close(): Promise<void>;
 }
 
 const CHANNEL_PREFIX = "board:";
 const PATTERN = `${CHANNEL_PREFIX}*`;
+const USER_CHANNEL_PREFIX = "user:";
+const USER_PATTERN = `${USER_CHANNEL_PREFIX}*`;
 
 export interface BusDeps {
   // Empty -> in-process EventEmitter; set -> ioredis pub/sub. Defaults to env.
@@ -41,6 +46,7 @@ export function createBus(deps: BusDeps = {}): Bus {
   const redisUrl = deps.redisUrl ?? env.REDIS_URL;
   const makeRedis = deps.makeRedis ?? defaultMakeRedis;
   const listeners = new Map<string, Set<BoardEventListener>>();
+  const userListeners = new Map<string, Set<UserEventListener>>();
 
   function dispatch(event: BoardEvent): void {
     const set = listeners.get(event.boardId);
@@ -69,6 +75,33 @@ export function createBus(deps: BusDeps = {}): Bus {
     };
   }
 
+  function dispatchUser(event: UserEvent): void {
+    const set = userListeners.get(event.userId);
+    if (!set) return;
+    for (const l of set) {
+      try {
+        l(event);
+      } catch (err) {
+        logger.error({ err, event: LogEvent.RealtimePublishFailed }, LogEvent.RealtimePublishFailed);
+      }
+    }
+  }
+
+  function addUserListener(userId: string, listener: UserEventListener): () => void {
+    let set = userListeners.get(userId);
+    if (!set) {
+      set = new Set();
+      userListeners.set(userId, set);
+    }
+    set.add(listener);
+    return () => {
+      const s = userListeners.get(userId);
+      if (!s) return;
+      s.delete(listener);
+      if (s.size === 0) userListeners.delete(userId);
+    };
+  }
+
   // ----- in-process backend -----
   if (!redisUrl) {
     const emitter = new EventEmitter();
@@ -84,8 +117,19 @@ export function createBus(deps: BusDeps = {}): Bus {
           logger.error({ err, event: LogEvent.RealtimePublishFailed }, LogEvent.RealtimePublishFailed);
         }
       },
+      subscribeUser(userId, listener) {
+        return addUserListener(userId, listener);
+      },
+      publishUser(event) {
+        try {
+          dispatchUser(event);
+        } catch (err) {
+          logger.error({ err, event: LogEvent.RealtimePublishFailed }, LogEvent.RealtimePublishFailed);
+        }
+      },
       async close() {
         listeners.clear();
+        userListeners.clear();
         emitter.removeAllListeners();
       },
     };
@@ -113,10 +157,13 @@ export function createBus(deps: BusDeps = {}): Bus {
     sub.on("error", (err) =>
       logger.error({ err, event: LogEvent.RealtimeRedisError }, LogEvent.RealtimeRedisError),
     );
-    sub.on("pmessage", (_pattern: string, _channel: string, payload: string) => {
+    sub.on("pmessage", (_pattern: string, channel: string, payload: string) => {
       try {
-        const event = boardEventSchema.parse(JSON.parse(payload));
-        dispatch(event);
+        if (channel.startsWith(USER_CHANNEL_PREFIX)) {
+          dispatchUser(userEventSchema.parse(JSON.parse(payload)));
+        } else {
+          dispatch(boardEventSchema.parse(JSON.parse(payload)));
+        }
       } catch (err) {
         logger.error(
           { err, event: LogEvent.RealtimeEventParseFailed },
@@ -125,7 +172,7 @@ export function createBus(deps: BusDeps = {}): Bus {
       }
     });
     // Best-effort; on failure the error handler logs and same-instance map still serves.
-    sub.psubscribe(PATTERN).catch((err) =>
+    sub.psubscribe(PATTERN, USER_PATTERN).catch((err) =>
       logger.error({ err, event: LogEvent.RealtimeRedisError }, LogEvent.RealtimeRedisError),
     );
   }
@@ -149,8 +196,27 @@ export function createBus(deps: BusDeps = {}): Bus {
         logger.error({ err, event: LogEvent.RealtimePublishFailed }, LogEvent.RealtimePublishFailed);
       }
     },
+    subscribeUser(userId, listener) {
+      ensureSub();
+      return addUserListener(userId, listener);
+    },
+    publishUser(event) {
+      try {
+        getPub()
+          .publish(USER_CHANNEL_PREFIX + event.userId, JSON.stringify(event))
+          .catch((err) =>
+            logger.error(
+              { err, event: LogEvent.RealtimePublishFailed },
+              LogEvent.RealtimePublishFailed,
+            ),
+          );
+      } catch (err) {
+        logger.error({ err, event: LogEvent.RealtimePublishFailed }, LogEvent.RealtimePublishFailed);
+      }
+    },
     async close() {
       listeners.clear();
+      userListeners.clear();
       subscribed = false;
       const clients = [pub, sub].filter((c): c is Redis => c !== null);
       pub = null;

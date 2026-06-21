@@ -6,11 +6,14 @@ import {
   type AssignInput,
   type ListAssigneesInput,
   type ListBoardMembersInput,
+  NotificationType,
   type UnassignInput,
 } from "shared";
 import type { CtxUser } from "../board/board.service.js";
 import { loadBoardFor } from "../board/board.service.js";
 import { cardTitle, record } from "../activity/activity.recorder.js";
+import { create as createNotification, handleFromEmail } from "../notification/notification.recorder.js";
+import { bus } from "../realtime/realtime.bus.js";
 import * as commentRepo from "../comment/comment.repo.js";
 import type { EmailPort } from "../email/email.service.js";
 import { env } from "../../config/env.config.js";
@@ -110,6 +113,21 @@ export async function assign(
     const title = await cardTitle(db, cardId);
     if (target.id !== user.id) {
       await email.sendCardAssigned(target.email, title, cardLink(boardId, cardId));
+      const actor = await db
+        .selectFrom("users")
+        .select(["email"])
+        .where("id", "=", user.id)
+        .executeTakeFirst();
+      await createNotification(db, bus, {
+        userId: target.id,
+        type: NotificationType.CARD_ASSIGNED,
+        payload: {
+          boardId,
+          cardId,
+          actorHandle: actor ? handleFromEmail(actor.email) : null,
+          title,
+        },
+      });
     }
     await record(db, {
       boardId,

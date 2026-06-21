@@ -1,6 +1,6 @@
 import express from "express";
 import request from "supertest";
-import { BoardEventType, ProjectPermission } from "shared";
+import { BoardEventType, ProjectPermission, UserEventKind } from "shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { signAccessToken } from "../../auth/auth.service.js";
 import { createBus } from "../realtime.bus.js";
@@ -158,5 +158,45 @@ describe("realtime SSE http route", () => {
       .get(`/api/boards/${board.id}/events`)
       .set("Cookie", cookie(stranger));
     expect(res.status).toBe(404);
+  });
+
+  it("per-user events: no cookie -> 401", async () => {
+    const { a } = app(db);
+    const res = await request(a).get("/api/me/notifications/events");
+    expect(res.status).toBe(401);
+  });
+
+  it("per-user events: delivers the caller's nudge, not another user's", async () => {
+    const me = await seedUser(db, { email: "me@example.com", verified: true });
+    const other = await seedUser(db, { email: "other@example.com", verified: true });
+    const { a, bus } = app(db);
+
+    await new Promise<void>((resolve, reject) => {
+      const req = openStream(a, "/api/me/notifications/events", cookie(me));
+      req
+        .buffer(false)
+        .parse((res, _cb) => {
+          res.on("data", (chunk: Buffer) => {
+            const text = chunk.toString();
+            if (text.includes(": connected")) {
+              expect(res.headers["content-type"]).toContain("text/event-stream");
+              // a nudge for another user must NOT arrive; mine must.
+              bus.publishUser({ userId: other.id, kind: UserEventKind.NOTIFICATION, ts: Date.now() });
+              bus.publishUser({ userId: me.id, kind: UserEventKind.NOTIFICATION, ts: Date.now() });
+              return;
+            }
+            if (text.startsWith("data:")) {
+              const payload = JSON.parse(text.replace(/^data:\s*/, "").trim());
+              expect(payload.userId).toBe(me.id);
+              expect(payload.kind).toBe(UserEventKind.NOTIFICATION);
+              res.destroy();
+              resolve();
+            }
+          });
+        })
+        .end((err) => {
+          if (err && !/aborted|socket hang up|ECONNRESET/i.test(String(err))) reject(err);
+        });
+    });
   });
 });

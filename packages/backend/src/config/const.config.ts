@@ -18,6 +18,7 @@ export const LogEvent = {
   SuperAdminSeedSkipped: "superadmin.seed.skipped",
   CardReminderSent: "card.reminder.sent",
   ActivityRecordFailed: "activity.record.failed",
+  NotificationCreateFailed: "notification.create.failed",
   BoardViewParseFailed: "board-view.parse.failed",
   RealtimePublishFailed: "realtime.publish.failed",
   RealtimeRedisError: "realtime.redis.error",

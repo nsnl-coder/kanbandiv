@@ -21,3 +21,20 @@ export const boardEventSchema = z.object({
   cardId: z.string().optional(),
 });
 export type BoardEvent = z.infer<typeof boardEventSchema>;
+
+// Per-user channel events fanned over the SAME bus on the user:{userId} channel.
+// PRIVACY: a lightweight NUDGE only — NO notification content. A stale subscriber
+// learns only "you have a new notification" then refetches through the authorized,
+// user-scoped tRPC query.
+export const UserEventKind = {
+  NOTIFICATION: "notification",
+} as const;
+export type UserEventKindValue =
+  (typeof UserEventKind)[keyof typeof UserEventKind];
+
+export const userEventSchema = z.object({
+  userId: z.string(),
+  kind: z.enum([UserEventKind.NOTIFICATION]),
+  ts: z.number(),
+});
+export type UserEvent = z.infer<typeof userEventSchema>;

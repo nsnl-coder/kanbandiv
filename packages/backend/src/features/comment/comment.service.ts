@@ -6,12 +6,14 @@ import {
   CommentError,
   type CommentThread,
   type CreateCommentInput,
+  NotificationType,
   parseMentions,
   type UpdateCommentInput,
 } from "shared";
 import type { CtxUser } from "../board/board.service.js";
 import { loadBoardFor } from "../board/board.service.js";
 import { cardTitle, record } from "../activity/activity.recorder.js";
+import { create as createNotification, handleFromEmail } from "../notification/notification.recorder.js";
 import { bus } from "../realtime/realtime.bus.js";
 import type { EmailPort } from "../email/email.service.js";
 import { env } from "../../config/env.config.js";
@@ -206,8 +208,19 @@ export async function createComment(
         .where("id", "=", input.cardId)
         .executeTakeFirst();
       const title = card?.title ?? "card";
+      const actor = await db
+        .selectFrom("users")
+        .select(["email"])
+        .where("id", "=", user.id)
+        .executeTakeFirst();
+      const actorHandle = actor ? handleFromEmail(actor.email) : null;
       for (const m of matched) {
         await email.sendCommentMention(m.email, title, snippet, link);
+        await createNotification(db, bus, {
+          userId: m.id,
+          type: NotificationType.MENTION,
+          payload: { boardId, cardId: input.cardId, actorHandle, title, snippet },
+        });
       }
     }
   }
