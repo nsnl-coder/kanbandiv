@@ -30,3 +30,7 @@ e2e/landing: store all e2e tests from packages/landing
 
 Always follow token discipline (short replies, scoped file reads, no rambling). The full ruleset is imported below and applies to every session:
 @.claude/skills/token/SKILL.md
+
+# Testing rules
+
+- Only run e2e test in the dev & prod

@@ -26,6 +26,11 @@ export function AdminLayout() {
               Users
             </NavLink>
           </Can>
+          <Can perm={Permission.AdminBackupRead}>
+            <NavLink to="/admin/backup" className={linkClass}>
+              Backup
+            </NavLink>
+          </Can>
         </nav>
         <Outlet />
       </div>

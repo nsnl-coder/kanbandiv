@@ -24,6 +24,8 @@ import { AdminLayout } from "./pages/admin/AdminLayout";
 import { RolesListPage } from "./pages/admin/roles/RolesListPage";
 import { RoleFormPage } from "./pages/admin/roles/RoleFormPage";
 import { UsersListPage } from "./pages/admin/users/UsersListPage";
+import { BackupPage } from "./pages/admin/backup/BackupPage";
+import { MaintenanceScreen } from "./components/MaintenanceScreen";
 import { useCan } from "./features/rbac/hooks/useCan";
 import { ADMIN_READ_PERMS } from "./features/rbac/constants";
 
@@ -36,7 +38,9 @@ function HomeIndex() {
 // /admin landing: send the user to the first admin section they can read.
 function AdminIndex() {
   const canRoles = useCan(Permission.AdminRolesRead);
-  return <Navigate to={canRoles ? "/admin/roles" : "/admin/users"} replace />;
+  const canUsers = useCan(Permission.AdminUsersRead);
+  const to = canRoles ? "/admin/roles" : canUsers ? "/admin/users" : "/admin/backup";
+  return <Navigate to={to} replace />;
 }
 
 // One-shot silent refresh on a full page reload, to re-hydrate the in-memory
@@ -108,12 +112,16 @@ export function App() {
           <Route element={<PermissionRoute perm={Permission.AdminUsersRead} />}>
             <Route path="users" element={<UsersListPage />} />
           </Route>
+          <Route element={<PermissionRoute perm={Permission.AdminBackupRead} />}>
+            <Route path="backup" element={<BackupPage />} />
+          </Route>
         </Route>
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Toaster />
+      <MaintenanceScreen />
     </>
   );
 }

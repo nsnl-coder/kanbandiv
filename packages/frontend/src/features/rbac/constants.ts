@@ -4,4 +4,5 @@ import { Permission } from "shared";
 export const ADMIN_READ_PERMS: Permission[] = [
   Permission.AdminRolesRead,
   Permission.AdminUsersRead,
+  Permission.AdminBackupRead,
 ];

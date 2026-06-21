@@ -32,6 +32,17 @@ RUN --mount=type=secret,id=sentry_auth_token \
 
 FROM base AS runtime
 ENV NODE_ENV=production
+# Backup tooling: pg_dump/pg_restore (match the postgres:16 server), MinIO mc,
+# tar/gzip for archiving, gnupg for optional at-rest encryption.
+RUN apk add --no-cache postgresql16-client tar gzip gnupg \
+    && ARCH=$(uname -m) \
+    && case "$ARCH" in \
+         x86_64) MC_ARCH=amd64 ;; \
+         aarch64) MC_ARCH=arm64 ;; \
+         *) MC_ARCH=amd64 ;; \
+       esac \
+    && wget -qO /usr/local/bin/mc "https://dl.min.io/client/mc/release/linux-${MC_ARCH}/mc" \
+    && chmod +x /usr/local/bin/mc
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 COPY packages/backend/package.json packages/backend/
 COPY packages/shared/package.json packages/shared/

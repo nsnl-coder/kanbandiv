@@ -7,10 +7,11 @@ import {
 import { createTRPCContext } from "@trpc/tanstack-react-query";
 import { observable } from "@trpc/server/observable";
 import superjson from "superjson";
-import { AuthError } from "shared";
+import { AuthError, BackupError } from "shared";
 import type { AppRouter } from "backend/src/trpc/router.js";
 import { config } from "../config/env.config";
 import { authStore } from "../hooks/useAuthStore";
+import { maintenanceStore } from "../hooks/useMaintenanceStore";
 
 export const { TRPCProvider, useTRPC } = createTRPCContext<AppRouter>();
 
@@ -89,6 +90,36 @@ const refreshLink: TRPCLink<AppRouter> = () => {
   };
 };
 
+// Observe every result to drive the app-wide maintenance screen: flip it on when
+// the backend guard returns SERVICE_UNAVAILABLE/MAINTENANCE, off on any success.
+const maintenanceLink: TRPCLink<AppRouter> = () => {
+  return ({ op, next }) => {
+    type Value = Parameters<
+      NonNullable<Parameters<ReturnType<typeof next>["subscribe"]>[0]["next"]>
+    >[0];
+    return observable<Value, TRPCClientError<AppRouter>>((observer) => {
+      const sub = next(op).subscribe({
+        next: (v) => {
+          maintenanceStore.setActive(false);
+          observer.next(v);
+        },
+        complete: () => observer.complete(),
+        error: (err) => {
+          if (
+            err instanceof TRPCClientError &&
+            err.data?.code === "SERVICE_UNAVAILABLE" &&
+            err.message === BackupError.MAINTENANCE
+          ) {
+            maintenanceStore.setActive(true);
+          }
+          observer.error(err);
+        },
+      });
+      return () => sub.unsubscribe();
+    });
+  };
+};
+
 const terminalLink = httpBatchLink({
   url: config.apiUrl,
   transformer: superjson,
@@ -106,5 +137,5 @@ const refreshClient = createTRPCClient<AppRouter>({
 });
 
 export const trpcClient = createTRPCClient<AppRouter>({
-  links: [refreshLink, terminalLink],
+  links: [maintenanceLink, refreshLink, terminalLink],
 });

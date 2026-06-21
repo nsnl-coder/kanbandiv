@@ -1,9 +1,13 @@
 import type { ColumnType, Generated } from "kysely";
 import type {
+  BackupStatus,
+  BackupTrigger,
   OtpPurpose,
   Permission,
   ProjectPermission,
   ProjectVisibility,
+  RetentionMode,
+  ScheduleKind,
 } from "shared";
 
 // Required timestamp (no DB default): insertable/updatable as Date or string.
@@ -123,6 +127,42 @@ export interface CardsTable {
   updated_at: GeneratedTimestamp;
 }
 
+export interface BackupSettingsTable {
+  id: number;
+  enabled: Generated<boolean>;
+  schedule_kind: Generated<ScheduleKind>;
+  cron_expr: string | null;
+  retention_mode: Generated<RetentionMode>;
+  retention_days: number | null;
+  gfs_daily: number | null;
+  gfs_weekly: number | null;
+  gfs_monthly: number | null;
+  include_minio: Generated<boolean>;
+  encryption_enabled: Generated<boolean>;
+  gdrive_email: string | null;
+  gdrive_refresh_token: string | null;
+  gdrive_folder_id: string | null;
+  gdrive_folder_name: string | null;
+  maintenance: Generated<boolean>;
+  updated_at: GeneratedTimestamp;
+}
+
+export interface BackupRunsTable {
+  id: Generated<string>;
+  started_at: GeneratedTimestamp;
+  finished_at: Timestamp | null;
+  status: BackupStatus;
+  trigger: BackupTrigger;
+  // bigint: node-pg returns it as string; parse in the service layer.
+  size_bytes: ColumnType<string | null, string | number | null, string | number | null>;
+  drive_file_id: string | null;
+  file_name: string;
+  checksum: string | null;
+  error: string | null;
+  expires_at: Timestamp | null;
+  created_at: GeneratedTimestamp;
+}
+
 export interface Database {
   users: UsersTable;
   roles: RolesTable;
@@ -136,4 +176,6 @@ export interface Database {
   board_access: BoardAccessTable;
   columns: ColumnsTable;
   cards: CardsTable;
+  backup_settings: BackupSettingsTable;
+  backup_runs: BackupRunsTable;
 }

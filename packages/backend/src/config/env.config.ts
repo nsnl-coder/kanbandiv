@@ -68,6 +68,27 @@ const schema = z.object({
   // Readiness deps. Only checked in /health/ready when the URL is set.
   REDIS_URL: z.string().default(""),
   MINIO_ENDPOINT: z.string().default(""),
+
+  // --- Backup (Google Drive OAuth + job pipeline) ---
+  // OAuth client (Google Cloud console). Empty -> Drive features disabled.
+  GDRIVE_CLIENT_ID: z.string().default(""),
+  GDRIVE_CLIENT_SECRET: z.string().default(""),
+  // Public callback URL the proxy routes to /api/admin/backup/gdrive/callback.
+  GDRIVE_REDIRECT_URI: z.string().default(""),
+  // Frontend base URL the OAuth callback redirects back to after connecting.
+  APP_BASE_URL: z.string().default(""),
+  // Optional default Drive folder for uploads (overridable per settings row).
+  GDRIVE_FOLDER_ID: z.string().default(""),
+  // Working dir for dump/tar staging. Defaults to the OS temp dir.
+  BACKUP_WORK_DIR: z.string().default(""),
+  // Symmetric passphrase for optional at-rest backup encryption (gpg).
+  BACKUP_ENCRYPTION_PASSPHRASE: z.string().default(""),
+  // Encrypts the Drive refresh token at rest. Falls back to JWT_REFRESH_SECRET.
+  BACKUP_TOKEN_SECRET: z.string().default(""),
+  // MinIO bucket(s) to mirror, comma-separated. Empty -> mirror skipped.
+  MINIO_BACKUP_BUCKETS: z.string().default(""),
+  MINIO_ACCESS_KEY: z.string().default(""),
+  MINIO_SECRET_KEY: z.string().default(""),
 });
 
 const parsed = schema.safeParse(process.env);

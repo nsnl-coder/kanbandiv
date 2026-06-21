@@ -1,9 +1,10 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import type { OpenApiMeta } from "trpc-to-openapi";
-import { AuthError, RbacError, hasPermission, type Permission } from "shared";
+import { AuthError, BackupError, Permission, RbacError, hasPermission } from "shared";
 import { findPublicUserById } from "../features/auth/auth.repo.js";
 import { findUserGlobalPerms } from "../features/rbac/rbac.repo.js";
+import { isMaintenance } from "../features/backup/backup.maintenance.js";
 import type { Context } from "./context.js";
 
 const t = initTRPC.context<Context>().meta<OpenApiMeta>().create({ transformer: superjson });
@@ -52,7 +53,7 @@ function rateLimit(opts: { limit: number; windowMs: number }) {
 export const rateLimitedProcedure = (limit: number, windowMs = 60_000) =>
   t.procedure.use(rateLimit({ limit, windowMs }));
 
-export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
+const authedProcedure = t.procedure.use(async ({ ctx, next }) => {
   // SESSION_EXPIRED marks an access-token problem the client can fix by
   // refreshing; domain UNAUTHORIZED errors (bad credentials) do not use it.
   const expired = new TRPCError({ code: "UNAUTHORIZED", message: AuthError.SESSION_EXPIRED });
@@ -75,6 +76,22 @@ export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
       },
     },
   });
+});
+
+/**
+ * While maintenance mode is on, only superusers and backup admins (who can turn
+ * it off / run the restore) may proceed; everyone else gets SERVICE_UNAVAILABLE.
+ */
+export const protectedProcedure = authedProcedure.use(({ ctx, next }) => {
+  if (
+    isMaintenance() &&
+    !ctx.user.isSuperuser &&
+    !hasPermission(ctx.user.permissions, Permission.AdminBackupManage) &&
+    !hasPermission(ctx.user.permissions, Permission.AdminBackupRead)
+  ) {
+    throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: BackupError.MAINTENANCE });
+  }
+  return next();
 });
 
 /**

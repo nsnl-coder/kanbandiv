@@ -36,6 +36,8 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     proxy: {
+      // tRPC + REST (incl. /api/client-log and the Drive OAuth callback) go to
+      // the backend in dev; nginx does this in deployed envs.
       "/trpc": {
         target: "http://localhost:4000",
         changeOrigin: true,
@@ -51,6 +53,7 @@ export default defineConfig({
           });
         },
       },
+      "/api": { target: "http://localhost:4000", changeOrigin: true },
     },
   },
 });

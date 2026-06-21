@@ -17,7 +17,9 @@ type TrpcCodeKey =
   | "FORBIDDEN"
   | "NOT_FOUND"
   | "CONFLICT"
+  | "PRECONDITION_FAILED"
   | "TOO_MANY_REQUESTS"
+  | "SERVICE_UNAVAILABLE"
   | "INTERNAL_SERVER_ERROR";
 
 const CODE_NUM: Record<TrpcCodeKey, number> = {
@@ -27,7 +29,9 @@ const CODE_NUM: Record<TrpcCodeKey, number> = {
   FORBIDDEN: -32003,
   NOT_FOUND: -32004,
   CONFLICT: -32009,
+  PRECONDITION_FAILED: -32012,
   TOO_MANY_REQUESTS: -32029,
+  SERVICE_UNAVAILABLE: -32603,
 };
 
 const HTTP_STATUS: Record<TrpcCodeKey, number> = {
@@ -36,7 +40,9 @@ const HTTP_STATUS: Record<TrpcCodeKey, number> = {
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   CONFLICT: 409,
+  PRECONDITION_FAILED: 412,
   TOO_MANY_REQUESTS: 429,
+  SERVICE_UNAVAILABLE: 503,
   INTERNAL_SERVER_ERROR: 500,
 };
 
