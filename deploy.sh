@@ -13,6 +13,13 @@ cd "$REPO_ROOT"
 
 git pull --ff-only
 
+# git pull may have updated this very script. bash already parsed the OLD
+# version into memory, so re-exec the freshly pulled one once (guarded against
+# looping) so the run always uses the latest deploy logic.
+if [ -z "${DEPLOY_REEXEC:-}" ]; then
+  DEPLOY_REEXEC=1 exec bash "$0" "$@"
+fi
+
 COMPOSE="docker compose -f packages/infra/docker-compose.yml"
 
 # Build one image at a time. Parallel builds (compose's default) run tsc/vite/next
