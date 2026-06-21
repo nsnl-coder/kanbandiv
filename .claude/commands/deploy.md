@@ -70,8 +70,8 @@ git checkout v1.3.0-rc.1
 make dev       # docker compose up
 make health    # smoke test
 
-# e2e against an EPHEMERAL test PG (started for the run, torn down after) + the
-# live MinIO via a dedicated test bucket. The live stack stays up. Exit = pass/fail.
+# e2e against the LIVE site (this tier's domain) as a pre-seeded test user. No
+# test DB/MinIO; OTP via Mailtrap sandbox. Exit code = pass/fail.
 bash packages/infra/deploy-scripts/run-e2e.sh
 ```
 
@@ -79,7 +79,7 @@ bash packages/infra/deploy-scripts/run-e2e.sh
 
 - [ ] DB migrations ran without error
 - [ ] `GET /health` → `{"status":"ok"}`
-- [ ] all tests are passed including: frontend tests, backend tests, landing tests & e2e tests (login/logout and other flows are covered by e2e, not a manual mcp check). e2e runs via `run-e2e.sh` against an ephemeral test PG (stopped after the run) + the live MinIO via a dedicated test bucket.
+- [ ] all tests are passed including: frontend tests, backend tests, landing tests & e2e tests (login/logout and other flows are covered by e2e, not a manual mcp check). e2e runs via `run-e2e.sh` against the live site as a pre-seeded test user (no test DB; OTP via Mailtrap sandbox).
 - [ ] New feature behaves per spec
 - [ ] No regression on existing features
 

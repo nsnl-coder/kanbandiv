@@ -33,4 +33,4 @@ Always follow token discipline (short replies, scoped file reads, no rambling). 
 
 # Testing rules
 
-- Run e2e tests in local, dev & prod. Local e2e runs against a dedicated test Postgres DB + test MinIO bucket (never the primary/dev data)
+- e2e tests run against a live deployed site (dev + prod domains) driving a pre-seeded test user via the real UI. No separate test DB/MinIO; OTP flows read codes from the Mailtrap sandbox (used in dev AND prod). Destructive flows use throwaway sign-up emails / a dedicated reset account so they never disturb real users.

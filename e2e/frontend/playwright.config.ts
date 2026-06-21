@@ -1,15 +1,17 @@
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { defineConfig, devices } from "@playwright/test";
-import { loadTestEnv } from "./support/env";
 
-// Real (non-mocked) frontend e2e: a test backend boots against the dedicated
-// `trelloclone-test` Postgres + test MinIO bucket, the Vite dev server proxies
-// /trpc + /api to it. Run `tsx support/setup-db.ts` first (the `e2e` script
-// does) to migrate the test DB before the backend boots and seeds its admin.
-loadTestEnv();
-
-const repoRoot = path.resolve(fileURLToPath(import.meta.url), "../../..");
+// Real e2e against a LIVE deployed domain (dev or prod), driving the actual UI as
+// a pre-seeded test user. No test DB / MinIO / app boot - E2E_BASE_URL points at
+// the running site (e.g. https://dev-app.trello-clone.shop). OTP-dependent flows
+// read codes from the Mailtrap sandbox (used in dev AND prod). Per-test
+// X-Forwarded-For (support/fixtures.ts) keeps the backend's per-IP rate limiter
+// from pooling the whole run into one bucket.
+const baseURL = process.env.E2E_BASE_URL;
+if (!baseURL) {
+  throw new Error(
+    "E2E_BASE_URL is required (e.g. https://dev-app.trello-clone.shop or https://app.trello-clone.shop)",
+  );
+}
 
 export default defineConfig({
   testDir: ".",
@@ -17,34 +19,14 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  retries: 1,
   reporter: process.env.CI ? "github" : "list",
   // Several flows send a real email synchronously in the request path, so give
   // assertions more room than the 5s default.
   expect: { timeout: 15_000 },
   use: {
-    baseURL: "http://localhost:5173",
+    baseURL,
     trace: "on-first-retry",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
-  webServer: [
-    {
-      // Test backend: own process on :4000 against the test DB + bucket. Env
-      // comes from process.env (loadTestEnv filled it from .env.test locally, or
-      // compose set it on the VPS), so no --env-file. Never reuse a running dev
-      // backend (that one talks to the dev DB).
-      command: "pnpm exec tsx src/index.ts",
-      cwd: path.join(repoRoot, "packages", "backend"),
-      url: "http://localhost:4000/health",
-      reuseExistingServer: false,
-      timeout: 60_000,
-    },
-    {
-      command: "pnpm --filter frontend dev",
-      cwd: repoRoot,
-      url: "http://localhost:5173",
-      reuseExistingServer: !process.env.CI,
-      timeout: 120_000,
-    },
-  ],
 });
