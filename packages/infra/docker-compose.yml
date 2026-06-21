@@ -44,6 +44,8 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+      # Console served behind the proxy at the minio subdomain (TLS upstream).
+      MINIO_BROWSER_REDIRECT_URL: https://${MINIO_DOMAIN:-dev-minio.trello-clone.shop}
     volumes:
       - miniodata:/data
     labels:
@@ -93,6 +95,10 @@ services:
       # Frontend lives on a different subdomain than the API -> credentialed CORS.
       # Prod must override (comma-separated origins) in packages/infra/.env.
       - CORS_ORIGINS=${CORS_ORIGINS:-https://dev-app.trello-clone.shop}
+      # Admin SSO gate: hosts it may mint tokens for + the app origin for login.
+      # SSO_SECRET is omitted on purpose -> backend falls back to JWT_ACCESS_SECRET.
+      - SSO_ALLOWED_HOSTS=${MONITOR_DOMAIN:-dev-monitor.trello-clone.shop},${MINIO_DOMAIN:-dev-minio.trello-clone.shop}
+      - SSO_APP_ORIGIN=https://${APP_DOMAIN:-dev-app.trello-clone.shop}
       # Backup: staging dir + MinIO creds for `mc` mirror. GDRIVE_*, APP_BASE_URL,
       # and BACKUP_ENCRYPTION_PASSPHRASE come from backend/.env.prod (env_file).
       - BACKUP_WORK_DIR=/var/backups/work
@@ -160,6 +166,8 @@ services:
       - frontend
       - backend
       - landing
+      - grafana
+      - minio
     ports:
       - "80:80"
       - "443:443"
@@ -168,6 +176,8 @@ services:
       APP_DOMAIN: ${APP_DOMAIN:-dev-app.trello-clone.shop}
       API_DOMAIN: ${API_DOMAIN:-dev-api.trello-clone.shop}
       LANDING_DOMAIN: ${LANDING_DOMAIN:-dev.trello-clone.shop}
+      MONITOR_DOMAIN: ${MONITOR_DOMAIN:-dev-monitor.trello-clone.shop}
+      MINIO_DOMAIN: ${MINIO_DOMAIN:-dev-minio.trello-clone.shop}
       # Only substitute *DOMAIN* vars; leave $host, $remote_addr, etc. intact.
       NGINX_ENVSUBST_FILTER: DOMAIN
     volumes:
@@ -177,6 +187,10 @@ services:
     labels:
       com.project.service: proxy
       com.project.env: ${VPS_ENV:-prod}
+    networks:
+      default:
+        # Pinned so Grafana's auth-proxy whitelist can trust exactly this IP.
+        ipv4_address: 172.28.0.10
 
   loki:
     image: grafana/loki:3.3.2
@@ -225,6 +239,22 @@ services:
     restart: unless-stopped
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      # Served behind the proxy at the monitor subdomain (TLS terminated upstream).
+      GF_SERVER_ROOT_URL: https://${MONITOR_DOMAIN:-dev-monitor.trello-clone.shop}
+      GF_SERVER_DOMAIN: ${MONITOR_DOMAIN:-dev-monitor.trello-clone.shop}
+      # Admin SSO: trust the X-WEBAUTH-User header, but ONLY from the proxy's
+      # pinned IP (172.28.0.10). Without the whitelist any in-network container
+      # could spoof the header. Login form stays available as a fallback.
+      GF_AUTH_PROXY_ENABLED: "true"
+      GF_AUTH_PROXY_HEADER_NAME: X-WEBAUTH-User
+      GF_AUTH_PROXY_HEADER_PROPERTY: username
+      GF_AUTH_PROXY_HEADERS: Email:X-WEBAUTH-User
+      GF_AUTH_PROXY_AUTO_SIGN_UP: "true"
+      GF_AUTH_PROXY_ENABLE_LOGIN_TOKEN: "false"
+      GF_AUTH_PROXY_WHITELIST: 172.28.0.10
+      GF_AUTH_PROXY_SYNC_TTL: "60"
+      # SSO'd users pass the super-admin gate, so grant them Grafana Admin.
+      GF_USERS_AUTO_ASSIGN_ORG_ROLE: Admin
       # Telegram alert credentials, interpolated into alerting provisioning.
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
@@ -275,6 +305,14 @@ services:
       - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
+
+networks:
+  # Fixed subnet so the proxy can hold a stable IP for Grafana's auth-proxy
+  # whitelist. Changing this requires `docker compose down` to recreate the net.
+  default:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
 
 volumes:
   pgdata:

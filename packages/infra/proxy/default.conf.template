@@ -12,6 +12,12 @@ map $http_traceparent $trace_id {
   default                               $request_id;
 }
 
+# Websocket upgrade (Grafana Live).
+map $http_upgrade $connection_upgrade {
+  default upgrade;
+  ''      close;
+}
+
 log_format proxy_json escape=json
   '{"time":"$time_iso8601","service":"nginx-proxy","level":"info",'
   '"host":"$host","method":"$request_method","path":"$uri","status":$status,'
@@ -30,7 +36,7 @@ server {
 # All known hosts: redirect HTTP -> HTTPS.
 server {
   listen 80;
-  server_name ${APP_DOMAIN} ${API_DOMAIN} ${LANDING_DOMAIN};
+  server_name ${APP_DOMAIN} ${API_DOMAIN} ${LANDING_DOMAIN} ${MONITOR_DOMAIN} ${MINIO_DOMAIN};
   return 301 https://$host$request_uri;
 }
 
@@ -66,6 +72,89 @@ server {
   location / {
     include /etc/nginx/snippets/proxy_headers.conf;
     proxy_pass http://backend:4000;
+  }
+}
+
+# Grafana (observability UI on :3000). Admin SSO via forward-auth: only a
+# super-admin app session gets in, and Grafana auto-logs-in from X-WEBAUTH-User.
+server {
+  listen 443 ssl;
+  http2 on;
+  server_name ${MONITOR_DOMAIN};
+  include /etc/nginx/snippets/ssl.conf;
+
+  access_log /dev/stdout proxy_json;
+  error_log  /dev/stderr;
+
+  # auth_request target: validates the per-host SSO cookie at the backend.
+  location = /__sso/verify {
+    internal;
+    proxy_pass http://backend:4000/api/sso/verify;
+    proxy_set_header Host $host;
+    proxy_pass_request_body off;
+    proxy_set_header Content-Length "";
+  }
+  # Token exchange landing (sets the SSO cookie). Must NOT be auth-gated.
+  location = /__sso/callback {
+    proxy_pass http://backend:4000/api/sso/callback;
+    proxy_set_header Host $host;
+  }
+  # No/expired SSO cookie -> bounce to the app host to prove super-admin.
+  location @sso_signin {
+    return 302 https://${APP_DOMAIN}/api/sso/authorize?rd=$scheme://$host$request_uri;
+  }
+
+  location / {
+    auth_request /__sso/verify;
+    auth_request_set $sso_user $upstream_http_x_sso_user;
+    error_page 401 = @sso_signin;
+
+    include /etc/nginx/snippets/proxy_headers.conf;
+    # Identity from auth_request; overwrites any client-sent value.
+    proxy_set_header X-WEBAUTH-User $sso_user;
+    proxy_set_header Upgrade    $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+    proxy_pass http://grafana:3000;
+  }
+}
+
+# MinIO admin console (:9001). Admin-gated by the same SSO; MinIO keeps its own
+# login (it has no header-trust mode), so reaching it still needs MinIO creds.
+server {
+  listen 443 ssl;
+  http2 on;
+  server_name ${MINIO_DOMAIN};
+  include /etc/nginx/snippets/ssl.conf;
+
+  access_log /dev/stdout proxy_json;
+  error_log  /dev/stderr;
+
+  # Admin uploads can be large; don't cap them at the edge.
+  client_max_body_size 0;
+
+  location = /__sso/verify {
+    internal;
+    proxy_pass http://backend:4000/api/sso/verify;
+    proxy_set_header Host $host;
+    proxy_pass_request_body off;
+    proxy_set_header Content-Length "";
+  }
+  location = /__sso/callback {
+    proxy_pass http://backend:4000/api/sso/callback;
+    proxy_set_header Host $host;
+  }
+  location @sso_signin {
+    return 302 https://${APP_DOMAIN}/api/sso/authorize?rd=$scheme://$host$request_uri;
+  }
+
+  location / {
+    auth_request /__sso/verify;
+    error_page 401 = @sso_signin;
+
+    include /etc/nginx/snippets/proxy_headers.conf;
+    proxy_set_header Upgrade    $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+    proxy_pass http://minio:9001;
   }
 }
 

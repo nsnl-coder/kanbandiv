@@ -89,6 +89,19 @@ const schema = z.object({
   MINIO_BACKUP_BUCKETS: z.string().default(""),
   MINIO_ACCESS_KEY: z.string().default(""),
   MINIO_SECRET_KEY: z.string().default(""),
+
+  // --- Admin SSO (forward-auth gate for Grafana/MinIO behind the proxy) ---
+  // HMAC secret for SSO transfer/session tokens. Empty -> falls back to JWT_ACCESS_SECRET.
+  SSO_SECRET: z.string().default(""),
+  // Hosts the admin SSO gate may mint tokens for (comma-separated allowlist).
+  SSO_ALLOWED_HOSTS: z
+    .string()
+    .default("")
+    .transform((v) => v.split(",").map((s) => s.trim()).filter(Boolean)),
+  // App origin used to bounce unauthenticated admins to the login page.
+  SSO_APP_ORIGIN: z.string().default(""),
+  // SSO session cookie lifetime (bounds role-revocation lag).
+  SSO_SESSION_TTL: z.string().default("1h"),
 });
 
 const parsed = schema.safeParse(process.env);
@@ -109,6 +122,9 @@ export const env = {
   ...parsed.data,
   // Access cookie maxAge, derived from JWT_ACCESS_TTL (no separate env var).
   ACCESS_TTL_MS: parseDurationMs(parsed.data.JWT_ACCESS_TTL),
+  // SSO tokens reuse the access secret unless an explicit one is set.
+  SSO_SECRET: parsed.data.SSO_SECRET || parsed.data.JWT_ACCESS_SECRET,
+  SSO_SESSION_TTL_MS: parseDurationMs(parsed.data.SSO_SESSION_TTL),
   // Everything below is derived from the single VPS_ENV knob.
   VPS_ENV: vpsEnv,
   isLocal,
