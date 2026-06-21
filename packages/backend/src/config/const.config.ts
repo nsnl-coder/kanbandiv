@@ -17,5 +17,6 @@ export const LogEvent = {
   SuperAdminSeeded: "superadmin.seeded",
   SuperAdminSeedSkipped: "superadmin.seed.skipped",
   CardReminderSent: "card.reminder.sent",
+  ActivityRecordFailed: "activity.record.failed",
 } as const;
 export type LogEvent = (typeof LogEvent)[keyof typeof LogEvent];

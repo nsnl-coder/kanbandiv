@@ -12,6 +12,7 @@ import { LabelPicker } from "./LabelPicker";
 import { AssigneePicker } from "./AssigneePicker";
 import { DueDatePicker } from "./DueDatePicker";
 import { CommentList } from "./CommentList";
+import { CardActivity } from "./CardActivity";
 import { AttachmentList } from "./AttachmentList";
 import { CardCoverBanner } from "./CardCoverBanner";
 import { CardCoverPicker } from "./CardCoverPicker";
@@ -145,6 +146,8 @@ export function CardEditor({
           currentUserId={currentUserId}
           isOwner={isOwner}
         />
+
+        <CardActivity cardId={card.id} />
 
         <div className="mt-4 flex items-center justify-between gap-2">
           {editable ? (

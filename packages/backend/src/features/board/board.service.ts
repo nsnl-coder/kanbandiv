@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import {
+  ActivityType,
   type Board,
   type BoardAccessEntry,
   type BoardData,
@@ -13,6 +14,7 @@ import {
 } from "shared";
 import { type CardRow, enrichCards } from "../card/card.enrich.js";
 import * as assigneeRepo from "../assignee/assignee.repo.js";
+import { record } from "../activity/activity.recorder.js";
 import * as repo from "./board.repo.js";
 import type { Db } from "./board.repo.js";
 
@@ -47,6 +49,10 @@ function boardNotFound() {
 
 function forbidden() {
   return new TRPCError({ code: "FORBIDDEN", message: BoardError.FORBIDDEN });
+}
+
+function nameFromEmail(email: string): string {
+  return email.split("@")[0];
 }
 
 const RANK: Record<MyPermission, number> = { view: 0, edit: 1, owner: 2 };
@@ -269,6 +275,17 @@ export async function grantBoardAccess(
     });
   }
   await repo.upsertBoardAccess(db, id, target.id, input.permission);
+  await record(db, {
+    boardId: id,
+    cardId: null,
+    actorId: user.id,
+    type: ActivityType.MEMBER_GRANTED,
+    meta: {
+      targetEmail: target.email,
+      targetHandle: nameFromEmail(target.email),
+      permission: input.permission,
+    },
+  });
   return listBoardAccess(db, user, id);
 }
 
@@ -279,7 +296,21 @@ export async function revokeBoardAccess(
   input: RevokeBoardAccessInput,
 ): Promise<BoardAccessEntry[]> {
   await loadBoardFor(db, user, id, "owner");
+  const u = await db
+    .selectFrom("users")
+    .select(["email"])
+    .where("id", "=", input.userId)
+    .executeTakeFirst();
   await repo.deleteBoardAccess(db, id, input.userId);
   await assigneeRepo.unassignAllForBoard(db, id, input.userId);
+  if (u) {
+    await record(db, {
+      boardId: id,
+      cardId: null,
+      actorId: user.id,
+      type: ActivityType.MEMBER_REVOKED,
+      meta: { targetEmail: u.email, targetHandle: nameFromEmail(u.email) },
+    });
+  }
   return listBoardAccess(db, user, id);
 }

@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import {
+  ActivityType,
   type Comment,
   CommentError,
   type CommentThread,
@@ -9,6 +10,7 @@ import {
 } from "shared";
 import type { CtxUser } from "../board/board.service.js";
 import { loadBoardFor } from "../board/board.service.js";
+import { cardTitle, record } from "../activity/activity.recorder.js";
 import type { EmailPort } from "../email/email.service.js";
 import { env } from "../../config/env.config.js";
 import * as repo from "./comment.repo.js";
@@ -170,6 +172,14 @@ export async function createComment(
     parentId,
     body: input.body,
   })) as CommentRow;
+
+  await record(db, {
+    boardId,
+    cardId: input.cardId,
+    actorId: user.id,
+    type: ActivityType.COMMENT_ADDED,
+    meta: { snippet: input.body.slice(0, 140), cardTitle: await cardTitle(db, input.cardId) },
+  });
 
   // Resolve @mentions to board members only; never the author.
   const tokens = parseMentions(input.body);

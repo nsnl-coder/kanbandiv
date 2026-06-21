@@ -198,6 +198,16 @@ describe("BoardDetailPage (render)", () => {
     expect(screen.getByRole("button", { name: "Share" })).toBeInTheDocument();
   });
 
+  it("shows History for a view-only user and opens the activity modal", async () => {
+    h.queryData = { getData: makeData({ myPermission: "view" }), accessList: [] };
+    const u = userEvent.setup();
+    renderPage();
+    const history = screen.getByRole("button", { name: "History" });
+    expect(history).toBeInTheDocument();
+    await u.click(history);
+    expect(screen.getByRole("heading", { name: "Board activity" })).toBeInTheDocument();
+  });
+
   it("view-only hides add/drag and management controls", () => {
     h.queryData = { getData: makeData({ myPermission: "view" }), accessList: [] };
     renderPage();

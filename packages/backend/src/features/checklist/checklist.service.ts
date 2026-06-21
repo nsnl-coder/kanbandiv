@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import {
+  ActivityType,
   type Checklist,
   ChecklistError,
   type ChecklistItem,
@@ -11,6 +12,7 @@ import {
 } from "shared";
 import type { CtxUser } from "../board/board.service.js";
 import { loadBoardFor } from "../board/board.service.js";
+import { cardTitle, record } from "../activity/activity.recorder.js";
 import { computePosition } from "../column/column.service.js";
 import * as repo from "./checklist.repo.js";
 import type { Db } from "./checklist.repo.js";
@@ -89,7 +91,7 @@ async function enforceCard(
   user: CtxUser,
   cardId: string,
   min: "view" | "edit",
-): Promise<void> {
+): Promise<{ boardId: string }> {
   const card = (await repo.findCardById(db, cardId)) as CardRow | undefined;
   if (!card) throw cardNotFound();
   const column = (await repo.findColumnById(db, card.column_id)) as
@@ -98,6 +100,7 @@ async function enforceCard(
   if (!column) throw cardNotFound();
   try {
     await loadBoardFor(db, user, column.board_id, min);
+    return { boardId: column.board_id };
   } catch (err) {
     if (err instanceof TRPCError && err.code === "NOT_FOUND") throw cardNotFound();
     throw err;
@@ -109,13 +112,14 @@ async function loadChecklistFor(
   user: CtxUser,
   id: string,
   min: "view" | "edit",
-): Promise<ChecklistRow> {
+): Promise<{ checklist: ChecklistRow; boardId: string }> {
   const checklist = (await repo.findChecklistById(db, id)) as
     | ChecklistRow
     | undefined;
   if (!checklist) throw checklistNotFound();
   try {
-    await enforceCard(db, user, checklist.card_id, min);
+    const { boardId } = await enforceCard(db, user, checklist.card_id, min);
+    return { checklist, boardId };
   } catch (err) {
     // Hide the checklist when its card/board is inaccessible.
     if (
@@ -126,7 +130,6 @@ async function loadChecklistFor(
     }
     throw err;
   }
-  return checklist;
 }
 
 async function loadItemFor(
@@ -134,11 +137,12 @@ async function loadItemFor(
   user: CtxUser,
   id: string,
   min: "view" | "edit",
-): Promise<ItemRow> {
+): Promise<{ item: ItemRow; checklist: ChecklistRow; boardId: string }> {
   const item = (await repo.findItemById(db, id)) as ItemRow | undefined;
   if (!item) throw itemNotFound();
   try {
-    await loadChecklistFor(db, user, item.checklist_id, min);
+    const { checklist, boardId } = await loadChecklistFor(db, user, item.checklist_id, min);
+    return { item, checklist, boardId };
   } catch (err) {
     if (
       err instanceof TRPCError &&
@@ -148,7 +152,6 @@ async function loadItemFor(
     }
     throw err;
   }
-  return item;
 }
 
 export async function listByCard(
@@ -174,14 +177,21 @@ export async function createChecklist(
   user: CtxUser,
   input: CreateChecklistInput,
 ): Promise<Checklist> {
-  await enforceCard(db, user, input.cardId, "edit");
+  const { boardId } = await enforceCard(db, user, input.cardId, "edit");
   const max = await repo.maxChecklistPosition(db, input.cardId);
-  const row = await repo.createChecklist(db, {
+  const row = (await repo.createChecklist(db, {
     cardId: input.cardId,
     title: input.title,
     position: max + 1,
+  })) as ChecklistRow;
+  await record(db, {
+    boardId,
+    cardId: input.cardId,
+    actorId: user.id,
+    type: ActivityType.CHECKLIST_CREATED,
+    meta: { title: row.title, cardTitle: await cardTitle(db, input.cardId) },
   });
-  return toChecklist(row as ChecklistRow, []);
+  return toChecklist(row, []);
 }
 
 export async function updateChecklist(
@@ -202,8 +212,15 @@ export async function deleteChecklist(
   user: CtxUser,
   id: string,
 ): Promise<{ ok: true }> {
-  await loadChecklistFor(db, user, id, "edit");
+  const { checklist, boardId } = await loadChecklistFor(db, user, id, "edit");
   await repo.deleteChecklist(db, id);
+  await record(db, {
+    boardId,
+    cardId: checklist.card_id,
+    actorId: user.id,
+    type: ActivityType.CHECKLIST_DELETED,
+    meta: { title: checklist.title, cardTitle: await cardTitle(db, checklist.card_id) },
+  });
   return { ok: true };
 }
 
@@ -212,14 +229,25 @@ export async function createItem(
   user: CtxUser,
   input: CreateChecklistItemInput,
 ): Promise<ChecklistItem> {
-  await loadChecklistFor(db, user, input.checklistId, "edit");
+  const { checklist, boardId } = await loadChecklistFor(db, user, input.checklistId, "edit");
   const max = await repo.maxItemPosition(db, input.checklistId);
-  const row = await repo.createItem(db, {
+  const row = (await repo.createItem(db, {
     checklistId: input.checklistId,
     text: input.text,
     position: max + 1,
+  })) as ItemRow;
+  await record(db, {
+    boardId,
+    cardId: checklist.card_id,
+    actorId: user.id,
+    type: ActivityType.CHECKLIST_ITEM_ADDED,
+    meta: {
+      text: row.text,
+      checklistTitle: checklist.title,
+      cardTitle: await cardTitle(db, checklist.card_id),
+    },
   });
-  return toItem(row as ItemRow);
+  return toItem(row);
 }
 
 export async function updateItem(
@@ -228,13 +256,24 @@ export async function updateItem(
   id: string,
   patch: UpdateChecklistItemInput,
 ): Promise<ChecklistItem> {
-  await loadItemFor(db, user, id, "edit");
-  const updated = await repo.updateItem(db, id, {
+  const { item, checklist, boardId } = await loadItemFor(db, user, id, "edit");
+  const updated = (await repo.updateItem(db, id, {
     text: patch.text,
     is_done: patch.isDone,
-  });
+  })) as ItemRow | undefined;
   if (!updated) throw itemNotFound();
-  return toItem(updated as ItemRow);
+  if (patch.isDone !== undefined && item.is_done !== updated.is_done) {
+    await record(db, {
+      boardId,
+      cardId: checklist.card_id,
+      actorId: user.id,
+      type: updated.is_done
+        ? ActivityType.CHECKLIST_ITEM_CHECKED
+        : ActivityType.CHECKLIST_ITEM_UNCHECKED,
+      meta: { text: updated.text, cardTitle: await cardTitle(db, checklist.card_id) },
+    });
+  }
+  return toItem(updated);
 }
 
 export async function deleteItem(
@@ -253,7 +292,7 @@ export async function moveItem(
   id: string,
   input: MoveChecklistItemInput,
 ): Promise<ChecklistItem> {
-  const item = await loadItemFor(db, user, id, "edit");
+  const { item } = await loadItemFor(db, user, id, "edit");
   const siblings = (await repo.listItemsByChecklist(
     db,
     item.checklist_id,

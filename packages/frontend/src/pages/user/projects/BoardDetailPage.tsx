@@ -9,7 +9,7 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
-import { ArrowLeft, Pencil, Trash2, Plus, Users, Maximize2, Minimize2, Tag } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, Plus, Users, Maximize2, Minimize2, Tag, History } from "lucide-react";
 import {
   COLUMN_NAME_MAX,
   type BoardData,
@@ -22,6 +22,7 @@ import { Column } from "../../../features/board/components/Column";
 import { CardEditor } from "../../../features/board/components/CardEditor";
 import { BoardAccessPanel } from "../../../features/board/components/BoardAccessPanel";
 import { LabelManager } from "../../../features/board/components/LabelManager";
+import { BoardActivityPanel } from "../../../features/board/components/BoardActivityPanel";
 import { LabelFilterBar } from "../../../features/board/components/LabelFilterBar";
 import { AssigneeFilterBar } from "../../../features/board/components/AssigneeFilterBar";
 import {
@@ -53,6 +54,7 @@ export function BoardDetailPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showAccess, setShowAccess] = useState(false);
   const [showLabels, setShowLabels] = useState(false);
+  const [showActivity, setShowActivity] = useState(false);
   const [labelFilter, setLabelFilter] = useState<string[]>([]);
   const [assigneeFilter, setAssigneeFilter] = useState<string[]>([]);
   const [assignedToMe, setAssignedToMe] = useState(false);
@@ -303,6 +305,14 @@ export function BoardDetailPage() {
                 Edit
               </Link>
             ) : null}
+            <button
+              type="button"
+              onClick={() => setShowActivity(true)}
+              className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
+            >
+              <History className="h-4 w-4" />
+              History
+            </button>
             {editable ? (
               <button
                 type="button"
@@ -419,6 +429,15 @@ export function BoardDetailPage() {
           <LabelManager boardId={board.id} editable={editable} />
         </Modal>
       ) : null}
+
+      <Modal
+        open={showActivity}
+        onClose={() => setShowActivity(false)}
+        title="Board activity"
+        widthClassName="max-w-lg"
+      >
+        <BoardActivityPanel boardId={board.id} />
+      </Modal>
 
       {activeCard ? (
         <CardEditor

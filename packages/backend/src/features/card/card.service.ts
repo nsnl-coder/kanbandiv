@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import {
+  ActivityType,
   BoardError,
   type Card,
   CardCoverError,
@@ -9,6 +10,7 @@ import {
   type MoveCardInput,
   type UpdateCardInput,
 } from "shared";
+import { record } from "../activity/activity.recorder.js";
 import * as attachmentRepo from "../attachment/attachment.repo.js";
 import type { AttachmentRow } from "../attachment/attachment.repo.js";
 import type { CtxUser } from "../board/board.service.js";
@@ -23,6 +25,7 @@ import type { Db } from "./card.repo.js";
 type ColumnRow = {
   id: string;
   board_id: string;
+  name: string;
 };
 
 function cardNotFound() {
@@ -96,6 +99,13 @@ export async function createCard(
     description: input.description ?? null,
     position: max + 1,
   });
+  await record(db, {
+    boardId: column.board_id,
+    cardId: (row as CardRow).id,
+    actorId: user.id,
+    type: ActivityType.CARD_CREATED,
+    meta: { cardTitle: (row as CardRow).title },
+  });
   return enrichCard(db, row as CardRow);
 }
 
@@ -105,7 +115,7 @@ export async function updateCard(
   id: string,
   patch: UpdateCardInput,
 ): Promise<Card> {
-  await loadCardFor(db, user, id, "edit");
+  const { card: before, column } = await loadCardFor(db, user, id, "edit");
   const dbPatch: {
     title?: string;
     description?: string | null;
@@ -126,9 +136,66 @@ export async function updateCard(
     dbPatch.reminder_sent_at = null;
   }
   await applyCoverPatch(db, id, patch, dbPatch);
-  const updated = await repo.updateCard(db, id, dbPatch);
+  const updated = (await repo.updateCard(db, id, dbPatch)) as CardRow | undefined;
   if (!updated) throw cardNotFound();
-  return enrichCard(db, updated as CardRow);
+  await recordCardUpdate(db, user.id, column.board_id, before, updated, patch);
+  return enrichCard(db, updated);
+}
+
+// Emit one activity row per changed field (a single updateCard can produce
+// several: e.g. rename + due date).
+async function recordCardUpdate(
+  db: Db,
+  actorId: string,
+  boardId: string,
+  before: CardRow,
+  updated: CardRow,
+  patch: UpdateCardInput,
+): Promise<void> {
+  const cardTitle = updated.title;
+  if (before.title !== updated.title) {
+    await record(db, {
+      boardId,
+      cardId: updated.id,
+      actorId,
+      type: ActivityType.CARD_RENAMED,
+      meta: { from: before.title, to: updated.title, cardTitle },
+    });
+  }
+  if (patch.description !== undefined && before.description !== updated.description) {
+    await record(db, {
+      boardId,
+      cardId: updated.id,
+      actorId,
+      type: ActivityType.CARD_DESCRIPTION_CHANGED,
+      meta: { cardTitle },
+    });
+  }
+  if (patch.dueAt !== undefined) {
+    await record(db, {
+      boardId,
+      cardId: updated.id,
+      actorId,
+      type: patch.dueAt ? ActivityType.DUE_DATE_SET : ActivityType.DUE_DATE_CLEARED,
+      meta: patch.dueAt
+        ? { dueAt: patch.dueAt.toISOString(), cardTitle }
+        : { cardTitle },
+    });
+  }
+  if (patch.coverColor !== undefined || patch.coverAttachmentId !== undefined) {
+    const coverKind = updated.cover_attachment_id
+      ? "image"
+      : updated.cover_color
+        ? "color"
+        : "none";
+    await record(db, {
+      boardId,
+      cardId: updated.id,
+      actorId,
+      type: ActivityType.COVER_CHANGED,
+      meta: { coverKind, cardTitle },
+    });
+  }
 }
 
 // Map the cover tri-state fields onto dbPatch, enforcing mutual exclusion and
@@ -195,8 +262,15 @@ export async function deleteCard(
   user: CtxUser,
   id: string,
 ): Promise<{ ok: true }> {
-  await loadCardFor(db, user, id, "edit");
+  const { card, column } = await loadCardFor(db, user, id, "edit");
   await repo.deleteCard(db, id);
+  await record(db, {
+    boardId: column.board_id,
+    cardId: null,
+    actorId: user.id,
+    type: ActivityType.CARD_DELETED,
+    meta: { cardTitle: card.title, cardId: id },
+  });
   // DB cascade removes attachment rows; the MinIO objects are not cascaded.
   await storage
     .removePrefix(`cards/${id}/`)
@@ -228,7 +302,18 @@ export async function moveCard(
     input.beforeId,
     input.afterId,
   );
-  const updated = await repo.setPosition(db, id, input.toColumnId, position);
+  const updated = (await repo.setPosition(db, id, input.toColumnId, position)) as
+    | CardRow
+    | undefined;
   if (!updated) throw cardNotFound();
-  return enrichCard(db, updated as CardRow);
+  if (input.toColumnId !== column.id) {
+    await record(db, {
+      boardId: column.board_id,
+      cardId: id,
+      actorId: user.id,
+      type: ActivityType.CARD_MOVED,
+      meta: { fromColumn: column.name, toColumn: target.name, cardTitle: updated.title },
+    });
+  }
+  return enrichCard(db, updated);
 }

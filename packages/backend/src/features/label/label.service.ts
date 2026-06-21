@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import {
+  ActivityType,
   type CardLabelInput,
   type CreateLabelInput,
   type Label,
@@ -8,6 +9,7 @@ import {
 } from "shared";
 import type { CtxUser } from "../board/board.service.js";
 import { loadBoardFor } from "../board/board.service.js";
+import { cardTitle, record } from "../activity/activity.recorder.js";
 import * as repo from "./label.repo.js";
 import type { Db } from "./label.repo.js";
 
@@ -153,6 +155,17 @@ export async function attachLabel(
     });
   }
   await repo.attachLabel(db, input.cardId, input.labelId);
+  await record(db, {
+    boardId,
+    cardId: input.cardId,
+    actorId: user.id,
+    type: ActivityType.LABEL_ATTACHED,
+    meta: {
+      labelName: label.name,
+      labelColor: label.color,
+      cardTitle: await cardTitle(db, input.cardId),
+    },
+  });
   return cardLabels(db, input.cardId);
 }
 
@@ -161,8 +174,24 @@ export async function detachLabel(
   user: CtxUser,
   input: CardLabelInput,
 ): Promise<Label[]> {
-  await loadCardBoard(db, user, input.cardId, "edit");
+  const { boardId } = await loadCardBoard(db, user, input.cardId, "edit");
+  const label = (await repo.findLabelById(db, input.labelId)) as
+    | LabelRow
+    | undefined;
   await repo.detachLabel(db, input.cardId, input.labelId);
+  if (label) {
+    await record(db, {
+      boardId,
+      cardId: input.cardId,
+      actorId: user.id,
+      type: ActivityType.LABEL_DETACHED,
+      meta: {
+        labelName: label.name,
+        labelColor: label.color,
+        cardTitle: await cardTitle(db, input.cardId),
+      },
+    });
+  }
   return cardLabels(db, input.cardId);
 }
 

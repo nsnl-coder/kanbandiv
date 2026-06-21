@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import {
+  ActivityType,
   type Assignee,
   AssigneeError,
   type AssignInput,
@@ -9,6 +10,7 @@ import {
 } from "shared";
 import type { CtxUser } from "../board/board.service.js";
 import { loadBoardFor } from "../board/board.service.js";
+import { cardTitle, record } from "../activity/activity.recorder.js";
 import * as commentRepo from "../comment/comment.repo.js";
 import type { EmailPort } from "../email/email.service.js";
 import { env } from "../../config/env.config.js";
@@ -24,6 +26,10 @@ function cardNotFound() {
 
 function boardNotFound() {
   return new TRPCError({ code: "NOT_FOUND", message: AssigneeError.BOARD_NOT_FOUND });
+}
+
+function nameFromEmail(email: string): string {
+  return email.split("@")[0];
 }
 
 function cardLink(boardId: string, cardId: string): string {
@@ -101,15 +107,21 @@ export async function assign(
   const existing = await repo.findByCardUser(db, cardId, userId);
   if (!existing) {
     await repo.assign(db, cardId, userId);
+    const title = await cardTitle(db, cardId);
     if (target.id !== user.id) {
-      const card = await db
-        .selectFrom("cards")
-        .select(["title"])
-        .where("id", "=", cardId)
-        .executeTakeFirst();
-      const title = card?.title ?? "card";
       await email.sendCardAssigned(target.email, title, cardLink(boardId, cardId));
     }
+    await record(db, {
+      boardId,
+      cardId,
+      actorId: user.id,
+      type: ActivityType.ASSIGNEE_ASSIGNED,
+      meta: {
+        targetEmail: target.email,
+        targetHandle: nameFromEmail(target.email),
+        cardTitle: title,
+      },
+    });
   }
 
   const rows = await repo.listByCard(db, cardId);
@@ -121,8 +133,29 @@ export async function unassign(
   user: CtxUser,
   { cardId, userId }: UnassignInput,
 ): Promise<Assignee[]> {
-  await resolveCardBoard(db, user, cardId, "edit");
+  const { boardId } = await resolveCardBoard(db, user, cardId, "edit");
+  const existing = await repo.findByCardUser(db, cardId, userId);
   await repo.unassign(db, cardId, userId);
+  if (existing) {
+    const u = await db
+      .selectFrom("users")
+      .select(["email"])
+      .where("id", "=", userId)
+      .executeTakeFirst();
+    if (u) {
+      await record(db, {
+        boardId,
+        cardId,
+        actorId: user.id,
+        type: ActivityType.ASSIGNEE_UNASSIGNED,
+        meta: {
+          targetEmail: u.email,
+          targetHandle: nameFromEmail(u.email),
+          cardTitle: await cardTitle(db, cardId),
+        },
+      });
+    }
+  }
   const rows = await repo.listByCard(db, cardId);
   return rows.map((r) => ({ id: r.id, email: r.email }));
 }

@@ -12,6 +12,7 @@ import { commentsRouter } from "../features/comment/comment.router.js";
 import { assigneesRouter } from "../features/assignee/assignee.router.js";
 import { attachmentsRouter } from "../features/attachment/attachment.router.js";
 import { backupRouter } from "../features/backup/backup.router.js";
+import { activityRouter } from "../features/activity/activity.router.js";
 
 export const appRouter = router({
   health: healthRouter,
@@ -28,6 +29,7 @@ export const appRouter = router({
   assignees: assigneesRouter,
   attachments: attachmentsRouter,
   backup: backupRouter,
+  activity: activityRouter,
 });
 
 export type AppRouter = typeof appRouter;

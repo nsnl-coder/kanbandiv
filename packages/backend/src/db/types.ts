@@ -1,5 +1,6 @@
 import type { ColumnType, Generated } from "kysely";
 import type {
+  ActivityMeta,
   BackupStatus,
   BackupTrigger,
   OtpPurpose,
@@ -234,6 +235,19 @@ export interface BackupRunsTable {
   created_at: GeneratedTimestamp;
 }
 
+export interface ActivitiesTable {
+  id: Generated<string>;
+  board_id: string;
+  card_id: string | null;
+  actor_id: string | null;
+  type: string;
+  // jsonb: select returns a parsed object; INSERT MUST send JSON TEXT (the
+  // recorder JSON.stringify's it — node-pg sends a raw object as
+  // "[object Object]"). So the insert type is string.
+  meta: ColumnType<ActivityMeta, string, string>;
+  created_at: GeneratedTimestamp;
+}
+
 export interface Database {
   users: UsersTable;
   roles: RolesTable;
@@ -257,4 +271,5 @@ export interface Database {
   attachments: AttachmentsTable;
   backup_settings: BackupSettingsTable;
   backup_runs: BackupRunsTable;
+  activities: ActivitiesTable;
 }

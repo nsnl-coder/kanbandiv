@@ -3,6 +3,7 @@ import path from "node:path";
 import { PassThrough } from "node:stream";
 import { TRPCError } from "@trpc/server";
 import {
+  ActivityType,
   type Attachment,
   AttachmentError,
   ATTACHMENT_ALLOWED_MIME,
@@ -14,6 +15,7 @@ import {
 } from "shared";
 import type { CtxUser } from "../board/board.service.js";
 import { loadBoardFor } from "../board/board.service.js";
+import { cardTitle, record } from "../activity/activity.recorder.js";
 import { logger } from "../../logger.js";
 import * as cardRepo from "../card/card.repo.js";
 import * as repo from "./attachment.repo.js";
@@ -37,14 +39,14 @@ async function loadCardBoard(
   user: CtxUser,
   cardId: string,
   min: MyPermission,
-): Promise<MyPermission> {
+): Promise<{ perm: MyPermission; boardId: string }> {
   const card = (await cardRepo.findCardById(db, cardId)) as { column_id: string } | undefined;
   if (!card) throw cardNotFound();
   const column = (await cardRepo.findColumnById(db, card.column_id)) as ColumnRow | undefined;
   if (!column) throw cardNotFound();
   try {
     const { perm } = await loadBoardFor(db, user, column.board_id, min);
-    return perm;
+    return { perm, boardId: column.board_id };
   } catch (e) {
     if (e instanceof TRPCError && (e.code === "NOT_FOUND" || e.code === "FORBIDDEN")) {
       throw cardNotFound();
@@ -86,7 +88,7 @@ export async function createAttachment(
   },
 ): Promise<Attachment> {
   if (!storage.isEnabled()) throw err(AttachmentError.STORAGE_UNAVAILABLE, "INTERNAL_SERVER_ERROR");
-  await loadCardBoard(db, user, input.cardId, "edit");
+  const { boardId } = await loadCardBoard(db, user, input.cardId, "edit");
   if (input.filename.length > ATTACHMENT_FILENAME_MAX) {
     throw err(AttachmentError.FILENAME_TOO_LONG, "BAD_REQUEST");
   }
@@ -122,6 +124,13 @@ export async function createAttachment(
       sizeBytes,
       storageKey: key,
     });
+    await record(db, {
+      boardId,
+      cardId: input.cardId,
+      actorId: user.id,
+      type: ActivityType.ATTACHMENT_ADDED,
+      meta: { filename: input.filename, cardTitle: await cardTitle(db, input.cardId) },
+    });
     return toAttachment(row as AttachmentRow);
   } catch (e) {
     // Avoid an orphan object if the row insert fails.
@@ -145,11 +154,11 @@ export async function loadAttachmentFor(
   db: Db,
   user: CtxUser,
   id: string,
-): Promise<{ row: AttachmentRow; perm: MyPermission }> {
+): Promise<{ row: AttachmentRow; perm: MyPermission; boardId: string }> {
   const row = (await repo.findById(db, id)) as AttachmentRow | undefined;
   if (!row) throw err(AttachmentError.ATTACHMENT_NOT_FOUND, "NOT_FOUND");
-  const perm = await loadCardBoard(db, user, row.card_id, "view");
-  return { row, perm };
+  const { perm, boardId } = await loadCardBoard(db, user, row.card_id, "view");
+  return { row, perm, boardId };
 }
 
 // Deleting a cover attachment auto-clears any card.cover_attachment_id pointing
@@ -160,7 +169,7 @@ export async function deleteAttachment(
   user: CtxUser,
   input: DeleteAttachmentInput,
 ): Promise<{ ok: true }> {
-  const { row, perm } = await loadAttachmentFor(db, user, input.id);
+  const { row, perm, boardId } = await loadAttachmentFor(db, user, input.id);
   if (row.uploader_id !== user.id && perm !== "owner") {
     throw err(AttachmentError.FORBIDDEN, "FORBIDDEN");
   }
@@ -169,5 +178,12 @@ export async function deleteAttachment(
     .removeObject(row.storage_key)
     .catch((rmErr) => logger.error({ err: rmErr, key: row.storage_key }, "attachment object remove failed"));
   await repo.deleteById(db, input.id);
+  await record(db, {
+    boardId,
+    cardId: row.card_id,
+    actorId: user.id,
+    type: ActivityType.ATTACHMENT_DELETED,
+    meta: { filename: row.filename, cardTitle: await cardTitle(db, row.card_id) },
+  });
   return { ok: true };
 }
