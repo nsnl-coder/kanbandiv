@@ -1,0 +1,13 @@
+# Per-Dockerfile ignore for the e2e runner (BuildKit prefers this over the root
+# .dockerignore). Same exclusions, EXCEPT we keep e2e/ - the runner needs the
+# specs and support harness. Patterns are relative to the build context (repo root).
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/coverage
+**/test-results
+**/.vite
+.git
+.github
+**/*.log

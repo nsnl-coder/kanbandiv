@@ -1,19 +1,15 @@
-import { test, expect } from "@playwright/test";
-import { TrpcMock, makeUser, getStore } from "./helpers";
+import { test, expect } from "../support/fixtures";
+import { login, getStore } from "./helpers";
+import { resetDb, closeDb, seedUser } from "../support/db";
 
-const PW = "password123";
+test.beforeEach(resetDb);
+test.afterAll(closeDb);
 
 test.describe("access guard", () => {
   test("must verify email before logging in", async ({ page }) => {
-    await new TrpcMock(page)
-      .loggedOut()
-      .err("auth.login", { code: "FORBIDDEN", message: "EMAIL_NOT_VERIFIED" })
-      .install();
+    await seedUser({ email: "unverified@example.com", verified: false });
 
-    await page.goto("/login");
-    await page.getByLabel("Email").fill("unverified@example.com");
-    await page.getByLabel("Password", { exact: true }).fill(PW);
-    await page.getByRole("button", { name: "Log in" }).click();
+    await login(page, "unverified@example.com");
 
     await expect(page.getByRole("alert")).toContainText("not verified");
     await expect(page.getByRole("link", { name: "Resend verification code" })).toBeVisible();
@@ -22,27 +18,26 @@ test.describe("access guard", () => {
   });
 
   test("protected route redirects to /login with next", async ({ page }) => {
-    await new TrpcMock(page).loggedOut().install();
+    await page.goto("/projects/new");
 
-    await page.goto("/settings/password");
-
-    await expect(page).toHaveURL(/\/login\?next=%2Fsettings%2Fpassword/);
+    await expect(page).toHaveURL(/\/login\?next=%2Fprojects%2Fnew/);
   });
 
-  test("home redirects unauthenticated users to /login", async ({ page }) => {
-    await new TrpcMock(page).loggedOut().install();
-
+  test("guests at / see the marketing home, not a redirect", async ({ page }) => {
     await page.goto("/");
 
-    await expect(page).toHaveURL(/\/login\?next=%2F/);
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole("link", { name: "Log in" }).first()).toBeVisible();
   });
 
-  test("user cannot reach /admin", async ({ page }) => {
-    await new TrpcMock(page).loggedIn(makeUser({ role: "user" })).install();
+  test("user without admin perms cannot reach /admin", async ({ page }) => {
+    await seedUser({ email: "user@example.com" });
+    await login(page, "user@example.com");
+    await expect(page).toHaveURL(/\/projects$/);
 
     await page.goto("/admin");
 
-    await expect(page).toHaveURL("http://localhost:5173/");
-    await expect(page.getByRole("heading", { name: "Your boards" })).toBeVisible();
+    await expect(page).toHaveURL(/\/projects$/);
+    await expect(page.getByText("No projects yet.")).toBeVisible();
   });
 });

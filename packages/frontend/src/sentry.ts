@@ -1,8 +1,8 @@
 import * as Sentry from "@sentry/react";
 import { config } from "./config/env.config";
 
-// Empty DSN (local) -> Sentry stays disabled.
-export const sentryEnabled = !!config.sentryDsn;
+// Disabled on local (any tier) and whenever no DSN is set.
+export const sentryEnabled = !!config.sentryDsn && config.appEnv !== "local";
 
 if (sentryEnabled) {
   Sentry.init({

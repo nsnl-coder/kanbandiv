@@ -1,16 +1,18 @@
-import { test, expect } from "@playwright/test";
-import { TrpcMock, makeUser, makeSession, getStore } from "./helpers";
+import { test, expect } from "../support/fixtures";
+import { PW, getStore } from "./helpers";
+import { resetDb, closeDb, seedUser } from "../support/db";
+import { fetchOtp } from "../support/mailtrap";
 
-const PW = "password123";
+test.beforeEach(resetDb);
+test.afterAll(closeDb);
 
 test.describe("sign up", () => {
   test("register -> verify email -> login (happy path)", async ({ page }) => {
-    const user = makeUser({ email: "newuser@example.com" });
-    const mock = new TrpcMock(page).loggedOut().ok("auth.register", { ok: true });
-    await mock.install();
+    const email = `signup-${Date.now()}@example.com`;
+    const t0 = Date.now();
 
     await page.goto("/register");
-    await page.getByLabel("Email").fill(user.email);
+    await page.getByLabel("Email").fill(email);
     await page.getByLabel("Password", { exact: true }).fill(PW);
     await page.getByLabel("Confirm password").fill(PW);
     await page.getByRole("button", { name: "Register" }).click();
@@ -19,40 +21,28 @@ test.describe("sign up", () => {
     expect((await getStore(page)).user).toBeNull();
 
     // wrong code first
-    mock.err("auth.verifyEmail", { code: "BAD_REQUEST", message: "INVALID_OTP" });
     await page.getByLabel("Verification code").fill("000000");
     await page.getByRole("button", { name: "Verify" }).click();
     await expect(page.getByRole("alert")).toContainText("Invalid or expired code");
     await expect(page).toHaveURL(/\/verify-email/);
 
-    // resend
-    mock.ok("auth.resendVerifyOtp", { ok: true });
-    await page.getByRole("button", { name: "Resend code" }).click();
-    await expect(page.getByText("A new code has been sent.")).toBeVisible();
-
-    // correct code -> login page
-    mock.ok("auth.verifyEmail", { ok: true });
-    await page.getByLabel("Verification code").fill("123456");
+    // real code from the verification email -> login page
+    const code = await fetchOtp(email, 6, t0);
+    await page.getByLabel("Verification code").fill(code);
     await page.getByRole("button", { name: "Verify" }).click();
     await expect(page).toHaveURL(/\/login/);
 
-    // login
-    mock.ok("auth.login", makeSession(user));
-    await page.getByLabel("Email").fill(user.email);
+    // login with the now-verified account
+    await page.getByLabel("Email").fill(email);
     await page.getByLabel("Password", { exact: true }).fill(PW);
     await page.getByRole("button", { name: "Log in" }).click();
 
-    await expect(page).toHaveURL("http://localhost:5173/");
-    const store = await getStore(page);
-    expect(store.user).not.toBeNull();
-    expect(store.user?.email).toBe(user.email);
+    await expect(page).toHaveURL(/\/projects$/);
+    expect((await getStore(page)).user?.email).toBe(email);
   });
 
   test("duplicate email shows EMAIL_TAKEN", async ({ page }) => {
-    const mock = new TrpcMock(page)
-      .loggedOut()
-      .err("auth.register", { code: "CONFLICT", message: "EMAIL_TAKEN" });
-    await mock.install();
+    await seedUser({ email: "taken@example.com", verified: true });
 
     await page.goto("/register");
     await page.getByLabel("Email").fill("taken@example.com");

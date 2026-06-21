@@ -75,6 +75,6 @@ E2E tests live outside this package in `e2e/frontend/<feature>/<flow>.e2e.spec.t
 ## Testing rule
 
 - e2e tests are real (non-mocked): hit the live API + test DB, no network/db mocking
-- run e2e only against the prod environment (dev + prod VPS), never local
+- run e2e in local, dev VPS, and prod VPS. Local e2e runs against a dedicated test Postgres DB and test MinIO bucket (never the dev/primary data)
 - e2e tests live in `e2e/frontend/`, not in this package
 - unit tests (vitest) stay in this package

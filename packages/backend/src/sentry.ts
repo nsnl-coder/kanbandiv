@@ -1,8 +1,8 @@
 import * as Sentry from "@sentry/node";
 import { env } from "./config/env.config.js";
 
-// Empty DSN (local) -> Sentry stays disabled, all calls become no-ops.
-export const sentryEnabled = !!env.SENTRY_DSN;
+// Disabled on local (any tier) and whenever no DSN is set -> all calls no-op.
+export const sentryEnabled = !!env.SENTRY_DSN && !env.isLocal;
 
 if (sentryEnabled) {
   Sentry.init({
