@@ -308,11 +308,15 @@ services:
 
 networks:
   # Fixed subnet so the proxy can hold a stable IP for Grafana's auth-proxy
-  # whitelist. Changing this requires `docker compose down` to recreate the net.
+  # whitelist. Dynamic IPs are confined to .1.0/24 so the proxy's static .0.10
+  # never collides with an auto-assigned address. Changing this requires
+  # `docker compose down` to recreate the network.
   default:
     ipam:
       config:
         - subnet: 172.28.0.0/16
+          ip_range: 172.28.1.0/24
+          gateway: 172.28.0.1
 
 volumes:
   pgdata:
