@@ -124,7 +124,12 @@ export function useBoardRealtime(boardId: string | undefined): void {
 
     return () => {
       closed = true;
+      // Leaving the board: drop this stream's offline state so a stale banner
+      // does not linger (the per-user notifications stream keeps reporting).
+      connectionStore.setOnline(true);
       if (debounceTimer !== null) clearTimeout(debounceTimer);
       es.close();
     };
-    // eslint-disable-next-line react
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boardId]);
+}
