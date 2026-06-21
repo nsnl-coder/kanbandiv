@@ -16,6 +16,7 @@ import { metricsMiddleware, metricsHandler } from "./metrics.js";
 import { healthHttpRouter } from "./features/health/health.http.js";
 import { clientLogRouter } from "./features/health/client-log.http.js";
 import { backupHttpRouter } from "./features/backup/backup.http.js";
+import { ssoHttpRouter } from "./features/sso/sso.http.js";
 import { appRouter } from "./trpc/router.js";
 import { createContext } from "./trpc/context.js";
 import { openApiDocument } from "./openapi.js";
@@ -99,6 +100,10 @@ app.use("/api", clientLogRouter);
 // Google Drive OAuth redirect lands here (plain GET; re-auths from the cookie).
 // Mounted before the tRPC/REST handlers so it owns this exact path.
 app.use("/api", backupHttpRouter);
+
+// Admin SSO forward-auth gate (Grafana/MinIO on sibling subdomains). Plain GET
+// redirects + an auth_request verify endpoint; mounted before tRPC/REST.
+app.use("/api", ssoHttpRouter);
 
 // Native tRPC endpoint (used by the typed frontend client).
 app.use(
