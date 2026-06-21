@@ -19,5 +19,8 @@ export const LogEvent = {
   CardReminderSent: "card.reminder.sent",
   ActivityRecordFailed: "activity.record.failed",
   BoardViewParseFailed: "board-view.parse.failed",
+  RealtimePublishFailed: "realtime.publish.failed",
+  RealtimeRedisError: "realtime.redis.error",
+  RealtimeEventParseFailed: "realtime.event.parse.failed",
 } as const;
 export type LogEvent = (typeof LogEvent)[keyof typeof LogEvent];

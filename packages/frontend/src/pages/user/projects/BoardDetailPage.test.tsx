@@ -17,6 +17,7 @@ const h = vi.hoisted(() => ({
   // per-mutation runtime callbacks captured from the last mutate() call
   runtime: {} as Record<string, { onError?: () => void; onSettled?: () => void }>,
   failMove: false,
+  invalidated: [] as unknown[][],
 }));
 
 vi.mock("../../../lib/trpc", () => {
@@ -26,8 +27,32 @@ vi.mock("../../../lib/trpc", () => {
     mutationOptions: (opts: Record<string, unknown> = {}) => ({ ...opts, _mutationKey: path }),
   });
   const proxy = new Proxy({}, { get: () => new Proxy({}, { get: (_t, ep: string) => leaf(ep) }) });
-  return { useTRPC: () => proxy };
+  return { useTRPC: () => proxy, refreshSession: vi.fn(() => Promise.resolve(true)) };
 });
+
+// jsdom has no EventSource; record instances so the page integration test can
+// push a remote event.
+class FakeEventSource {
+  static instances: FakeEventSource[] = [];
+  url: string;
+  withCredentials: boolean;
+  onopen: ((e: Event) => void) | null = null;
+  onmessage: ((e: MessageEvent) => void) | null = null;
+  onerror: ((e: Event) => void) | null = null;
+  closed = false;
+  constructor(url: string, init?: { withCredentials?: boolean }) {
+    this.url = url;
+    this.withCredentials = init?.withCredentials ?? false;
+    FakeEventSource.instances.push(this);
+  }
+  emit(data: unknown) {
+    this.onmessage?.({ data: JSON.stringify(data) } as MessageEvent);
+  }
+  close() {
+    this.closed = true;
+  }
+}
+vi.stubGlobal("EventSource", FakeEventSource as unknown as typeof EventSource);
 
 // Render dnd primitives as plain wrappers; capture onDragEnd so tests can fire it.
 vi.mock("@dnd-kit/core", () => ({
@@ -84,7 +109,9 @@ vi.mock("@tanstack/react-query", async (orig) => {
       error: h.mutationError[opts._mutationKey] ?? null,
     }),
     useQueryClient: () => ({
-      invalidateQueries: () => {},
+      invalidateQueries: (opts: { queryKey: unknown[] }) => {
+        h.invalidated.push(opts.queryKey);
+      },
       setQueryData: (key: unknown[], updater: unknown) => {
         const k = key[0] as string;
         const prev = h.store.get(k);
@@ -171,6 +198,8 @@ beforeEach(() => {
   h.store = new Map([["getData", data]]);
   h.dragEnd = null;
   h.failMove = false;
+  h.invalidated = [];
+  FakeEventSource.instances = [];
   useAuthStore.getState().setAuth(user);
 });
 
@@ -401,6 +430,34 @@ describe("BoardDetailPage (saved views - hydrate)", () => {
       // hydration alone must not trigger a save
       vi.advanceTimersByTime(600);
       expect(h.mutateCalls.set ?? []).toHaveLength(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe("BoardDetailPage (realtime)", () => {
+  it("opens exactly one stream for the routed board", () => {
+    renderPage();
+    expect(FakeEventSource.instances).toHaveLength(1);
+    expect(FakeEventSource.instances[0].url).toContain("/boards/b1/events");
+    expect(FakeEventSource.instances[0].withCredentials).toBe(true);
+  });
+
+  it("a remote event invalidates boards.getData", () => {
+    vi.useFakeTimers();
+    try {
+      renderPage();
+      act(() => {
+        FakeEventSource.instances[0].emit({
+          boardId: "b1",
+          type: "BOARD_CHANGED",
+          actorId: "other",
+          ts: Date.now(),
+        });
+        vi.advanceTimersByTime(250);
+      });
+      expect(h.invalidated).toContainEqual(["getData", { id: "b1" }]);
     } finally {
       vi.useRealTimers();
     }

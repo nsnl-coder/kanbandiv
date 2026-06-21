@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import {
   ActivityType,
+  BoardEventType,
   type Comment,
   CommentError,
   type CommentThread,
@@ -11,6 +12,7 @@ import {
 import type { CtxUser } from "../board/board.service.js";
 import { loadBoardFor } from "../board/board.service.js";
 import { cardTitle, record } from "../activity/activity.recorder.js";
+import { bus } from "../realtime/realtime.bus.js";
 import type { EmailPort } from "../email/email.service.js";
 import { env } from "../../config/env.config.js";
 import * as repo from "./comment.repo.js";
@@ -222,7 +224,7 @@ export async function updateComment(
 ): Promise<Comment> {
   const row = (await repo.findCommentById(db, id)) as CommentRow | undefined;
   if (!row) throw commentNotFound();
-  await resolveCardBoard(db, user, row.card_id, "view");
+  const { boardId } = await resolveCardBoard(db, user, row.card_id, "view");
   if (row.author_id !== user.id) {
     throw new TRPCError({ code: "FORBIDDEN", message: CommentError.NOT_AUTHOR });
   }
@@ -230,6 +232,13 @@ export async function updateComment(
     | CommentRow
     | undefined;
   if (!updated) throw commentNotFound();
+  bus.publish({
+    boardId,
+    cardId: row.card_id,
+    actorId: user.id,
+    ts: Date.now(),
+    type: BoardEventType.CARD_ACTIVITY,
+  });
   const [out] = await buildComments(db, [updated]);
   return out;
 }
@@ -241,10 +250,17 @@ export async function deleteComment(
 ): Promise<{ ok: true }> {
   const row = (await repo.findCommentById(db, id)) as CommentRow | undefined;
   if (!row) throw commentNotFound();
-  const { perm } = await resolveCardBoard(db, user, row.card_id, "view");
+  const { boardId, perm } = await resolveCardBoard(db, user, row.card_id, "view");
   if (row.author_id !== user.id && perm !== "owner") {
     throw new TRPCError({ code: "FORBIDDEN", message: CommentError.FORBIDDEN });
   }
   await repo.deleteComment(db, id);
+  bus.publish({
+    boardId,
+    cardId: row.card_id,
+    actorId: user.id,
+    ts: Date.now(),
+    type: BoardEventType.CARD_ACTIVITY,
+  });
   return { ok: true };
 }

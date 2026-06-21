@@ -18,6 +18,7 @@ import { clientLogRouter } from "./features/health/client-log.http.js";
 import { backupHttpRouter } from "./features/backup/backup.http.js";
 import { ssoHttpRouter } from "./features/sso/sso.http.js";
 import { attachmentHttpRouter } from "./features/attachment/attachment.http.js";
+import { realtimeHttpRouter } from "./features/realtime/realtime.http.js";
 import { storage } from "./features/attachment/attachment.storage.js";
 import { appRouter } from "./trpc/router.js";
 import { createContext } from "./trpc/context.js";
@@ -112,6 +113,10 @@ app.use("/api", ssoHttpRouter);
 // Multipart attachment upload/download. Mounted before the /api JSON body parser
 // and tRPC so these multipart routes are never touched by express.json().
 app.use("/api", attachmentHttpRouter);
+
+// SSE realtime board events (long-lived GET). Mounted before the /api JSON body
+// parser + OpenAPI catch-all so the stream is never buffered or shadowed.
+app.use("/api", realtimeHttpRouter);
 
 // Native tRPC endpoint (used by the typed frontend client).
 app.use(

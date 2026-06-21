@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import {
   ActivityType,
   BoardError,
+  BoardEventType,
   type Card,
   CardCoverError,
   COVER_IMAGE_MIME,
@@ -11,6 +12,7 @@ import {
   type UpdateCardInput,
 } from "shared";
 import { record } from "../activity/activity.recorder.js";
+import { bus } from "../realtime/realtime.bus.js";
 import * as attachmentRepo from "../attachment/attachment.repo.js";
 import type { AttachmentRow } from "../attachment/attachment.repo.js";
 import * as boardRepo from "../board/board.repo.js";
@@ -373,6 +375,14 @@ export async function moveCard(
       actorId: user.id,
       type: ActivityType.CARD_MOVED,
       meta: { fromColumn: column.name, toColumn: target.name, cardTitle: updated.title },
+    });
+  } else {
+    // Same-column reorder does not record activity; publish so other viewers refetch.
+    bus.publish({
+      boardId: column.board_id,
+      actorId: user.id,
+      ts: Date.now(),
+      type: BoardEventType.BOARD_CHANGED,
     });
   }
   return enrichCard(db, updated);

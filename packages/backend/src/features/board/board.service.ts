@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import {
   ActivityType,
+  BoardEventType,
   type ArchivedBoardItems,
   type Board,
   type BoardAccessEntry,
@@ -18,6 +19,7 @@ import * as assigneeRepo from "../assignee/assignee.repo.js";
 import * as cardRepo from "../card/card.repo.js";
 import * as columnRepo from "../column/column.repo.js";
 import { record } from "../activity/activity.recorder.js";
+import { bus } from "../realtime/realtime.bus.js";
 import * as repo from "./board.repo.js";
 import type { Db } from "./board.repo.js";
 
@@ -229,6 +231,7 @@ export async function updateBoard(
   const { perm } = await loadBoardFor(db, user, id, "edit");
   const updated = await repo.updateBoard(db, id, patch);
   if (!updated) throw boardNotFound();
+  bus.publish({ boardId: id, actorId: user.id, ts: Date.now(), type: BoardEventType.BOARD_CHANGED });
   return toBoard(updated as BoardRow, perm);
 }
 
@@ -239,6 +242,7 @@ export async function deleteBoard(
 ): Promise<{ ok: true }> {
   await loadBoardFor(db, user, id, "owner");
   await repo.deleteBoard(db, id);
+  bus.publish({ boardId: id, actorId: user.id, ts: Date.now(), type: BoardEventType.BOARD_CHANGED });
   return { ok: true };
 }
 
