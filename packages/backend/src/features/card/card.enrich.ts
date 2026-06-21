@@ -2,6 +2,7 @@ import type { Card, Label } from "shared";
 import * as labelRepo from "../label/label.repo.js";
 import * as checklistRepo from "../checklist/checklist.repo.js";
 import * as commentRepo from "../comment/comment.repo.js";
+import * as attachmentRepo from "../attachment/attachment.repo.js";
 import type { Db } from "./card.repo.js";
 
 export type CardRow = {
@@ -47,6 +48,7 @@ export async function enrichCards(
 
   const progress = await checklistRepo.progressForCards(db, ids);
   const counts = await commentRepo.countByCards(db, ids);
+  const attCounts = await attachmentRepo.countByCards(db, ids);
 
   return rows.map((r) => ({
     id: r.id,
@@ -60,6 +62,7 @@ export async function enrichCards(
     labels: labelsByCard.get(r.id) ?? [],
     checklistProgress: progress.get(r.id) ?? { done: 0, total: 0 },
     commentCount: counts.get(r.id) ?? 0,
+    attachmentCount: attCounts.get(r.id) ?? 0,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   }));

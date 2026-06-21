@@ -73,6 +73,13 @@ const schema = z.object({
   // Readiness deps. Only checked in /health/ready when the URL is set.
   REDIS_URL: z.string().default(""),
   MINIO_ENDPOINT: z.string().default(""),
+  MINIO_PORT: z.coerce.number().default(9000),
+  MINIO_USE_SSL: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((v) => v === "true"),
+  MINIO_ATTACHMENTS_BUCKET: z.string().default("attachments"),
+  ATTACHMENT_MAX_BYTES: z.coerce.number().default(10485760),
 
   // --- Backup (Google Drive OAuth + job pipeline) ---
   // OAuth client (Google Cloud console). Empty -> Drive features disabled.

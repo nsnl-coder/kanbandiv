@@ -1,7 +1,28 @@
 import type { Board, Card, Label } from "shared";
-import { LABEL_COLORS } from "shared";
+import { LABEL_COLORS, ATTACHMENT_MAX_BYTES, ATTACHMENT_ALLOWED_MIME } from "shared";
 
 export { LABEL_COLORS };
+
+// Attachment helpers. Client-side pre-validation; server is source of truth.
+export function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  const units = ["KB", "MB", "GB"];
+  let value = n / 1024;
+  let i = 0;
+  while (value >= 1024 && i < units.length - 1) {
+    value /= 1024;
+    i += 1;
+  }
+  return `${value.toFixed(value < 10 ? 1 : 0)} ${units[i]}`;
+}
+
+export function isWithinSize(file: File): boolean {
+  return file.size <= ATTACHMENT_MAX_BYTES;
+}
+
+export function isAllowedType(file: File): boolean {
+  return (ATTACHMENT_ALLOWED_MIME as readonly string[]).includes(file.type);
+}
 
 export function canEdit(b: Pick<Board, "myPermission">): boolean {
   return b.myPermission !== "view";

@@ -17,6 +17,8 @@ import { healthHttpRouter } from "./features/health/health.http.js";
 import { clientLogRouter } from "./features/health/client-log.http.js";
 import { backupHttpRouter } from "./features/backup/backup.http.js";
 import { ssoHttpRouter } from "./features/sso/sso.http.js";
+import { attachmentHttpRouter } from "./features/attachment/attachment.http.js";
+import { storage } from "./features/attachment/attachment.storage.js";
 import { appRouter } from "./trpc/router.js";
 import { createContext } from "./trpc/context.js";
 import { openApiDocument } from "./openapi.js";
@@ -107,6 +109,10 @@ app.use("/api", backupHttpRouter);
 // redirects + an auth_request verify endpoint; mounted before tRPC/REST.
 app.use("/api", ssoHttpRouter);
 
+// Multipart attachment upload/download. Mounted before the /api JSON body parser
+// and tRPC so these multipart routes are never touched by express.json().
+app.use("/api", attachmentHttpRouter);
+
 // Native tRPC endpoint (used by the typed frontend client).
 app.use(
   "/trpc",
@@ -146,4 +152,8 @@ app.listen(env.PORT, () => {
     logger.error({ err }, "failed to start backup scheduler"),
   );
   startReminderScheduler(appDb);
+  // Best-effort: create the attachments bucket if storage is configured.
+  storage.ensureBucket().catch((err) =>
+    logger.error({ err }, "ensure attachments bucket failed"),
+  );
 });

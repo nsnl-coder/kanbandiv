@@ -10,6 +10,7 @@ import { ChecklistSection } from "./ChecklistSection";
 import { LabelPicker } from "./LabelPicker";
 import { DueDatePicker } from "./DueDatePicker";
 import { CommentList } from "./CommentList";
+import { AttachmentList } from "./AttachmentList";
 import type { MentionMember } from "../utils";
 
 interface Props {
@@ -104,6 +105,14 @@ export function CardEditor({
         <DueDatePicker boardId={boardId} card={card} editable={editable} />
 
         <ChecklistSection cardId={card.id} editable={editable} />
+
+        <AttachmentList
+          boardId={boardId}
+          cardId={card.id}
+          canEdit={editable}
+          currentUserId={currentUserId}
+          isOwner={isOwner}
+        />
 
         <CommentList
           boardId={boardId}

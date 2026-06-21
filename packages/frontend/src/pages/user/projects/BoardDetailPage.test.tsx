@@ -128,8 +128,8 @@ function makeData(over: Partial<BoardData> = {}): BoardData {
         createdAt: new Date(),
         updatedAt: new Date(),
         cards: [
-          { id: "k1", columnId: "c1", title: "Card 1", description: null, position: 0, dueAt: null, reminderMinutes: null, isOverdue: false, labels: [], checklistProgress: { done: 0, total: 0 }, commentCount: 0, createdAt: new Date(), updatedAt: new Date() },
-          { id: "k2", columnId: "c1", title: "Card 2", description: null, position: 1, dueAt: null, reminderMinutes: null, isOverdue: false, labels: [], checklistProgress: { done: 0, total: 0 }, commentCount: 0, createdAt: new Date(), updatedAt: new Date() },
+          { id: "k1", columnId: "c1", title: "Card 1", description: null, position: 0, dueAt: null, reminderMinutes: null, isOverdue: false, labels: [], checklistProgress: { done: 0, total: 0 }, commentCount: 0, attachmentCount: 0, createdAt: new Date(), updatedAt: new Date() },
+          { id: "k2", columnId: "c1", title: "Card 2", description: null, position: 1, dueAt: null, reminderMinutes: null, isOverdue: false, labels: [], checklistProgress: { done: 0, total: 0 }, commentCount: 0, attachmentCount: 0, createdAt: new Date(), updatedAt: new Date() },
         ],
       },
       {
@@ -140,7 +140,7 @@ function makeData(over: Partial<BoardData> = {}): BoardData {
         createdAt: new Date(),
         updatedAt: new Date(),
         cards: [
-          { id: "k3", columnId: "c2", title: "Card 3", description: null, position: 0, dueAt: null, reminderMinutes: null, isOverdue: false, labels: [], checklistProgress: { done: 0, total: 0 }, commentCount: 0, createdAt: new Date(), updatedAt: new Date() },
+          { id: "k3", columnId: "c2", title: "Card 3", description: null, position: 0, dueAt: null, reminderMinutes: null, isOverdue: false, labels: [], checklistProgress: { done: 0, total: 0 }, commentCount: 0, attachmentCount: 0, createdAt: new Date(), updatedAt: new Date() },
         ],
       },
     ],

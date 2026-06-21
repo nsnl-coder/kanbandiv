@@ -9,6 +9,7 @@ import {
 } from "shared";
 import { protectedProcedure, router } from "../../trpc/trpc.js";
 import * as card from "./card.service.js";
+import { storage } from "../attachment/attachment.storage.js";
 
 const idInput = z.object({ id: z.string() });
 
@@ -43,7 +44,7 @@ export const cardsRouter = router({
     .meta({ openapi: { method: "DELETE", path: "/cards/{id}", tags: ["cards"], protect: true, summary: "Delete a card" } })
     .input(idInput)
     .output(okSchema)
-    .mutation(({ ctx, input }) => card.deleteCard(ctx.db, user(ctx), input.id)),
+    .mutation(({ ctx, input }) => card.deleteCard(ctx.db, storage, user(ctx), input.id)),
 
   move: protectedProcedure
     .meta({ openapi: { method: "POST", path: "/cards/{id}/move", tags: ["cards"], protect: true, summary: "Move or reorder a card" } })

@@ -9,6 +9,8 @@ import {
 } from "shared";
 import type { CtxUser } from "../board/board.service.js";
 import { loadBoardFor } from "../board/board.service.js";
+import { logger } from "../../logger.js";
+import type { Storage } from "../attachment/attachment.storage.js";
 import { computePosition } from "../column/column.service.js";
 import { type CardRow, enrichCard, enrichCards } from "./card.enrich.js";
 import * as repo from "./card.repo.js";
@@ -138,11 +140,16 @@ export async function listDueCards(
 
 export async function deleteCard(
   db: Db,
+  storage: Storage,
   user: CtxUser,
   id: string,
 ): Promise<{ ok: true }> {
   await loadCardFor(db, user, id, "edit");
   await repo.deleteCard(db, id);
+  // DB cascade removes attachment rows; the MinIO objects are not cascaded.
+  await storage
+    .removePrefix(`cards/${id}/`)
+    .catch((err) => logger.error({ err, cardId: id }, "attachment prefix cleanup failed"));
   return { ok: true };
 }
 

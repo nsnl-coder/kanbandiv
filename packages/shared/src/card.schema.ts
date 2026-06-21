@@ -55,6 +55,7 @@ export const cardSchema = z.object({
   labels: z.array(labelSchema),
   checklistProgress: checklistProgressSchema,
   commentCount: z.number(),
+  attachmentCount: z.number(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });

@@ -178,6 +178,18 @@ export interface CommentMentionsTable {
   user_id: string;
 }
 
+export interface AttachmentsTable {
+  id: Generated<string>;
+  card_id: string;
+  uploader_id: string;
+  filename: string;
+  mime_type: string;
+  // bigint: node-pg returns it as string; parse with Number in the service.
+  size_bytes: ColumnType<string, string | number, string | number>;
+  storage_key: string;
+  created_at: GeneratedTimestamp;
+}
+
 export interface BackupSettingsTable {
   id: number;
   enabled: Generated<boolean>;
@@ -233,6 +245,7 @@ export interface Database {
   checklist_items: ChecklistItemsTable;
   comments: CommentsTable;
   comment_mentions: CommentMentionsTable;
+  attachments: AttachmentsTable;
   backup_settings: BackupSettingsTable;
   backup_runs: BackupRunsTable;
 }

@@ -29,6 +29,7 @@ function makeCard(over: Partial<Card> = {}): Card {
     labels: [],
     checklistProgress: { done: 0, total: 0 },
     commentCount: 0,
+    attachmentCount: 0,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...over,
