@@ -9,7 +9,7 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
-import { ArrowLeft, Pencil, Archive, Plus, Users, Maximize2, Minimize2, Tag, History, LayoutTemplate } from "lucide-react";
+import { Plus } from "lucide-react";
 import {
   COLUMN_NAME_MAX,
   BoardViewMode,
@@ -23,6 +23,8 @@ import { useTRPC } from "../../../lib/trpc";
 import { useAuthStore } from "../../../hooks/useAuthStore";
 import { Modal } from "../../../components/Modal";
 import { Column } from "../../../features/board/components/Column";
+import { BoardMenu } from "../../../features/board/components/BoardMenu";
+import { EditBoardModal } from "../../../features/board/components/EditBoardModal";
 import { CardEditor } from "../../../features/board/components/CardEditor";
 import { BoardAccessPanel } from "../../../features/board/components/BoardAccessPanel";
 import { LabelManager } from "../../../features/board/components/LabelManager";
@@ -71,6 +73,7 @@ export function BoardDetailPage() {
   const [showAccess, setShowAccess] = useState(false);
   const [showLabels, setShowLabels] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
   const [showActivity, setShowActivity] = useState(false);
   const [labelFilter, setLabelFilter] = useState<string[]>([]);
   const [assigneeFilter, setAssigneeFilter] = useState<string[]>([]);
@@ -82,6 +85,8 @@ export function BoardDetailPage() {
   const currentUser = useAuthStore((s) => s.user);
   // Full-width by default; only "fit" is an explicit opt-out stored as "0".
   const [wide, setWide] = useState(() => localStorage.getItem("boardWide") !== "0");
+  const [addingColumn, setAddingColumn] = useState(false);
+  const [newColumn, setNewColumn] = useState("");
 
   const toggleWide = () =>
     setWide((w) => {
@@ -238,12 +243,12 @@ export function BoardDetailPage() {
 
   if (dataQuery.error) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="board-surface min-h-screen">
         <main className="max-w-3xl p-6">
           <p className="text-sm text-slate-600">Board not found or no access.</p>
           <Link
             to={`/projects/${id}`}
-            className="text-sm font-medium text-slate-700 hover:text-slate-900"
+            className="text-sm font-medium text-slate-700 transition-colors hover:text-slate-900"
           >
             Back to project
           </Link>
@@ -254,9 +259,14 @@ export function BoardDetailPage() {
 
   if (!board) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <main className="max-w-3xl p-6">
-          <p className="text-sm text-slate-500">Loading...</p>
+      <div className="board-surface min-h-screen">
+        <main className="max-w-3xl space-y-3 p-6">
+          <div className="h-8 w-48 animate-pulse rounded-lg bg-slate-200/70" />
+          <div className="flex gap-4">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-64 w-72 animate-pulse rounded-2xl bg-slate-200/50" />
+            ))}
+          </div>
         </main>
       </div>
     );
@@ -275,11 +285,13 @@ export function BoardDetailPage() {
   const activeCard =
     columns.flatMap((c) => c.cards).find((c) => c.id === activeCardId) ?? null;
 
-  const addColumn = () => {
-    const name = window.prompt("Column name")?.trim();
+  const submitColumn = () => {
+    const name = newColumn.trim();
     if (name && name.length <= COLUMN_NAME_MAX) {
       createColumnMutation.mutate({ boardId: board.id, name });
     }
+    setNewColumn("");
+    setAddingColumn(false);
   };
 
   const onColumnDrop = (event: DragEndEvent) => {
@@ -398,25 +410,18 @@ export function BoardDetailPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
-      <main className={`flex flex-1 flex-col overflow-hidden ${wide ? "w-full" : "w-full max-w-6xl"} px-6 pt-6`}>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <Link
-              to={`/projects/${id}`}
-              className="inline-flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-700"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to project
-            </Link>
-            <div className="mt-1 flex items-center gap-3">
-              <span
-                aria-hidden
-                style={{ backgroundColor: board.color }}
-                className="h-6 w-6 rounded-full"
-              />
-              <h1 className="text-2xl font-bold text-slate-800">{board.name}</h1>
-            </div>
+    <div className="board-surface board-grain relative flex min-h-screen flex-col">
+      <main className={`relative z-[1] flex flex-1 flex-col overflow-hidden ${wide ? "w-full" : "w-full max-w-6xl"} px-6 pt-6`}>
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+          <div className="flex items-center gap-3">
+            <span
+              aria-hidden
+              style={{ backgroundColor: board.color, boxShadow: `0 4px 14px -2px ${board.color}80` }}
+              className="h-7 w-7 shrink-0 rounded-full ring-2 ring-white/80"
+            />
+            <h1 className="text-[1.75rem] font-bold leading-none tracking-tight text-slate-900 text-balance">
+              {board.name}
+            </h1>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <ViewSwitcher
@@ -425,88 +430,24 @@ export function BoardDetailPage() {
               swimlaneBy={swimlaneBy}
               onSwimlaneByChange={setSwimlaneBy}
             />
-            <button
-              type="button"
-              onClick={toggleWide}
-              aria-label={wide ? "Use fixed width" : "Use full width"}
-              title={wide ? "Use fixed width" : "Use full width"}
-              className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
-            >
-              {wide ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-              {wide ? "Fit" : "Full width"}
-            </button>
-            {editable ? (
-              <Link
-                to={`/projects/${id}/boards/${board.id}/edit`}
-                className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
-              >
-                <Pencil className="h-4 w-4" />
-                Edit
-              </Link>
-            ) : null}
-            <button
-              type="button"
-              onClick={() => setShowActivity(true)}
-              className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
-            >
-              <History className="h-4 w-4" />
-              History
-            </button>
-            {editable ? (
-              <button
-                type="button"
-                onClick={() => setShowLabels(true)}
-                className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
-              >
-                <Tag className="h-4 w-4" />
-                Manage labels
-              </button>
-            ) : null}
-            {editable ? (
-              <button
-                type="button"
-                onClick={() => setShowTemplates(true)}
-                className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
-              >
-                <LayoutTemplate className="h-4 w-4" />
-                Manage templates
-              </button>
-            ) : null}
-            {editable ? (
-              <button
-                type="button"
-                onClick={() => setShowArchived(true)}
-                className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
-              >
-                <Archive className="h-4 w-4" />
-                Archived items
-              </button>
-            ) : null}
-            {isOwner(board) ? (
-              <button
-                type="button"
-                onClick={() => setShowAccess(true)}
-                className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
-              >
-                <Users className="h-4 w-4" />
-                Manage access
-              </button>
-            ) : null}
-            {isOwner(board) ? (
-              <button
-                type="button"
-                onClick={() => setConfirmArchive(true)}
-                className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
-              >
-                <Archive className="h-4 w-4" />
-                Archive
-              </button>
-            ) : null}
+            <BoardMenu
+              editable={editable}
+              owner={isOwner(board)}
+              wide={wide}
+              onToggleWide={toggleWide}
+              onEdit={() => setShowEdit(true)}
+              onHistory={() => setShowActivity(true)}
+              onLabels={() => setShowLabels(true)}
+              onTemplates={() => setShowTemplates(true)}
+              onArchived={() => setShowArchived(true)}
+              onAccess={() => setShowAccess(true)}
+              onArchive={() => setConfirmArchive(true)}
+            />
           </div>
         </div>
 
         {board.description ? (
-          <p className="mt-4 text-sm text-slate-600">{board.description}</p>
+          <p className="mt-4 max-w-prose text-sm leading-relaxed text-slate-600">{board.description}</p>
         ) : null}
 
         <div className="mt-4 flex flex-col gap-2">
@@ -554,14 +495,44 @@ export function BoardDetailPage() {
             </SortableContext>
 
             {editable ? (
-              <button
-                type="button"
-                onClick={addColumn}
-                className="flex w-72 shrink-0 items-center gap-1 self-start rounded-lg border border-dashed border-slate-300 px-3 py-2 text-left text-sm font-medium text-slate-500 hover:bg-slate-100"
-              >
-                <Plus className="h-4 w-4" />
-                Add column
-              </button>
+              addingColumn ? (
+                <div className="flex w-72 shrink-0 flex-col gap-2 self-start rounded-2xl border border-slate-200/70 bg-white/70 p-3 shadow-[0_2px_10px_-4px_rgb(30_41_59/0.12)] backdrop-blur-sm">
+                  <input
+                    autoFocus
+                    aria-label="new column name"
+                    value={newColumn}
+                    maxLength={COLUMN_NAME_MAX}
+                    onChange={(e) => setNewColumn(e.target.value)}
+                    onBlur={submitColumn}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") submitColumn();
+                      if (e.key === "Escape") {
+                        setNewColumn("");
+                        setAddingColumn(false);
+                      }
+                    }}
+                    placeholder="List name, e.g. To do"
+                    className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm outline-none focus:border-indigo-400"
+                  />
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={submitColumn}
+                    className="self-start rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
+                  >
+                    Add list
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setAddingColumn(true)}
+                  className="flex w-72 shrink-0 items-center gap-1.5 self-start rounded-2xl border border-dashed border-slate-300 px-3 py-3 text-left text-sm font-semibold text-slate-500 transition-all duration-200 hover:border-indigo-300 hover:bg-white/60 hover:text-indigo-600 active:scale-[0.99]"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add another list
+                </button>
+              )
             ) : null}
           </div>
         </DndContext>
@@ -624,6 +595,15 @@ export function BoardDetailPage() {
         >
           <TemplatesManager boardId={board.id} editable={editable} />
         </Modal>
+      ) : null}
+
+      {editable ? (
+        <EditBoardModal
+          projectId={id!}
+          board={{ id: board.id, name: board.name, description: board.description ?? null, color: board.color }}
+          open={showEdit}
+          onClose={() => setShowEdit(false)}
+        />
       ) : null}
 
       <Modal

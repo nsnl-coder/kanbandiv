@@ -188,6 +188,10 @@ function renderPage(entry = "/projects/p1/boards/b1") {
   );
 }
 
+// Secondary board actions now live behind the "Board menu" dropdown.
+const openMenu = (u: ReturnType<typeof userEvent.setup>) =>
+  u.click(screen.getByRole("button", { name: "Board menu" }));
+
 beforeEach(() => {
   const data = makeData();
   h.queryData = { getData: data, accessList: [], get: defaultBoardView };
@@ -212,19 +216,22 @@ describe("BoardDetailPage (render)", () => {
     expect(screen.getByText("Card 3")).toBeInTheDocument();
   });
 
-  it("owner sees Edit, Archive and Manage access; no permanent Delete", () => {
+  it("owner sees Edit, Archive and Manage access; no permanent Delete", async () => {
+    const u = userEvent.setup();
     renderPage();
-    expect(screen.getByRole("link", { name: "Edit" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Archive" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Manage access" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Delete" })).toBeNull();
+    await openMenu(u);
+    expect(screen.getByRole("menuitem", { name: "Edit board details" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Archive board" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Manage access" })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Delete" })).toBeNull();
   });
 
   it("editor sees Archived items and opens the drawer", async () => {
     const u = userEvent.setup();
     h.queryData = { getData: makeData(), accessList: [], archivedItems: { columns: [], cards: [] } };
     renderPage();
-    await u.click(screen.getByRole("button", { name: "Archived items" }));
+    await openMenu(u);
+    await u.click(screen.getByRole("menuitem", { name: "Archived items" }));
     expect(screen.getByRole("heading", { name: "Archived items" })).toBeInTheDocument();
     expect(screen.getByText("No archived items.")).toBeInTheDocument();
   });
@@ -232,7 +239,8 @@ describe("BoardDetailPage (render)", () => {
   it("archives the board (owner) and navigates to the project", async () => {
     const u = userEvent.setup();
     renderPage();
-    await u.click(screen.getByRole("button", { name: "Archive" }));
+    await openMenu(u);
+    await u.click(screen.getByRole("menuitem", { name: "Archive board" }));
     const dialog = screen.getByRole("heading", { name: "Archive board" }).closest("div")!
       .parentElement as HTMLElement;
     await u.click(within(dialog).getByRole("button", { name: "Archive" }));
@@ -243,7 +251,8 @@ describe("BoardDetailPage (render)", () => {
     const u = userEvent.setup();
     renderPage();
     expect(screen.queryByRole("button", { name: "Share" })).toBeNull();
-    await u.click(screen.getByRole("button", { name: "Manage access" }));
+    await openMenu(u);
+    await u.click(screen.getByRole("menuitem", { name: "Manage access" }));
     expect(screen.getByRole("heading", { name: "Board access" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Share" })).toBeInTheDocument();
   });
@@ -252,16 +261,15 @@ describe("BoardDetailPage (render)", () => {
     h.queryData = { getData: makeData({ myPermission: "view" }), accessList: [] };
     const u = userEvent.setup();
     renderPage();
-    const history = screen.getByRole("button", { name: "History" });
-    expect(history).toBeInTheDocument();
-    await u.click(history);
+    await openMenu(u);
+    await u.click(screen.getByRole("menuitem", { name: "Activity history" }));
     expect(screen.getByRole("heading", { name: "Board activity" })).toBeInTheDocument();
   });
 
   it("view-only hides add/drag and management controls", () => {
     h.queryData = { getData: makeData({ myPermission: "view" }), accessList: [] };
     renderPage();
-    expect(screen.queryByRole("button", { name: "Add column" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Add another list" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Add card" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Edit" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Archive" })).toBeNull();
@@ -476,18 +484,21 @@ describe("BoardDetailPage (card templates)", () => {
     },
   ];
 
-  it("editor opens Manage templates modal", async () => {
+  it("editor opens Card templates modal", async () => {
     const u = userEvent.setup();
     h.queryData = { getData: makeData(), accessList: [], get: defaultBoardView, list: templates };
     renderPage();
-    await u.click(screen.getByRole("button", { name: "Manage templates" }));
+    await openMenu(u);
+    await u.click(screen.getByRole("menuitem", { name: "Card templates" }));
     expect(screen.getByRole("heading", { name: "Card templates" })).toBeInTheDocument();
   });
 
-  it("view-only hides Manage templates", () => {
+  it("view-only hides Card templates", async () => {
+    const u = userEvent.setup();
     h.queryData = { getData: makeData({ myPermission: "view" }), accessList: [], list: templates };
     renderPage();
-    expect(screen.queryByRole("button", { name: "Manage templates" })).toBeNull();
+    await openMenu(u);
+    expect(screen.queryByRole("menuitem", { name: "Card templates" })).toBeNull();
   });
 
   it("from-template flow calls cardTemplates.instantiate with {id, columnId}", async () => {

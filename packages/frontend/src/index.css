@@ -1,1 +1,41 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  /* One consistent, accessible focus ring for keyboard users. */
+  :focus-visible {
+    outline: 2px solid rgb(99 102 241 / 0.55);
+    outline-offset: 2px;
+  }
+}
+
+/* Ambient board canvas: warm-cool tinted gradients over an off-white base,
+   so the page reads richer than a flat slate fill. */
+.board-surface {
+  background-color: #f6f7f9;
+  background-image:
+    radial-gradient(1100px 560px at 12% -12%, rgb(99 102 241 / 0.07), transparent 58%),
+    radial-gradient(820px 480px at 102% -4%, rgb(45 212 191 / 0.06), transparent 54%);
+}
+
+/* Faint film grain to break digital flatness. Sits behind content. */
+.board-grain::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}

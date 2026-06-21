@@ -4,6 +4,14 @@ import { cleanup } from "@testing-library/react";
 
 afterEach(() => cleanup());
 
+// jsdom lacks the pointer-capture + scroll APIs Radix menus call on open.
+if (typeof Element !== "undefined") {
+  Element.prototype.hasPointerCapture ??= () => false;
+  Element.prototype.setPointerCapture ??= () => {};
+  Element.prototype.releasePointerCapture ??= () => {};
+  Element.prototype.scrollIntoView ??= () => {};
+}
+
 // jsdom has no EventSource. Provide an inert default so any component that opens
 // a stream (e.g. useBoardRealtime) does not throw. Tests asserting stream
 // behaviour stub their own recording EventSource over this.

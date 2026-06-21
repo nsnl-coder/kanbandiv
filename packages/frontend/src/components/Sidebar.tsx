@@ -10,7 +10,6 @@ import {
   LogOut,
   Search,
 } from "lucide-react";
-import type { Project } from "shared";
 import { useTRPC } from "../lib/trpc";
 import { useAuthStore } from "../hooks/useAuthStore";
 import { useSearchStore } from "../hooks/useSearchStore";
@@ -19,6 +18,8 @@ import { useCanAny } from "../features/rbac/hooks/useCan";
 import { ADMIN_READ_PERMS } from "../features/rbac/constants";
 import { ChangePasswordModal } from "../features/auth/components/ChangePasswordModal";
 import { NotificationBell } from "../features/notification/components/NotificationBell";
+import { SidebarProject } from "./SidebarProject";
+import { CreateProjectModal } from "../features/project/components/CreateProjectModal";
 
 // Persistent left rail: brand, the user's projects for quick switching, and
 // account actions. Hidden below md; AppLayout shows a compact top bar instead.
@@ -28,6 +29,7 @@ export function Sidebar() {
   const canAdmin = useCanAny(ADMIN_READ_PERMS);
   const openSearch = useSearchStore((s) => s.setOpen);
   const [showPassword, setShowPassword] = useState(false);
+  const [showCreateProject, setShowCreateProject] = useState(false);
   const [sharedOpen, setSharedOpen] = useState(false);
   const logout = useLogout();
 
@@ -42,27 +44,6 @@ export function Sidebar() {
 
   const itemBase =
     "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition";
-
-  const projectLink = (p: Project) => (
-    <NavLink
-      key={p.id}
-      to={`/projects/${p.id}`}
-      className={({ isActive }) =>
-        `${itemBase} ${
-          isActive
-            ? "bg-indigo-50 font-medium text-indigo-700"
-            : "text-slate-600 hover:bg-slate-100"
-        }`
-      }
-    >
-      <span
-        aria-hidden
-        style={{ backgroundColor: p.color }}
-        className="h-3 w-3 shrink-0 rounded-full"
-      />
-      <span className="truncate">{p.name}</span>
-    </NavLink>
-  );
 
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-200 bg-white md:flex">
@@ -92,13 +73,14 @@ export function Sidebar() {
           <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
             Projects
           </span>
-          <Link
-            to="/projects/new"
+          <button
+            type="button"
+            onClick={() => setShowCreateProject(true)}
             aria-label="New project"
             className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
           >
             <Plus className="h-4 w-4" />
-          </Link>
+          </button>
         </div>
 
         <nav className="mt-1 flex flex-col gap-0.5">
@@ -107,7 +89,7 @@ export function Sidebar() {
           ) : owned.length === 0 ? (
             <p className="px-3 py-2 text-sm text-slate-400">No projects yet</p>
           ) : (
-            owned.map(projectLink)
+            owned.map((p) => <SidebarProject key={p.id} project={p} />)
           )}
         </nav>
 
@@ -132,7 +114,7 @@ export function Sidebar() {
                   No shared projects
                 </p>
               ) : (
-                shared.map(projectLink)
+                shared.map((p) => <SidebarProject key={p.id} project={p} />)
               )}
             </nav>
           ) : null}
@@ -180,6 +162,11 @@ export function Sidebar() {
       {showPassword ? (
         <ChangePasswordModal onClose={() => setShowPassword(false)} />
       ) : null}
+
+      <CreateProjectModal
+        open={showCreateProject}
+        onClose={() => setShowCreateProject(false)}
+      />
     </aside>
   );
 }

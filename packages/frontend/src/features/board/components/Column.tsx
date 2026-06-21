@@ -66,7 +66,7 @@ export function Column({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex w-72 shrink-0 flex-col gap-2 rounded-lg bg-slate-100 p-3"
+      className="flex w-72 shrink-0 flex-col gap-2 rounded-2xl border border-slate-200/70 bg-white/55 p-3 shadow-[0_2px_10px_-4px_rgb(30_41_59/0.12)] backdrop-blur-sm"
     >
       <div className="flex items-center justify-between gap-2">
         {renaming ? (
@@ -89,7 +89,7 @@ export function Column({
         ) : (
           <h3
             {...(editable ? { ...attributes, ...listeners } : {})}
-            className={`truncate font-semibold text-slate-700 ${editable ? "cursor-grab" : ""}`}
+            className={`truncate font-semibold tracking-tight text-slate-800 ${editable ? "cursor-grab" : ""}`}
           >
             {column.name}
           </h3>
