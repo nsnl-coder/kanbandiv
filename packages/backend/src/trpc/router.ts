@@ -9,6 +9,7 @@ import { cardsRouter } from "../features/card/card.router.js";
 import { labelsRouter } from "../features/label/label.router.js";
 import { checklistsRouter, checklistItemsRouter } from "../features/checklist/checklist.router.js";
 import { commentsRouter } from "../features/comment/comment.router.js";
+import { assigneesRouter } from "../features/assignee/assignee.router.js";
 import { attachmentsRouter } from "../features/attachment/attachment.router.js";
 import { backupRouter } from "../features/backup/backup.router.js";
 
@@ -24,6 +25,7 @@ export const appRouter = router({
   checklists: checklistsRouter,
   checklistItems: checklistItemsRouter,
   comments: commentsRouter,
+  assignees: assigneesRouter,
   attachments: attachmentsRouter,
   backup: backupRouter,
 });

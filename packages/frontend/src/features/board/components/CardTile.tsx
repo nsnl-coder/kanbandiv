@@ -6,6 +6,7 @@ import { LabelBadge } from "./LabelBadge";
 import { DueDateBadge } from "./DueDateBadge";
 import { CommentCountBadge } from "./CommentCountBadge";
 import { AttachmentCountBadge } from "./AttachmentCountBadge";
+import { AssigneeStack } from "./AssigneeStack";
 
 interface Props {
   card: Card;
@@ -51,6 +52,11 @@ export function CardTile({ card, editable, onOpen }: Props) {
       <ChecklistProgressBadge progress={card.checklistProgress} />
       <CommentCountBadge count={card.commentCount} />
       <AttachmentCountBadge count={card.attachmentCount} />
+      {card.assignees?.length ? (
+        <div className="mt-1.5">
+          <AssigneeStack assignees={card.assignees} />
+        </div>
+      ) : null}
     </div>
   );
 }

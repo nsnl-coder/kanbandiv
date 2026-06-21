@@ -12,6 +12,7 @@ import {
   type UpdateBoardInput,
 } from "shared";
 import { type CardRow, enrichCards } from "../card/card.enrich.js";
+import * as assigneeRepo from "../assignee/assignee.repo.js";
 import * as repo from "./board.repo.js";
 import type { Db } from "./board.repo.js";
 
@@ -279,5 +280,6 @@ export async function revokeBoardAccess(
 ): Promise<BoardAccessEntry[]> {
   await loadBoardFor(db, user, id, "owner");
   await repo.deleteBoardAccess(db, id, input.userId);
+  await assigneeRepo.unassignAllForBoard(db, id, input.userId);
   return listBoardAccess(db, user, id);
 }

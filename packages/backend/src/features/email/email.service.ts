@@ -13,6 +13,7 @@ export interface EmailPort {
     snippet: string,
     link: string,
   ): Promise<void>;
+  sendCardAssigned(to: string, cardTitle: string, link: string): Promise<void>;
 }
 
 function render(template: string): string {
@@ -117,6 +118,16 @@ export function createEmailService(): EmailPort {
         noticeTemplate(
           "You were mentioned",
           `On "${cardTitle}": ${snippet}`,
+          link,
+        ),
+      ),
+    sendCardAssigned: (to, cardTitle, link) =>
+      send(
+        to,
+        `You were assigned: ${cardTitle}`,
+        noticeTemplate(
+          "You were assigned to a card",
+          `You were assigned to "${cardTitle}".`,
           link,
         ),
       ),

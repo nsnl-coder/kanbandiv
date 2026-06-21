@@ -1,4 +1,4 @@
-import type { Board, Card, Label } from "shared";
+import type { Assignee, Board, Card, Label } from "shared";
 import { LABEL_COLORS, ATTACHMENT_MAX_BYTES, ATTACHMENT_ALLOWED_MIME } from "shared";
 
 export { LABEL_COLORS };
@@ -64,6 +64,60 @@ export function cardMatchesLabels(card: Pick<Card, "labels">, ids: string[]): bo
   const set = new Set(card.labels.map((l) => l.id));
   return ids.every((id) => set.has(id));
 }
+
+// Assignee helpers. PublicUser has no name/avatar, so display is derived from
+// the email local-part; the chip color is keyed off the immutable user id.
+export function assigneeDisplayName(email: string): string {
+  return email.split("@")[0];
+}
+
+export function assigneeInitials(email: string): string {
+  const local = assigneeDisplayName(email);
+  const parts = local.split(/[.\-_]+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return local.slice(0, 2).toUpperCase();
+}
+
+export const ASSIGNEE_COLORS = [
+  "#2563eb",
+  "#0ea5e9",
+  "#10b981",
+  "#f59e0b",
+  "#ef4444",
+  "#ec4899",
+  "#8b5cf6",
+  "#64748b",
+] as const;
+
+export function assigneeColor(id: string): string {
+  let hash = 0;
+  for (let i = 0; i < id.length; i += 1) {
+    hash = (hash * 31 + id.charCodeAt(i)) | 0;
+  }
+  return ASSIGNEE_COLORS[Math.abs(hash) % ASSIGNEE_COLORS.length];
+}
+
+export function cardAssignedToUser(
+  card: Pick<Card, "assignees">,
+  userId: string,
+): boolean {
+  if (!userId) return false;
+  return card.assignees.some((a) => a.id === userId);
+}
+
+// OR-match: a card matches if it has ANY selected assignee. Empty filter passes.
+// Intentionally NOT AND like cardMatchesLabels.
+export function cardMatchesAssignees(
+  card: Pick<Card, "assignees">,
+  userIds: string[],
+): boolean {
+  if (userIds.length === 0) return true;
+  const set = new Set(card.assignees.map((a) => a.id));
+  return userIds.some((id) => set.has(id));
+}
+
+// Re-export Assignee for callers.
+export type { Assignee };
 
 // Due date helpers.
 export type DueState = "overdue" | "soon" | "upcoming" | "none";

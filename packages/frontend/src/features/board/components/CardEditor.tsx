@@ -8,6 +8,7 @@ import {
 import { Modal } from "../../../components/Modal";
 import { ChecklistSection } from "./ChecklistSection";
 import { LabelPicker } from "./LabelPicker";
+import { AssigneePicker } from "./AssigneePicker";
 import { DueDatePicker } from "./DueDatePicker";
 import { CommentList } from "./CommentList";
 import { AttachmentList } from "./AttachmentList";
@@ -99,6 +100,13 @@ export function CardEditor({
           boardId={boardId}
           cardId={card.id}
           labels={card.labels}
+          editable={editable}
+        />
+
+        <AssigneePicker
+          boardId={boardId}
+          cardId={card.id}
+          assignees={card.assignees}
           editable={editable}
         />
 

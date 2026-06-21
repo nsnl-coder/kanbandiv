@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
   cardMatchesLabels,
+  cardMatchesAssignees,
+  cardAssignedToUser,
+  assigneeDisplayName,
+  assigneeInitials,
+  assigneeColor,
   dueState,
   formatDueDate,
   renderMentions,
 } from "./utils";
+import type { Assignee } from "shared";
 import type { Label } from "shared";
 
 const label = (id: string): Label => ({
@@ -50,6 +56,52 @@ describe("cardMatchesLabels", () => {
     expect(cardMatchesLabels(card, ["a"])).toBe(true);
     expect(cardMatchesLabels(card, ["a", "b"])).toBe(true);
     expect(cardMatchesLabels(card, ["a", "c"])).toBe(false);
+  });
+});
+
+const assignee = (id: string, email: string): Assignee => ({ id, email });
+
+describe("assigneeDisplayName / assigneeInitials", () => {
+  it("derives the name from the email local-part", () => {
+    expect(assigneeDisplayName("alice@example.com")).toBe("alice");
+  });
+  it("initials from a dotted local-part", () => {
+    expect(assigneeInitials("john.doe@example.com")).toBe("JD");
+  });
+  it("initials from a single-token local-part", () => {
+    expect(assigneeInitials("alice@example.com")).toBe("AL");
+  });
+  it("initials from a single-char local-part", () => {
+    expect(assigneeInitials("a@example.com")).toBe("A");
+  });
+});
+
+describe("assigneeColor", () => {
+  it("is deterministic for the same id", () => {
+    expect(assigneeColor("u1")).toBe(assigneeColor("u1"));
+  });
+});
+
+describe("cardAssignedToUser", () => {
+  it("matches when the user is an assignee", () => {
+    const card = { assignees: [assignee("u1", "a@x.com")] };
+    expect(cardAssignedToUser(card, "u1")).toBe(true);
+    expect(cardAssignedToUser(card, "u2")).toBe(false);
+  });
+  it("is false when the user id is empty", () => {
+    expect(cardAssignedToUser({ assignees: [assignee("u1", "a@x.com")] }, "")).toBe(false);
+  });
+});
+
+describe("cardMatchesAssignees", () => {
+  it("matches when no filter", () => {
+    expect(cardMatchesAssignees({ assignees: [] }, [])).toBe(true);
+  });
+  it("OR-matches any selected assignee", () => {
+    const card = { assignees: [assignee("u1", "a@x.com"), assignee("u2", "b@x.com")] };
+    expect(cardMatchesAssignees(card, ["u1"])).toBe(true);
+    expect(cardMatchesAssignees(card, ["u2", "u3"])).toBe(true);
+    expect(cardMatchesAssignees(card, ["u3"])).toBe(false);
   });
 });
 

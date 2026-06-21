@@ -178,6 +178,12 @@ export interface CommentMentionsTable {
   user_id: string;
 }
 
+export interface CardAssigneesTable {
+  card_id: string;
+  user_id: string;
+  assigned_at: GeneratedTimestamp;
+}
+
 export interface AttachmentsTable {
   id: Generated<string>;
   card_id: string;
@@ -245,6 +251,7 @@ export interface Database {
   checklist_items: ChecklistItemsTable;
   comments: CommentsTable;
   comment_mentions: CommentMentionsTable;
+  card_assignees: CardAssigneesTable;
   attachments: AttachmentsTable;
   backup_settings: BackupSettingsTable;
   backup_runs: BackupRunsTable;

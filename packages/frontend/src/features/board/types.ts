@@ -10,6 +10,7 @@ export type {
   Comment,
   CommentThread,
   Attachment,
+  Assignee,
 } from "shared";
 
 export {

@@ -23,7 +23,16 @@ import { CardEditor } from "../../../features/board/components/CardEditor";
 import { BoardAccessPanel } from "../../../features/board/components/BoardAccessPanel";
 import { LabelManager } from "../../../features/board/components/LabelManager";
 import { LabelFilterBar } from "../../../features/board/components/LabelFilterBar";
-import { canEdit, isOwner, sortByPosition, cardMatchesLabels, type MentionMember } from "../../../features/board/utils";
+import { AssigneeFilterBar } from "../../../features/board/components/AssigneeFilterBar";
+import {
+  canEdit,
+  isOwner,
+  sortByPosition,
+  cardMatchesLabels,
+  cardMatchesAssignees,
+  cardAssignedToUser,
+  type MentionMember,
+} from "../../../features/board/utils";
 import { boardErrorMessage } from "../../../features/board/errors";
 
 // Reorder neighbours: midpoint between the surrounding positions. Mirrors the
@@ -45,6 +54,8 @@ export function BoardDetailPage() {
   const [showAccess, setShowAccess] = useState(false);
   const [showLabels, setShowLabels] = useState(false);
   const [labelFilter, setLabelFilter] = useState<string[]>([]);
+  const [assigneeFilter, setAssigneeFilter] = useState<string[]>([]);
+  const [assignedToMe, setAssignedToMe] = useState(false);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const currentUser = useAuthStore((s) => s.user);
   // Full-width by default; only "fit" is an explicit opt-out stored as "0".
@@ -329,8 +340,16 @@ export function BoardDetailPage() {
           <p className="mt-4 text-sm text-slate-600">{board.description}</p>
         ) : null}
 
-        <div className="mt-4">
+        <div className="mt-4 flex flex-col gap-2">
           <LabelFilterBar boardId={board.id} selected={labelFilter} onChange={setLabelFilter} />
+          <AssigneeFilterBar
+            boardId={board.id}
+            selected={assigneeFilter}
+            onChange={setAssigneeFilter}
+            assignedToMe={assignedToMe}
+            onAssignedToMeChange={setAssignedToMe}
+            currentUserId={currentUser?.id ?? ""}
+          />
         </div>
 
         <DndContext sensors={sensors} onDragEnd={onDragEnd}>
@@ -344,7 +363,12 @@ export function BoardDetailPage() {
                   key={column.id}
                   column={{
                     ...column,
-                    cards: column.cards.filter((c) => cardMatchesLabels(c, labelFilter)),
+                    cards: column.cards.filter(
+                      (c) =>
+                        cardMatchesLabels(c, labelFilter) &&
+                        cardMatchesAssignees(c, assigneeFilter) &&
+                        (!assignedToMe || cardAssignedToUser(c, currentUser?.id ?? "")),
+                    ),
                   }}
                   editable={editable}
                   onRename={(name) =>

@@ -20,6 +20,7 @@ import { up as up010 } from "../../../migrations/010.card-due-date.js";
 import { up as up011 } from "../../../migrations/011.checklist.js";
 import { up as up012 } from "../../../migrations/012.comment.js";
 import { up as up013 } from "../../../migrations/013.attachment.js";
+import { up as up014 } from "../../../migrations/014.assignee.js";
 import type { EmailPort } from "../../email/email.service.js";
 
 export type TestDb = Kysely<Database>;
@@ -50,11 +51,12 @@ export async function newTestDb(): Promise<TestDb> {
   await up011(db);
   await up012(db);
   await up013(db);
+  await up014(db);
   return db;
 }
 
 export interface SentEmail {
-  type: "verify" | "reset" | "locked" | "due" | "mention";
+  type: "verify" | "reset" | "locked" | "due" | "mention" | "assigned";
   to: string;
   code?: string;
   cardTitle?: string;
@@ -86,6 +88,9 @@ export function fakeEmail(): FakeEmail {
     },
     sendCommentMention: async (to, cardTitle, snippet, link) => {
       sent.push({ type: "mention", to, cardTitle, snippet, link });
+    },
+    sendCardAssigned: async (to, cardTitle, link) => {
+      sent.push({ type: "assigned", to, cardTitle, link });
     },
     lastCodeFor(to) {
       for (let i = sent.length - 1; i >= 0; i--) {

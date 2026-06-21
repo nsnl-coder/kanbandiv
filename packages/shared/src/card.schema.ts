@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { assigneeSchema } from "./assignee.schema.js";
 import { labelSchema } from "./label.schema.js";
 
 export const CARD_TITLE_MIN = 1;
@@ -53,6 +54,7 @@ export const cardSchema = z.object({
   reminderMinutes: z.number().nullable(),
   isOverdue: z.boolean(),
   labels: z.array(labelSchema),
+  assignees: z.array(assigneeSchema),
   checklistProgress: checklistProgressSchema,
   commentCount: z.number(),
   attachmentCount: z.number(),
