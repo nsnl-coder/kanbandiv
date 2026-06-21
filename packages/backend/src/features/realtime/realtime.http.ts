@@ -109,6 +109,37 @@ export function createRealtimeHttpRouter(deps: { db: AppDb; bus: Bus }): Router 
     },
   );
 
+  // Per-user stream. Authz == authentication: the only resource is the caller's
+  // own user channel. No board authz.
+  router.get(
+    "/me/notifications/events",
+    requireUser(db),
+    async (req: AuthedRequest, res: Response) => {
+      const user = req.authUser!;
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache, no-transform");
+      res.setHeader("Connection", "keep-alive");
+      res.setHeader("X-Accel-Buffering", "no");
+      res.flushHeaders();
+      res.write(": connected\n\n");
+
+      const off = bus.subscribeUser(user.id, (ev) => {
+        res.write(`data: ${JSON.stringify(ev)}\n\n`);
+      });
+
+      const hb = setInterval(() => {
+        res.write(": ping\n\n");
+      }, HEARTBEAT_MS);
+
+      req.on("close", () => {
+        clearInterval(hb);
+        off();
+        res.end();
+      });
+    },
+  );
+
   return router;
 }
 

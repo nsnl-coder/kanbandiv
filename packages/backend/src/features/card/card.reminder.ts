@@ -1,6 +1,9 @@
+import { NotificationType } from "shared";
 import { env } from "../../config/env.config.js";
 import type { EmailPort } from "../email/email.service.js";
 import * as commentRepo from "../comment/comment.repo.js";
+import { create as createNotification } from "../notification/notification.recorder.js";
+import { bus } from "../realtime/realtime.bus.js";
 import * as repo from "./card.repo.js";
 import type { Db } from "./card.repo.js";
 
@@ -40,6 +43,16 @@ export async function runDueReminders(
     const link = cardLink(column.board_id, card.id);
     for (const m of members) {
       await email.sendCardDueSoon(m.email, card.title, link);
+      await createNotification(db, bus, {
+        userId: m.id,
+        type: NotificationType.CARD_DUE_SOON,
+        payload: {
+          boardId: column.board_id,
+          cardId: card.id,
+          actorHandle: null,
+          title: card.title,
+        },
+      });
     }
     await repo.stampReminderSent(db, card.id, now);
     sent += 1;

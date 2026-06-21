@@ -18,6 +18,7 @@ import { useLogout } from "../hooks/useLogout";
 import { useCanAny } from "../features/rbac/hooks/useCan";
 import { ADMIN_READ_PERMS } from "../features/rbac/constants";
 import { ChangePasswordModal } from "../features/auth/components/ChangePasswordModal";
+import { NotificationBell } from "../features/notification/components/NotificationBell";
 
 // Persistent left rail: brand, the user's projects for quick switching, and
 // account actions. Hidden below md; AppLayout shows a compact top bar instead.
@@ -73,14 +74,17 @@ export function Sidebar() {
         {user ? (
           <p className="mt-1 truncate px-3 text-xs text-slate-500">{user.email}</p>
         ) : null}
-        <button
-          type="button"
-          onClick={() => openSearch(true)}
-          className={`${itemBase} mt-2 w-full text-slate-600 hover:bg-slate-100`}
-        >
-          <Search className="h-4 w-4" />
-          Search
-        </button>
+        <div className="mt-2 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => openSearch(true)}
+            className={`${itemBase} flex-1 text-slate-600 hover:bg-slate-100`}
+          >
+            <Search className="h-4 w-4" />
+            Search
+          </button>
+          <NotificationBell />
+        </div>
       </div>
 
       <div className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">

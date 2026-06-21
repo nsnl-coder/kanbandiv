@@ -1,6 +1,7 @@
 import type { ColumnType, Generated } from "kysely";
 import type {
   ActivityMeta,
+  NotificationPayload,
   BoardViewConfig,
   BackupStatus,
   BackupTrigger,
@@ -265,6 +266,18 @@ export interface BoardViewsTable {
   updated_at: GeneratedTimestamp;
 }
 
+export interface NotificationsTable {
+  id: Generated<string>;
+  user_id: string;
+  type: string;
+  // jsonb: select returns a parsed object; INSERT MUST send JSON TEXT (the
+  // recorder JSON.stringify's it — node-pg sends a raw object as "[object
+  // Object]" and corrupts the row, mirror activity audit B1).
+  payload: ColumnType<NotificationPayload, string, string>;
+  read_at: Timestamp | null;
+  created_at: GeneratedTimestamp;
+}
+
 export interface Database {
   users: UsersTable;
   roles: RolesTable;
@@ -290,4 +303,5 @@ export interface Database {
   backup_runs: BackupRunsTable;
   activities: ActivitiesTable;
   board_views: BoardViewsTable;
+  notifications: NotificationsTable;
 }

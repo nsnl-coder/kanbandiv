@@ -4,6 +4,8 @@ import { LayoutDashboard, LogOut, Search } from "lucide-react";
 import { useLogout } from "../hooks/useLogout";
 import { useSearchStore } from "../hooks/useSearchStore";
 import { SearchPalette } from "../features/search/components/SearchPalette";
+import { NotificationBell } from "../features/notification/components/NotificationBell";
+import { useNotificationsRealtime } from "../features/notification/hooks/useNotificationsRealtime";
 import { Sidebar } from "./Sidebar";
 
 // Shell for signed-in app pages: fixed-height row of [sidebar | content].
@@ -11,6 +13,9 @@ import { Sidebar } from "./Sidebar";
 export function AppLayout() {
   const logout = useLogout();
   const setOpen = useSearchStore((s) => s.setOpen);
+
+  // Single per-user SSE stream shared by the desktop + mobile bell.
+  useNotificationsRealtime();
 
   // Global Cmd/Ctrl+K opens the search palette.
   useEffect(() => {
@@ -42,6 +47,7 @@ export function AppLayout() {
             >
               <Search className="h-4 w-4" />
             </button>
+            <NotificationBell />
             <button
               type="button"
               onClick={logout.run}

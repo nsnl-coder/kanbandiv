@@ -26,6 +26,7 @@ import { up as up016 } from "../../../migrations/016.activity.js";
 import { up as up017 } from "../../../migrations/017.card-search.js";
 import { up as up018 } from "../../../migrations/018.archiving.js";
 import { up as up019 } from "../../../migrations/019.board-view.js";
+import { up as up020 } from "../../../migrations/020.notification.js";
 import type { EmailPort } from "../../email/email.service.js";
 
 export type TestDb = Kysely<Database>;
@@ -62,6 +63,12 @@ export async function newTestDb(): Promise<TestDb> {
   await up017(db);
   await up018(db);
   await up019(db);
+  await up020(db);
+  // pg-mem DEFECT: a partial index `(user_id) WHERE read_at IS NULL` is wrongly
+  // applied to plain `WHERE user_id = ?` queries, hiding rows once read_at is set
+  // (real Postgres only uses it when the query implies the partial predicate).
+  // Drop it in the test DB only; the migration spec still validates it boots.
+  await db.schema.dropIndex("notifications_user_unread_idx").ifExists().execute();
   return db;
 }
 
