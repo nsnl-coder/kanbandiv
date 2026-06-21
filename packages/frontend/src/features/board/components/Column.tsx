@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Pencil, Archive, Plus } from "lucide-react";
 import { COLUMN_NAME_MAX, COLUMN_NAME_MIN, type Card, type Column as ColumnType } from "shared";
 import { sortByPosition } from "../utils";
 import { CardTile } from "./CardTile";
@@ -11,7 +11,7 @@ interface Props {
   column: ColumnType;
   editable: boolean;
   onRename: (name: string) => void;
-  onDelete: () => void;
+  onArchive: () => void;
   onAddCard: (title: string) => void;
   onOpenCard: (card: Card) => void;
 }
@@ -20,7 +20,7 @@ export function Column({
   column,
   editable,
   onRename,
-  onDelete,
+  onArchive,
   onAddCard,
   onOpenCard,
 }: Props) {
@@ -103,11 +103,11 @@ export function Column({
             </button>
             <button
               type="button"
-              aria-label={`delete ${column.name}`}
-              onClick={onDelete}
-              className="rounded-lg p-1 text-red-500 hover:bg-red-50 hover:text-red-700"
+              aria-label={`archive ${column.name}`}
+              onClick={onArchive}
+              className="rounded-lg p-1 text-slate-500 hover:bg-slate-200 hover:text-slate-700"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Archive className="h-3.5 w-3.5" />
             </button>
           </div>
         ) : null}

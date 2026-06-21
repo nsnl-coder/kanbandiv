@@ -9,5 +9,6 @@ export const BoardError = {
   PROJECT_NOT_FOUND: "PROJECT_NOT_FOUND",
   INVALID_MOVE: "INVALID_MOVE",
   INVALID_DUE_RANGE: "INVALID_DUE_RANGE",
+  PARENT_ARCHIVED: "PARENT_ARCHIVED",
 } as const;
 export type BoardError = (typeof BoardError)[keyof typeof BoardError];

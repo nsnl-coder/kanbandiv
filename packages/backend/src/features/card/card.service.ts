@@ -13,6 +13,7 @@ import {
 import { record } from "../activity/activity.recorder.js";
 import * as attachmentRepo from "../attachment/attachment.repo.js";
 import type { AttachmentRow } from "../attachment/attachment.repo.js";
+import * as boardRepo from "../board/board.repo.js";
 import type { CtxUser } from "../board/board.service.js";
 import { loadBoardFor } from "../board/board.service.js";
 import { logger } from "../../logger.js";
@@ -26,7 +27,10 @@ type ColumnRow = {
   id: string;
   board_id: string;
   name: string;
+  archived_at?: Date | null;
 };
+
+type BoardArchRow = { id: string; archived_at: Date | null };
 
 function cardNotFound() {
   return new TRPCError({ code: "NOT_FOUND", message: BoardError.CARD_NOT_FOUND });
@@ -276,6 +280,62 @@ export async function deleteCard(
     .removePrefix(`cards/${id}/`)
     .catch((err) => logger.error({ err, cardId: id }, "attachment prefix cleanup failed"));
   return { ok: true };
+}
+
+export async function archiveCard(
+  db: Db,
+  user: CtxUser,
+  id: string,
+): Promise<Card> {
+  const { card, column } = await loadCardFor(db, user, id, "edit");
+  if (card.archived_at != null) return enrichCard(db, card); // idempotent no-op
+  const updated = (await repo.setCardArchived(db, id, new Date())) as
+    | CardRow
+    | undefined;
+  if (!updated) throw cardNotFound();
+  await record(db, {
+    boardId: column.board_id,
+    cardId: id,
+    actorId: user.id,
+    type: ActivityType.CARD_ARCHIVED,
+    meta: { cardTitle: card.title },
+  });
+  return enrichCard(db, updated);
+}
+
+export async function restoreCard(
+  db: Db,
+  user: CtxUser,
+  id: string,
+): Promise<Card> {
+  const { card } = await loadCardFor(db, user, id, "edit");
+  if (card.archived_at == null) return enrichCard(db, card); // idempotent no-op
+  // Parent guards: UNFILTERED finders so archived parents are actually seen.
+  const column = (await repo.findColumnById(db, card.column_id)) as
+    | ColumnRow
+    | undefined;
+  if (!column) throw cardNotFound();
+  const board = (await boardRepo.findBoardById(db, column.board_id)) as
+    | BoardArchRow
+    | undefined;
+  if (column.archived_at != null || board?.archived_at != null) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: BoardError.PARENT_ARCHIVED,
+    });
+  }
+  const updated = (await repo.setCardArchived(db, id, null)) as
+    | CardRow
+    | undefined;
+  if (!updated) throw cardNotFound();
+  await record(db, {
+    boardId: column.board_id,
+    cardId: id,
+    actorId: user.id,
+    type: ActivityType.CARD_RESTORED,
+    meta: { cardTitle: card.title },
+  });
+  return enrichCard(db, updated);
 }
 
 export async function moveCard(

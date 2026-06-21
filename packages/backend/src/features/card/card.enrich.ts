@@ -16,6 +16,7 @@ export type CardRow = {
   reminder_minutes: number | null;
   cover_color: string | null;
   cover_attachment_id: string | null;
+  archived_at: Date | null;
   created_at: Date;
   updated_at: Date;
 };
@@ -94,6 +95,7 @@ export async function enrichCards(
     checklistProgress: progress.get(r.id) ?? { done: 0, total: 0 },
     commentCount: counts.get(r.id) ?? 0,
     attachmentCount: attCounts.get(r.id) ?? 0,
+    archivedAt: r.archived_at,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   }));

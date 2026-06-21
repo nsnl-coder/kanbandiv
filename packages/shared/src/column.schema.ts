@@ -28,6 +28,7 @@ export const columnSchema = z.object({
   boardId: z.string(),
   name: z.string(),
   position: z.number(),
+  archivedAt: z.date().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
   cards: z.array(cardSchema),

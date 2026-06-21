@@ -99,6 +99,12 @@ export function buildSearchQuery(db: Db, opts: SearchCardsOpts) {
     );
   }
 
+  // Archive: search never surfaces archived cards/columns/boards (unconditional).
+  q = q
+    .where("cards.archived_at", "is", null)
+    .where("columns.archived_at", "is", null)
+    .where("boards.archived_at", "is", null);
+
   // Filters: each ANDed, applied only when present.
   // "at least one of" filters via non-correlated IN-subqueries (these de-dup
   // naturally and stay portable to the pg-mem test runner, which cannot resolve

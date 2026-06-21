@@ -41,10 +41,22 @@ export const cardsRouter = router({
     }),
 
   delete: protectedProcedure
-    .meta({ openapi: { method: "DELETE", path: "/cards/{id}", tags: ["cards"], protect: true, summary: "Delete a card" } })
+    .meta({ openapi: { method: "DELETE", path: "/cards/{id}", tags: ["cards"], protect: true, summary: "Permanently delete a card" } })
     .input(idInput)
     .output(okSchema)
     .mutation(({ ctx, input }) => card.deleteCard(ctx.db, storage, user(ctx), input.id)),
+
+  archive: protectedProcedure
+    .meta({ openapi: { method: "POST", path: "/cards/{id}/archive", tags: ["cards"], protect: true, summary: "Archive a card" } })
+    .input(idInput)
+    .output(cardSchema)
+    .mutation(({ ctx, input }) => card.archiveCard(ctx.db, user(ctx), input.id)),
+
+  restore: protectedProcedure
+    .meta({ openapi: { method: "POST", path: "/cards/{id}/restore", tags: ["cards"], protect: true, summary: "Restore an archived card" } })
+    .input(idInput)
+    .output(cardSchema)
+    .mutation(({ ctx, input }) => card.restoreCard(ctx.db, user(ctx), input.id)),
 
   move: protectedProcedure
     .meta({ openapi: { method: "POST", path: "/cards/{id}/move", tags: ["cards"], protect: true, summary: "Move or reorder a card" } })

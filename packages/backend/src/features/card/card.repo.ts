@@ -45,8 +45,35 @@ export function listByColumn(db: Db, columnId: string) {
     .selectFrom("cards")
     .selectAll()
     .where("column_id", "=", columnId)
+    .where("archived_at", "is", null)
     .orderBy("position", "asc")
     .execute();
+}
+
+export function listArchivedByBoard(db: Db, boardId: string) {
+  return db
+    .selectFrom("cards")
+    .innerJoin("columns", "columns.id", "cards.column_id")
+    .select([
+      "cards.id as id",
+      "cards.title as title",
+      "cards.column_id as column_id",
+      "columns.name as column_name",
+      "cards.archived_at as archived_at",
+    ])
+    .where("columns.board_id", "=", boardId)
+    .where("cards.archived_at", "is not", null)
+    .orderBy("cards.position", "asc")
+    .execute();
+}
+
+export function setCardArchived(db: Db, id: string, at: Date | null) {
+  return db
+    .updateTable("cards")
+    .set({ archived_at: at, updated_at: new Date() })
+    .where("id", "=", id)
+    .returningAll()
+    .executeTakeFirst();
 }
 
 export function updateCard(
@@ -74,12 +101,16 @@ export function listDueCards(db: Db, boardId: string, from: Date, to: Date) {
   return db
     .selectFrom("cards")
     .innerJoin("columns", "columns.id", "cards.column_id")
+    .innerJoin("boards", "boards.id", "columns.board_id")
     .selectAll("cards")
     .where("columns.board_id", "=", boardId)
     // due_at >= from already excludes nulls; an explicit IS NOT NULL with a
     // range on the same column trips a pg-mem planner bug, so omit it.
     .where("cards.due_at", ">=", from)
     .where("cards.due_at", "<=", to)
+    .where("cards.archived_at", "is", null)
+    .where("columns.archived_at", "is", null)
+    .where("boards.archived_at", "is", null)
     .orderBy("cards.due_at", "asc")
     .execute();
 }
@@ -88,11 +119,16 @@ export function listDueCards(db: Db, boardId: string, from: Date, to: Date) {
 export function findDueForReminder(db: Db, now: Date) {
   return db
     .selectFrom("cards")
-    .selectAll()
+    .innerJoin("columns", "columns.id", "cards.column_id")
+    .innerJoin("boards", "boards.id", "columns.board_id")
+    .selectAll("cards")
     // due_at >= now already excludes nulls (see listDueCards note).
-    .where("reminder_minutes", "is not", null)
-    .where("reminder_sent_at", "is", null)
-    .where("due_at", ">=", now)
+    .where("cards.reminder_minutes", "is not", null)
+    .where("cards.reminder_sent_at", "is", null)
+    .where("cards.due_at", ">=", now)
+    .where("cards.archived_at", "is", null)
+    .where("columns.archived_at", "is", null)
+    .where("boards.archived_at", "is", null)
     .execute();
 }
 
@@ -127,6 +163,7 @@ export async function maxPosition(db: Db, columnId: string): Promise<number> {
     .selectFrom("cards")
     .select((eb) => eb.fn.max("position").as("m"))
     .where("column_id", "=", columnId)
+    .where("archived_at", "is", null)
     .executeTakeFirst();
   return row?.m ?? 0;
 }

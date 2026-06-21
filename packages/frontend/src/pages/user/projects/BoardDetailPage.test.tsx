@@ -182,11 +182,31 @@ describe("BoardDetailPage (render)", () => {
     expect(screen.getByText("Card 3")).toBeInTheDocument();
   });
 
-  it("owner sees Edit, Delete and Manage access", () => {
+  it("owner sees Edit, Archive and Manage access; no permanent Delete", () => {
     renderPage();
     expect(screen.getByRole("link", { name: "Edit" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Archive" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Manage access" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Delete" })).toBeNull();
+  });
+
+  it("editor sees Archived items and opens the drawer", async () => {
+    const u = userEvent.setup();
+    h.queryData = { getData: makeData(), accessList: [], archivedItems: { columns: [], cards: [] } };
+    renderPage();
+    await u.click(screen.getByRole("button", { name: "Archived items" }));
+    expect(screen.getByRole("heading", { name: "Archived items" })).toBeInTheDocument();
+    expect(screen.getByText("No archived items.")).toBeInTheDocument();
+  });
+
+  it("archives the board (owner) and navigates to the project", async () => {
+    const u = userEvent.setup();
+    renderPage();
+    await u.click(screen.getByRole("button", { name: "Archive" }));
+    const dialog = screen.getByRole("heading", { name: "Archive board" }).closest("div")!
+      .parentElement as HTMLElement;
+    await u.click(within(dialog).getByRole("button", { name: "Archive" }));
+    expect(h.mutateCalls.archive).toContainEqual({ id: "b1" });
   });
 
   it("opens the access modal from Manage access", async () => {
@@ -214,11 +234,12 @@ describe("BoardDetailPage (render)", () => {
     expect(screen.queryByRole("button", { name: "Add column" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Add card" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Edit" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Delete" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Archive" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Archived items" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Manage access" })).toBeNull();
   });
 
-  it("shows a no-access state on query error", () => {
+  it("shows a no-access state on query error (also covers archived deep-link NOT_FOUND)", () => {
     h.queryError = { getData: new Error("nope") };
     renderPage();
     expect(screen.getByText(/not found or no access/)).toBeInTheDocument();
@@ -266,11 +287,11 @@ describe("BoardDetailPage (column + card mutations)", () => {
     expect(h.mutateCalls.update).toContainEqual({ id: "c1", name: "In progress" });
   });
 
-  it("deletes a column", async () => {
+  it("archives a column", async () => {
     const u = userEvent.setup();
     renderPage();
-    await u.click(screen.getByRole("button", { name: "delete Done" }));
-    expect(h.mutateCalls.delete).toContainEqual({ id: "c2" });
+    await u.click(screen.getByRole("button", { name: "archive Done" }));
+    expect(h.mutateCalls.archive).toContainEqual({ id: "c2" });
   });
 
   it("edits a card through the editor", async () => {
@@ -288,14 +309,14 @@ describe("BoardDetailPage (column + card mutations)", () => {
     });
   });
 
-  it("deletes a card through the editor", async () => {
+  it("archives a card through the editor", async () => {
     const u = userEvent.setup();
     renderPage();
     await u.click(screen.getByText("Card 2"));
     const dialog = screen.getByRole("heading", { name: "Edit card" }).closest("div")!
       .parentElement as HTMLElement;
-    await u.click(within(dialog).getByRole("button", { name: "Delete" }));
-    expect(h.mutateCalls.delete).toContainEqual({ id: "k2" });
+    await u.click(within(dialog).getByRole("button", { name: "Archive" }));
+    expect(h.mutateCalls.archive).toContainEqual({ id: "k2" });
   });
 });
 

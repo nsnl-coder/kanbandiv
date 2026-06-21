@@ -9,6 +9,7 @@ import { EditProjectModal } from "../../../features/project/components/EditProje
 import { canEdit, isOwner } from "../../../features/project/utils";
 import { BoardCard } from "../../../features/board/components/BoardCard";
 import { CreateBoardModal } from "../../../features/board/components/CreateBoardModal";
+import { ArchivedBoardsSection } from "../../../features/board/components/ArchivedBoardsSection";
 
 export function ProjectDetailPage() {
   const trpc = useTRPC();
@@ -96,6 +97,8 @@ export function ProjectDetailPage() {
               ))}
             </div>
           )}
+
+          <ArchivedBoardsSection projectId={project.id} />
         </section>
       </main>
 

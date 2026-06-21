@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import {
+  ActivityType,
   BoardError,
   type Column,
   type CreateColumnInput,
@@ -8,15 +9,19 @@ import {
 } from "shared";
 import type { CtxUser } from "../board/board.service.js";
 import { loadBoardFor } from "../board/board.service.js";
+import { record } from "../activity/activity.recorder.js";
 import * as boardRepo from "../board/board.repo.js";
 import * as repo from "./column.repo.js";
 import type { Db } from "./column.repo.js";
+
+type BoardArchRow = { id: string; archived_at: Date | null };
 
 type ColumnRow = {
   id: string;
   board_id: string;
   name: string;
   position: number;
+  archived_at: Date | null;
   created_at: Date;
   updated_at: Date;
 };
@@ -34,6 +39,7 @@ function toColumn(row: ColumnRow): Column {
     boardId: row.board_id,
     name: row.name,
     position: row.position,
+    archivedAt: row.archived_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     cards: [],
@@ -105,6 +111,58 @@ export async function deleteColumn(
   await loadColumnFor(db, user, id, "edit");
   await repo.deleteColumn(db, id);
   return { ok: true };
+}
+
+export async function archiveColumn(
+  db: Db,
+  user: CtxUser,
+  id: string,
+): Promise<Column> {
+  const row = await loadColumnFor(db, user, id, "edit");
+  if (row.archived_at != null) return toColumn(row); // idempotent no-op
+  const updated = (await repo.setColumnArchived(db, id, new Date())) as
+    | ColumnRow
+    | undefined;
+  if (!updated) throw columnNotFound();
+  await record(db, {
+    boardId: row.board_id,
+    cardId: null,
+    actorId: user.id,
+    type: ActivityType.COLUMN_ARCHIVED,
+    meta: { columnName: row.name },
+  });
+  return toColumn(updated);
+}
+
+export async function restoreColumn(
+  db: Db,
+  user: CtxUser,
+  id: string,
+): Promise<Column> {
+  const row = await loadColumnFor(db, user, id, "edit");
+  if (row.archived_at == null) return toColumn(row); // idempotent no-op
+  // Parent guard: UNFILTERED finder so an archived board is actually seen.
+  const board = (await boardRepo.findBoardById(db, row.board_id)) as
+    | BoardArchRow
+    | undefined;
+  if (board?.archived_at != null) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: BoardError.PARENT_ARCHIVED,
+    });
+  }
+  const updated = (await repo.setColumnArchived(db, id, null)) as
+    | ColumnRow
+    | undefined;
+  if (!updated) throw columnNotFound();
+  await record(db, {
+    boardId: row.board_id,
+    cardId: null,
+    actorId: user.id,
+    type: ActivityType.COLUMN_RESTORED,
+    meta: { columnName: row.name },
+  });
+  return toColumn(updated);
 }
 
 export async function moveColumn(

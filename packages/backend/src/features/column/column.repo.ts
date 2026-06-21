@@ -31,8 +31,28 @@ export function listByBoard(db: Db, boardId: string) {
     .selectFrom("columns")
     .selectAll()
     .where("board_id", "=", boardId)
+    .where("archived_at", "is", null)
     .orderBy("position", "asc")
     .execute();
+}
+
+export function listArchivedByBoard(db: Db, boardId: string) {
+  return db
+    .selectFrom("columns")
+    .selectAll()
+    .where("board_id", "=", boardId)
+    .where("archived_at", "is not", null)
+    .orderBy("position", "asc")
+    .execute();
+}
+
+export function setColumnArchived(db: Db, id: string, at: Date | null) {
+  return db
+    .updateTable("columns")
+    .set({ archived_at: at, updated_at: new Date() })
+    .where("id", "=", id)
+    .returningAll()
+    .executeTakeFirst();
 }
 
 export function updateColumn(db: Db, id: string, patch: { name?: string }) {
@@ -62,6 +82,7 @@ export async function maxPosition(db: Db, boardId: string): Promise<number> {
     .selectFrom("columns")
     .select((eb) => eb.fn.max("position").as("m"))
     .where("board_id", "=", boardId)
+    .where("archived_at", "is", null)
     .executeTakeFirst();
   return row?.m ?? 0;
 }

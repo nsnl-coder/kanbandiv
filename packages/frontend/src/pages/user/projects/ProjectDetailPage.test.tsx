@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import type { Project, PublicUser } from "shared";
+import type { Board, Project, PublicUser } from "shared";
 import { useAuthStore } from "../../../hooks/useAuthStore";
 
 const h = vi.hoisted(() => ({
@@ -62,6 +62,22 @@ function makeProject(over: Partial<Project> = {}): Project {
     color: "#10b981",
     visibility: "private",
     myPermission: "owner",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...over,
+  };
+}
+
+function makeBoard(over: Partial<Board> = {}): Board {
+  return {
+    id: "ab1",
+    projectId: "p1",
+    ownerId: "u1",
+    name: "Archived board",
+    description: null,
+    color: "#2563eb",
+    myPermission: "owner",
+    archivedAt: new Date(),
     createdAt: new Date(),
     updatedAt: new Date(),
     ...over,
@@ -132,5 +148,52 @@ describe("ProjectDetailPage", () => {
     h.queryError = { get: new Error("nope") };
     renderPage();
     expect(screen.getByText(/not found or no access/)).toBeInTheDocument();
+  });
+});
+
+describe("ProjectDetailPage archived boards", () => {
+  it("renders the archived-boards section and expands it", async () => {
+    const u = userEvent.setup();
+    h.queryData = { get: makeProject(), accessList: [], list: [], archived: [makeBoard()] };
+    renderPage();
+    const toggle = screen.getByRole("button", { name: /Archived boards/ });
+    expect(toggle).toBeInTheDocument();
+    await u.click(toggle);
+    expect(screen.getByText("Archived board")).toBeInTheDocument();
+  });
+
+  it("hides the section entirely when there are no archived boards", () => {
+    h.queryData = { get: makeProject(), accessList: [], list: [], archived: [] };
+    renderPage();
+    expect(screen.queryByRole("button", { name: /Archived boards/ })).toBeNull();
+  });
+
+  it("owner can restore and permanently delete an archived board", async () => {
+    const u = userEvent.setup();
+    h.queryData = { get: makeProject(), accessList: [], list: [], archived: [makeBoard()] };
+    renderPage();
+    await u.click(screen.getByRole("button", { name: /Archived boards/ }));
+    await u.click(screen.getByRole("button", { name: "Restore" }));
+    expect(h.mutateCalls.restore).toContainEqual({ id: "ab1" });
+
+    await u.click(screen.getByRole("button", { name: "Delete permanently" }));
+    const confirm = screen.getByText(/Permanently delete/).closest("div") as HTMLElement;
+    await u.click(confirm.querySelector("button.bg-red-600")!);
+    expect(h.mutateCalls.delete).toContainEqual({ id: "ab1" });
+  });
+
+  it("non-owner sees neither restore nor delete", async () => {
+    const u = userEvent.setup();
+    h.queryData = {
+      get: makeProject({ ownerId: "u2", myPermission: "edit" }),
+      accessList: [],
+      list: [],
+      archived: [makeBoard({ ownerId: "u2", myPermission: "edit" })],
+    };
+    renderPage();
+    await u.click(screen.getByRole("button", { name: /Archived boards/ }));
+    expect(screen.getByText("Archived board")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Restore" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Delete permanently" })).toBeNull();
   });
 });

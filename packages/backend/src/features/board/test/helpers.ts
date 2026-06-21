@@ -31,6 +31,7 @@ export interface SeedBoardOpts {
   name?: string;
   description?: string | null;
   color?: string;
+  archivedAt?: Date | null;
 }
 
 export async function seedBoard(db: TestDb, opts: SeedBoardOpts) {
@@ -42,6 +43,7 @@ export async function seedBoard(db: TestDb, opts: SeedBoardOpts) {
       name: opts.name ?? "My Board",
       description: opts.description ?? null,
       color: opts.color ?? DEFAULT_BOARD_COLOR,
+      archived_at: opts.archivedAt ?? null,
     })
     .returningAll()
     .executeTakeFirstOrThrow();
@@ -61,7 +63,7 @@ export async function seedBoardAccess(
 
 export async function seedColumn(
   db: TestDb,
-  opts: { boardId: string; name?: string; position: number },
+  opts: { boardId: string; name?: string; position: number; archivedAt?: Date | null },
 ) {
   return db
     .insertInto("columns")
@@ -69,6 +71,7 @@ export async function seedColumn(
       board_id: opts.boardId,
       name: opts.name ?? "Todo",
       position: opts.position,
+      archived_at: opts.archivedAt ?? null,
     })
     .returningAll()
     .executeTakeFirstOrThrow();
@@ -81,6 +84,9 @@ export async function seedCard(
     title?: string;
     description?: string | null;
     position: number;
+    archivedAt?: Date | null;
+    dueAt?: Date | null;
+    reminderMinutes?: number | null;
   },
 ) {
   return db
@@ -90,6 +96,9 @@ export async function seedCard(
       title: opts.title ?? "Task",
       description: opts.description ?? null,
       position: opts.position,
+      archived_at: opts.archivedAt ?? null,
+      due_at: opts.dueAt ?? null,
+      reminder_minutes: opts.reminderMinutes ?? null,
     })
     .returningAll()
     .executeTakeFirstOrThrow();

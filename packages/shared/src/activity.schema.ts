@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// Single source of truth for the audit event taxonomy (22 types).
+// Single source of truth for the audit event taxonomy (28 types).
 export const ActivityType = {
   // card
   CARD_CREATED: "CARD_CREATED",
@@ -34,6 +34,13 @@ export const ActivityType = {
   // board member
   MEMBER_GRANTED: "MEMBER_GRANTED",
   MEMBER_REVOKED: "MEMBER_REVOKED",
+  // archiving
+  CARD_ARCHIVED: "CARD_ARCHIVED",
+  CARD_RESTORED: "CARD_RESTORED",
+  COLUMN_ARCHIVED: "COLUMN_ARCHIVED",
+  COLUMN_RESTORED: "COLUMN_RESTORED",
+  BOARD_ARCHIVED: "BOARD_ARCHIVED",
+  BOARD_RESTORED: "BOARD_RESTORED",
 } as const;
 export type ActivityTypeValue = (typeof ActivityType)[keyof typeof ActivityType];
 
@@ -47,6 +54,9 @@ export type ActivityTypeValue = (typeof ActivityType)[keyof typeof ActivityType]
 //   CHECKLIST_* { title }; CHECKLIST_ITEM_* { text, checklistTitle? }
 //   MEMBER_GRANTED { targetEmail, targetHandle, permission }
 //   MEMBER_REVOKED { targetEmail, targetHandle }
+//   CARD_ARCHIVED / CARD_RESTORED { cardTitle }
+//   COLUMN_ARCHIVED / COLUMN_RESTORED { columnName }
+//   BOARD_ARCHIVED / BOARD_RESTORED { boardName }
 export const activityMetaSchema = z.record(z.unknown());
 export type ActivityMeta = z.infer<typeof activityMetaSchema>;
 

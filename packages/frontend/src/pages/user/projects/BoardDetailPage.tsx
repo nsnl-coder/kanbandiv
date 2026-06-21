@@ -9,7 +9,7 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
-import { ArrowLeft, Pencil, Trash2, Plus, Users, Maximize2, Minimize2, Tag, History } from "lucide-react";
+import { ArrowLeft, Pencil, Archive, Plus, Users, Maximize2, Minimize2, Tag, History } from "lucide-react";
 import {
   COLUMN_NAME_MAX,
   type BoardData,
@@ -23,6 +23,7 @@ import { CardEditor } from "../../../features/board/components/CardEditor";
 import { BoardAccessPanel } from "../../../features/board/components/BoardAccessPanel";
 import { LabelManager } from "../../../features/board/components/LabelManager";
 import { BoardActivityPanel } from "../../../features/board/components/BoardActivityPanel";
+import { ArchivedItemsPanel } from "../../../features/board/components/ArchivedItemsPanel";
 import { LabelFilterBar } from "../../../features/board/components/LabelFilterBar";
 import { AssigneeFilterBar } from "../../../features/board/components/AssigneeFilterBar";
 import {
@@ -52,7 +53,8 @@ export function BoardDetailPage() {
   const queryClient = useQueryClient();
   const { id, boardId } = useParams<{ id: string; boardId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmArchive, setConfirmArchive] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [showAccess, setShowAccess] = useState(false);
   const [showLabels, setShowLabels] = useState(false);
   const [showActivity, setShowActivity] = useState(false);
@@ -102,8 +104,10 @@ export function BoardDetailPage() {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
-  const deleteBoardMutation = useMutation(
-    trpc.boards.delete.mutationOptions({
+  // Archive (not getData-invalidate): the board 404s once archived, so navigate
+  // to the project immediately to avoid flashing the not-found state.
+  const archiveBoardMutation = useMutation(
+    trpc.boards.archive.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: trpc.boards.list.queryKey({ projectId: id }) });
         navigate(`/projects/${id}`);
@@ -117,8 +121,8 @@ export function BoardDetailPage() {
   const updateColumnMutation = useMutation(
     trpc.columns.update.mutationOptions({ onSettled: invalidateData }),
   );
-  const deleteColumnMutation = useMutation(
-    trpc.columns.delete.mutationOptions({ onSettled: invalidateData }),
+  const archiveColumnMutation = useMutation(
+    trpc.columns.archive.mutationOptions({ onSettled: invalidateData }),
   );
   const moveColumnMutation = useMutation(trpc.columns.move.mutationOptions());
 
@@ -126,7 +130,7 @@ export function BoardDetailPage() {
     trpc.cards.create.mutationOptions({ onSettled: invalidateData }),
   );
   const updateCardMutation = useMutation(trpc.cards.update.mutationOptions());
-  const deleteCardMutation = useMutation(trpc.cards.delete.mutationOptions());
+  const archiveCardMutation = useMutation(trpc.cards.archive.mutationOptions());
   const moveCardMutation = useMutation(trpc.cards.move.mutationOptions());
 
   if (dataQuery.error) {
@@ -341,6 +345,16 @@ export function BoardDetailPage() {
                 Manage labels
               </button>
             ) : null}
+            {editable ? (
+              <button
+                type="button"
+                onClick={() => setShowArchived(true)}
+                className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
+              >
+                <Archive className="h-4 w-4" />
+                Archived items
+              </button>
+            ) : null}
             {isOwner(board) ? (
               <button
                 type="button"
@@ -354,11 +368,11 @@ export function BoardDetailPage() {
             {isOwner(board) ? (
               <button
                 type="button"
-                onClick={() => setConfirmDelete(true)}
-                className="flex items-center gap-1.5 rounded-lg border border-red-300 px-3 py-1.5 font-medium text-red-600 hover:bg-red-50"
+                onClick={() => setConfirmArchive(true)}
+                className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
               >
-                <Trash2 className="h-4 w-4" />
-                Delete
+                <Archive className="h-4 w-4" />
+                Archive
               </button>
             ) : null}
           </div>
@@ -402,7 +416,7 @@ export function BoardDetailPage() {
                   onRename={(name) =>
                     updateColumnMutation.mutate({ id: column.id, name })
                   }
-                  onDelete={() => deleteColumnMutation.mutate({ id: column.id })}
+                  onArchive={() => archiveColumnMutation.mutate({ id: column.id })}
                   onAddCard={(title) =>
                     createCardMutation.mutate({ columnId: column.id, title })
                   }
@@ -457,6 +471,17 @@ export function BoardDetailPage() {
         <BoardActivityPanel boardId={board.id} />
       </Modal>
 
+      {editable ? (
+        <Modal
+          open={showArchived}
+          onClose={() => setShowArchived(false)}
+          title="Archived items"
+          widthClassName="max-w-lg"
+        >
+          <ArchivedItemsPanel boardId={board.id} editable={editable} />
+        </Modal>
+      ) : null}
+
       {activeCard ? (
         <CardEditor
           card={activeCard}
@@ -465,7 +490,7 @@ export function BoardDetailPage() {
           isOwner={isOwner(board)}
           currentUserId={currentUser?.id ?? ""}
           members={members}
-          error={updateCardMutation.error ?? deleteCardMutation.error}
+          error={updateCardMutation.error ?? archiveCardMutation.error}
           errorMessage={boardErrorMessage}
           onSave={(values) =>
             updateCardMutation.mutate(
@@ -479,8 +504,8 @@ export function BoardDetailPage() {
               },
             )
           }
-          onDelete={() =>
-            deleteCardMutation.mutate(
+          onArchive={() =>
+            archiveCardMutation.mutate(
               { id: activeCard.id },
               {
                 onSuccess: () => {
@@ -498,36 +523,37 @@ export function BoardDetailPage() {
         />
       ) : null}
 
-      {confirmDelete ? (
+      {confirmArchive ? (
         <Modal
-          open={confirmDelete}
-          onClose={() => setConfirmDelete(false)}
-          title="Delete board"
+          open={confirmArchive}
+          onClose={() => setConfirmArchive(false)}
+          title="Archive board"
         >
           <div>
             <p className="text-sm text-slate-600">
-              Delete <strong>{board.name}</strong>? This cannot be undone.
+              Archive <strong>{board.name}</strong>? It moves to the project's
+              archived boards. You can restore it later.
             </p>
-            {deleteBoardMutation.error ? (
+            {archiveBoardMutation.error ? (
               <p className="mt-2 text-sm text-red-600">
-                {boardErrorMessage(deleteBoardMutation.error)}
+                {boardErrorMessage(archiveBoardMutation.error)}
               </p>
             ) : null}
             <div className="mt-4 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setConfirmDelete(false)}
+                onClick={() => setConfirmArchive(false)}
                 className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                disabled={deleteBoardMutation.isPending}
-                onClick={() => deleteBoardMutation.mutate({ id: board.id })}
-                className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                disabled={archiveBoardMutation.isPending}
+                onClick={() => archiveBoardMutation.mutate({ id: board.id })}
+                className="rounded-lg bg-slate-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-900 disabled:opacity-50"
               >
-                Delete
+                Archive
               </button>
             </div>
           </div>

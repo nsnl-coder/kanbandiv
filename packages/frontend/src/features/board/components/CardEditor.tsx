@@ -29,7 +29,7 @@ interface Props {
   error?: unknown;
   errorMessage?: (err: unknown) => string;
   onSave: (values: { title: string; description: string | null }) => void;
-  onDelete: () => void;
+  onArchive: () => void;
   onClose: () => void;
 }
 
@@ -43,7 +43,7 @@ export function CardEditor({
   error,
   errorMessage,
   onSave,
-  onDelete,
+  onArchive,
   onClose,
 }: Props) {
   const trpc = useTRPC();
@@ -153,10 +153,10 @@ export function CardEditor({
           {editable ? (
             <button
               type="button"
-              onClick={onDelete}
-              className="rounded-lg border border-red-300 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+              onClick={onArchive}
+              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
             >
-              Delete
+              Archive
             </button>
           ) : (
             <span />

@@ -12,6 +12,7 @@ const MESSAGES: Record<BoardError, string> = {
   [BoardError.PROJECT_NOT_FOUND]: "That project no longer exists.",
   [BoardError.INVALID_MOVE]: "That move is not allowed.",
   [BoardError.INVALID_DUE_RANGE]: "That date range is not valid.",
+  [BoardError.PARENT_ARCHIVED]: "Restore the parent first.",
 };
 
 export function boardErrorMessage(err: unknown): string {

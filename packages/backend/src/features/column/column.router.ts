@@ -33,10 +33,22 @@ export const columnsRouter = router({
     }),
 
   delete: protectedProcedure
-    .meta({ openapi: { method: "DELETE", path: "/columns/{id}", tags: ["columns"], protect: true, summary: "Delete a column" } })
+    .meta({ openapi: { method: "DELETE", path: "/columns/{id}", tags: ["columns"], protect: true, summary: "Permanently delete a column (cascade)" } })
     .input(idInput)
     .output(okSchema)
     .mutation(({ ctx, input }) => column.deleteColumn(ctx.db, user(ctx), input.id)),
+
+  archive: protectedProcedure
+    .meta({ openapi: { method: "POST", path: "/columns/{id}/archive", tags: ["columns"], protect: true, summary: "Archive a column" } })
+    .input(idInput)
+    .output(columnSchema)
+    .mutation(({ ctx, input }) => column.archiveColumn(ctx.db, user(ctx), input.id)),
+
+  restore: protectedProcedure
+    .meta({ openapi: { method: "POST", path: "/columns/{id}/restore", tags: ["columns"], protect: true, summary: "Restore an archived column" } })
+    .input(idInput)
+    .output(columnSchema)
+    .mutation(({ ctx, input }) => column.restoreColumn(ctx.db, user(ctx), input.id)),
 
   move: protectedProcedure
     .meta({ openapi: { method: "POST", path: "/columns/{id}/move", tags: ["columns"], protect: true, summary: "Reorder a column" } })

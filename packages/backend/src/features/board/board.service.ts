@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import {
   ActivityType,
+  type ArchivedBoardItems,
   type Board,
   type BoardAccessEntry,
   type BoardData,
@@ -14,6 +15,8 @@ import {
 } from "shared";
 import { type CardRow, enrichCards } from "../card/card.enrich.js";
 import * as assigneeRepo from "../assignee/assignee.repo.js";
+import * as cardRepo from "../card/card.repo.js";
+import * as columnRepo from "../column/column.repo.js";
 import { record } from "../activity/activity.recorder.js";
 import * as repo from "./board.repo.js";
 import type { Db } from "./board.repo.js";
@@ -30,6 +33,7 @@ export type BoardRow = {
   name: string;
   description: string | null;
   color: string;
+  archived_at: Date | null;
   created_at: Date;
   updated_at: Date;
 };
@@ -92,6 +96,7 @@ function toBoard(row: BoardRow, myPermission: MyPermission): Board {
     description: row.description,
     color: row.color,
     myPermission,
+    archivedAt: row.archived_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -122,6 +127,7 @@ export async function getBoard(
   id: string,
 ): Promise<Board> {
   const { row, perm } = await loadBoardFor(db, user, id, "view");
+  if (row.archived_at != null) throw boardNotFound();
   return toBoard(row, perm);
 }
 
@@ -145,6 +151,7 @@ export async function getBoardData(
   id: string,
 ): Promise<BoardData> {
   const { row, perm } = await loadBoardFor(db, user, id, "view");
+  if (row.archived_at != null) throw boardNotFound();
   const columns = await repo.listColumnsForBoard(db, id);
   const cards = await repo.listCardsForBoard(db, id);
   const enriched = await enrichCards(db, cards as CardRow[]);
@@ -160,6 +167,7 @@ export async function getBoardData(
       boardId: col.board_id,
       name: col.name,
       position: col.position,
+      archivedAt: col.archived_at,
       createdAt: col.created_at,
       updatedAt: col.updated_at,
       cards: byColumn.get(col.id) ?? [],
@@ -232,6 +240,93 @@ export async function deleteBoard(
   await loadBoardFor(db, user, id, "owner");
   await repo.deleteBoard(db, id);
   return { ok: true };
+}
+
+export async function archiveBoard(
+  db: Db,
+  user: CtxUser,
+  id: string,
+): Promise<Board> {
+  const { row, perm } = await loadBoardFor(db, user, id, "owner");
+  if (row.archived_at != null) return toBoard(row, perm); // idempotent no-op
+  const updated = (await repo.setBoardArchived(db, id, new Date())) as
+    | BoardRow
+    | undefined;
+  if (!updated) throw boardNotFound();
+  await record(db, {
+    boardId: id,
+    cardId: null,
+    actorId: user.id,
+    type: ActivityType.BOARD_ARCHIVED,
+    meta: { boardName: row.name },
+  });
+  return toBoard(updated, perm);
+}
+
+export async function restoreBoard(
+  db: Db,
+  user: CtxUser,
+  id: string,
+): Promise<Board> {
+  const { row, perm } = await loadBoardFor(db, user, id, "owner");
+  if (row.archived_at == null) return toBoard(row, perm); // idempotent no-op
+  const updated = (await repo.setBoardArchived(db, id, null)) as
+    | BoardRow
+    | undefined;
+  if (!updated) throw boardNotFound();
+  await record(db, {
+    boardId: id,
+    cardId: null,
+    actorId: user.id,
+    type: ActivityType.BOARD_RESTORED,
+    meta: { boardName: row.name },
+  });
+  return toBoard(updated, perm);
+}
+
+export async function listArchivedBoards(
+  db: Db,
+  user: CtxUser,
+  projectId: string,
+): Promise<Board[]> {
+  const rows = (await repo.listArchivedBoardsForProject(
+    db,
+    projectId,
+  )) as BoardRow[];
+  const out: Board[] = [];
+  for (const row of rows) {
+    const perm = await resolveBoardPermission(db, row, user);
+    if (perm) out.push(toBoard(row, perm));
+  }
+  return out;
+}
+
+export async function getArchivedItems(
+  db: Db,
+  user: CtxUser,
+  id: string,
+): Promise<ArchivedBoardItems> {
+  await loadBoardFor(db, user, id, "edit");
+  const columns = await columnRepo.listArchivedByBoard(db, id);
+  const cards = await cardRepo.listArchivedByBoard(db, id);
+  return {
+    columns: columns.map((c) => ({
+      id: c.id,
+      boardId: c.board_id,
+      name: c.name,
+      position: c.position,
+      archivedAt: c.archived_at,
+      createdAt: c.created_at,
+      updatedAt: c.updated_at,
+    })),
+    cards: cards.map((c) => ({
+      id: c.id,
+      title: c.title,
+      columnId: c.column_id,
+      columnName: c.column_name,
+      archivedAt: c.archived_at,
+    })),
+  };
 }
 
 export async function listBoardAccess(

@@ -101,6 +101,7 @@ export const cardSchema = z.object({
   checklistProgress: checklistProgressSchema,
   commentCount: z.number(),
   attachmentCount: z.number(),
+  archivedAt: z.date().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });

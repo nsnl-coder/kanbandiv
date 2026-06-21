@@ -1,10 +1,12 @@
 import { z } from "zod";
 import {
+  archivedBoardItemsSchema,
   boardAccessEntrySchema,
   boardDataSchema,
   boardSchema,
   createBoardInput,
   grantBoardAccessInput,
+  listArchivedBoardsInput,
   listBoardsInput,
   okSchema,
   updateBoardInput,
@@ -54,10 +56,34 @@ export const boardsRouter = router({
     }),
 
   delete: protectedProcedure
-    .meta({ openapi: { method: "DELETE", path: "/boards/{id}", tags: ["boards"], protect: true, summary: "Delete a board" } })
+    .meta({ openapi: { method: "DELETE", path: "/boards/{id}", tags: ["boards"], protect: true, summary: "Permanently delete a board (cascade)" } })
     .input(idInput)
     .output(okSchema)
     .mutation(({ ctx, input }) => board.deleteBoard(ctx.db, user(ctx), input.id)),
+
+  archive: protectedProcedure
+    .meta({ openapi: { method: "POST", path: "/boards/{id}/archive", tags: ["boards"], protect: true, summary: "Archive a board" } })
+    .input(idInput)
+    .output(boardSchema)
+    .mutation(({ ctx, input }) => board.archiveBoard(ctx.db, user(ctx), input.id)),
+
+  restore: protectedProcedure
+    .meta({ openapi: { method: "POST", path: "/boards/{id}/restore", tags: ["boards"], protect: true, summary: "Restore an archived board" } })
+    .input(idInput)
+    .output(boardSchema)
+    .mutation(({ ctx, input }) => board.restoreBoard(ctx.db, user(ctx), input.id)),
+
+  archived: protectedProcedure
+    .meta({ openapi: { method: "GET", path: "/boards/archived", tags: ["boards"], protect: true, summary: "List archived boards in a project" } })
+    .input(listArchivedBoardsInput)
+    .output(z.array(boardSchema))
+    .query(({ ctx, input }) => board.listArchivedBoards(ctx.db, user(ctx), input.projectId)),
+
+  archivedItems: protectedProcedure
+    .meta({ openapi: { method: "GET", path: "/boards/{id}/archived", tags: ["boards"], protect: true, summary: "List archived columns and cards in a board" } })
+    .input(idInput)
+    .output(archivedBoardItemsSchema)
+    .query(({ ctx, input }) => board.getArchivedItems(ctx.db, user(ctx), input.id)),
 
   accessList: protectedProcedure
     .meta({ openapi: { method: "GET", path: "/boards/{id}/access", tags: ["boards"], protect: true, summary: "List a board's access grants" } })

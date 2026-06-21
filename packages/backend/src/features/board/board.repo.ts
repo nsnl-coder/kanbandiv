@@ -40,8 +40,28 @@ export function listBoardsForProject(db: Db, projectId: string) {
     .selectFrom("boards")
     .selectAll()
     .where("project_id", "=", projectId)
+    .where("archived_at", "is", null)
     .orderBy("updated_at", "desc")
     .execute();
+}
+
+export function listArchivedBoardsForProject(db: Db, projectId: string) {
+  return db
+    .selectFrom("boards")
+    .selectAll()
+    .where("project_id", "=", projectId)
+    .where("archived_at", "is not", null)
+    .orderBy("archived_at", "desc")
+    .execute();
+}
+
+export function setBoardArchived(db: Db, id: string, at: Date | null) {
+  return db
+    .updateTable("boards")
+    .set({ archived_at: at, updated_at: new Date() })
+    .where("id", "=", id)
+    .returningAll()
+    .executeTakeFirst();
 }
 
 export function updateBoard(
@@ -68,6 +88,7 @@ export function listColumnsForBoard(db: Db, boardId: string) {
     .selectFrom("columns")
     .selectAll()
     .where("board_id", "=", boardId)
+    .where("archived_at", "is", null)
     .orderBy("position", "asc")
     .execute();
 }
@@ -86,10 +107,13 @@ export function listCardsForBoard(db: Db, boardId: string) {
       "cards.reminder_minutes as reminder_minutes",
       "cards.cover_color as cover_color",
       "cards.cover_attachment_id as cover_attachment_id",
+      "cards.archived_at as archived_at",
       "cards.created_at as created_at",
       "cards.updated_at as updated_at",
     ])
     .where("columns.board_id", "=", boardId)
+    .where("cards.archived_at", "is", null)
+    .where("columns.archived_at", "is", null)
     .orderBy("cards.position", "asc")
     .execute();
 }

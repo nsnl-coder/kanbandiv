@@ -47,6 +47,11 @@ export const revokeBoardAccessInput = z.object({
 });
 export type RevokeBoardAccessInput = z.infer<typeof revokeBoardAccessInput>;
 
+export const listArchivedBoardsInput = z.object({
+  projectId: z.string(),
+});
+export type ListArchivedBoardsInput = z.infer<typeof listArchivedBoardsInput>;
+
 export const boardSchema = z.object({
   id: z.string(),
   projectId: z.string(),
@@ -55,6 +60,7 @@ export const boardSchema = z.object({
   description: z.string().nullable(),
   color: z.string(),
   myPermission: z.enum(["owner", ProjectPermission.Edit, ProjectPermission.View]),
+  archivedAt: z.date().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -71,5 +77,33 @@ export const boardDataSchema = boardSchema.extend({
   columns: z.array(columnSchema),
 });
 export type BoardData = z.infer<typeof boardDataSchema>;
+
+// Per-board archived view. Columns are full (FE can render them); archived cards
+// use a lean shape (no enrichment) and carry columnName for grouping.
+export const archivedColumnSchema = z.object({
+  id: z.string(),
+  boardId: z.string(),
+  name: z.string(),
+  position: z.number(),
+  archivedAt: z.date().nullable(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+export type ArchivedColumn = z.infer<typeof archivedColumnSchema>;
+
+export const archivedCardSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  columnId: z.string(),
+  columnName: z.string(),
+  archivedAt: z.date().nullable(),
+});
+export type ArchivedCard = z.infer<typeof archivedCardSchema>;
+
+export const archivedBoardItemsSchema = z.object({
+  columns: z.array(archivedColumnSchema),
+  cards: z.array(archivedCardSchema),
+});
+export type ArchivedBoardItems = z.infer<typeof archivedBoardItemsSchema>;
 
 export type { MyPermission };

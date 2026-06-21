@@ -99,6 +99,7 @@ export interface BoardsTable {
   name: string;
   description: string | null;
   color: string;
+  archived_at: Timestamp | null;
   created_at: GeneratedTimestamp;
   updated_at: GeneratedTimestamp;
 }
@@ -114,6 +115,7 @@ export interface ColumnsTable {
   board_id: string;
   name: string;
   position: number;
+  archived_at: Timestamp | null;
   created_at: GeneratedTimestamp;
   updated_at: GeneratedTimestamp;
 }
@@ -129,6 +131,7 @@ export interface CardsTable {
   reminder_sent_at: Timestamp | null;
   cover_color: string | null;
   cover_attachment_id: string | null;
+  archived_at: Timestamp | null;
   created_at: GeneratedTimestamp;
   updated_at: GeneratedTimestamp;
   search_vector: ColumnType<string, never, never>;
