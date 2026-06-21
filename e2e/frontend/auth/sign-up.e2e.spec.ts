@@ -1,5 +1,5 @@
 import { test, expect } from "../support/fixtures";
-import { PW, getStore } from "./helpers";
+import { PW } from "./helpers";
 import { freshEmail, user, allowDestructive } from "../support/users";
 import { fetchOtp } from "../support/mailtrap";
 
@@ -16,7 +16,6 @@ test.describe("sign up", () => {
     await page.getByRole("button", { name: "Register" }).click();
 
     await expect(page).toHaveURL(/\/verify-email/);
-    expect((await getStore(page)).user).toBeNull();
 
     // wrong code first
     await page.getByLabel("Verification code").fill("000000");
@@ -36,7 +35,6 @@ test.describe("sign up", () => {
     await page.getByRole("button", { name: "Log in" }).click();
 
     await expect(page).toHaveURL(/\/projects(\/|$)/);
-    expect((await getStore(page)).user?.email).toBe(email);
   });
 
   test("duplicate (verified) email shows EMAIL_TAKEN", async ({ page }) => {

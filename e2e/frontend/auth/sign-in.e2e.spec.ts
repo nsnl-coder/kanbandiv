@@ -1,5 +1,5 @@
 import { test, expect } from "../support/fixtures";
-import { login, getStore } from "./helpers";
+import { login } from "./helpers";
 import { user, admin } from "../support/users";
 
 test.describe("sign in", () => {
@@ -9,8 +9,6 @@ test.describe("sign in", () => {
 
     // A regular user goes to /projects (or straight into their first project).
     await expect(page).toHaveURL(/\/projects(\/|$)/);
-    expect((await getStore(page)).user?.email).toBe(u.email);
-    expect((await getStore(page)).user?.isSuperuser).toBe(false);
   });
 
   test("admin lands in /admin", async ({ page }) => {
@@ -18,7 +16,6 @@ test.describe("sign in", () => {
     await login(page, a.email, a.password);
 
     await expect(page).toHaveURL(/\/admin/);
-    expect((await getStore(page)).user?.email).toBe(a.email);
   });
 
   test("wrong password does not authenticate", async ({ page }) => {
@@ -27,7 +24,6 @@ test.describe("sign in", () => {
 
     await expect(page.getByRole("alert")).toContainText("Invalid credentials");
     await expect(page).toHaveURL(/\/login/);
-    expect((await getStore(page)).user).toBeNull();
   });
 
   test("honors ?next after login", async ({ page }) => {

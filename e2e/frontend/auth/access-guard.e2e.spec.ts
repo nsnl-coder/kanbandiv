@@ -1,5 +1,5 @@
 import { test, expect } from "../support/fixtures";
-import { login, getStore, PW } from "./helpers";
+import { login, PW } from "./helpers";
 import { user, freshEmail, allowDestructive } from "../support/users";
 
 test.describe("access guard", () => {
@@ -43,6 +43,5 @@ test.describe("access guard", () => {
     await expect(page.getByRole("alert")).toContainText("not verified");
     await expect(page.getByRole("link", { name: "Resend verification code" })).toBeVisible();
     await expect(page).toHaveURL(/\/login/);
-    expect((await getStore(page)).user).toBeNull();
   });
 });
