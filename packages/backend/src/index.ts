@@ -23,6 +23,7 @@ import { openApiDocument } from "./openapi.js";
 import { appDb } from "./db/index.js";
 import { startScheduler } from "./features/backup/backup.scheduler.js";
 import { loadMaintenanceFlag } from "./features/backup/backup.service.js";
+import { seedSuperAdmin } from "./scripts/seedSuperAdmin.js";
 
 const app = express();
 // Docs are served only on local; never on a deployed tier (auth attack surface).
@@ -132,6 +133,10 @@ if (sentryEnabled) Sentry.setupExpressErrorHandler(app);
 app.listen(env.PORT, () => {
   logger.info({ port: env.PORT, vpsEnv: env.VPS_ENV }, "backend listening");
   if (showDocs) logger.info(`API docs at http://localhost:${env.PORT}/docs`);
+  // Bootstrap the super admin from env (idempotent; no-op without creds).
+  seedSuperAdmin(appDb).catch((err) =>
+    logger.error({ err }, "failed to seed super admin"),
+  );
   // Hydrate the maintenance flag and register the backup schedule from the DB.
   loadMaintenanceFlag(appDb).catch((err) =>
     logger.error({ err }, "failed to load maintenance flag"),

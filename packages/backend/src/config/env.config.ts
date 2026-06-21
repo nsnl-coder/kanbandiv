@@ -49,6 +49,11 @@ const schema = z.object({
 
   BCRYPT_COST: z.coerce.number().min(12).default(12),
 
+  // Optional bootstrap super admin, seeded on startup. Both must be set to seed;
+  // empty -> seeding skipped. Idempotent (see scripts/seedSuperAdmin.ts).
+  SUPER_ADMIN_EMAIL: z.string().email().or(z.literal("")).default(""),
+  SUPER_ADMIN_PASSWORD: z.string().min(8).or(z.literal("")).default(""),
+
   MAIL_HOST: z.string().default("sandbox.smtp.mailtrap.io"),
   MAIL_PORT: z.coerce.number().default(2525),
   MAIL_USER: z.string().default(""),

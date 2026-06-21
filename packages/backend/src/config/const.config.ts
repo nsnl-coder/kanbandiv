@@ -14,5 +14,7 @@ export const LogEvent = {
   BackupMaintenanceToggled: "backup.maintenance.toggled",
   BackupDriveConnected: "backup.drive.connected",
   BackupDriveDisconnected: "backup.drive.disconnected",
+  SuperAdminSeeded: "superadmin.seeded",
+  SuperAdminSeedSkipped: "superadmin.seed.skipped",
 } as const;
 export type LogEvent = (typeof LogEvent)[keyof typeof LogEvent];
