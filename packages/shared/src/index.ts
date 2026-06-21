@@ -15,6 +15,7 @@ export * from "./backup.schema.js";
 export * from "./search.schema.js";
 export * from "./board-view.schema.js";
 export * from "./logger.schema.js";
+export * from "./realtime.schema.js";
 export * from "./errors/auth.error.js";
 export * from "./errors/rbac.error.js";
 export * from "./errors/project.error.js";

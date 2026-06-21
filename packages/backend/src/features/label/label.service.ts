@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import {
   ActivityType,
+  BoardEventType,
   type CardLabelInput,
   type CreateLabelInput,
   type Label,
@@ -10,6 +11,7 @@ import {
 import type { CtxUser } from "../board/board.service.js";
 import { loadBoardFor } from "../board/board.service.js";
 import { cardTitle, record } from "../activity/activity.recorder.js";
+import { bus } from "../realtime/realtime.bus.js";
 import * as repo from "./label.repo.js";
 import type { Db } from "./label.repo.js";
 
@@ -35,6 +37,10 @@ function cardNotFound() {
 
 function boardNotFound() {
   return new TRPCError({ code: "NOT_FOUND", message: LabelError.BOARD_NOT_FOUND });
+}
+
+function publishBoardChanged(boardId: string, actorId: string): void {
+  bus.publish({ boardId, actorId, ts: Date.now(), type: BoardEventType.BOARD_CHANGED });
 }
 
 export function toLabel(row: LabelRow): Label {
@@ -113,6 +119,7 @@ export async function createLabel(
     name: input.name,
     color: input.color,
   });
+  publishBoardChanged(input.boardId, user.id);
   return toLabel(row as LabelRow);
 }
 
@@ -122,9 +129,10 @@ export async function updateLabel(
   id: string,
   patch: UpdateLabelInput,
 ): Promise<Label> {
-  await loadLabelFor(db, user, id, "edit");
+  const before = await loadLabelFor(db, user, id, "edit");
   const updated = await repo.updateLabel(db, id, patch);
   if (!updated) throw labelNotFound();
+  publishBoardChanged(before.board_id, user.id);
   return toLabel(updated as LabelRow);
 }
 
@@ -133,8 +141,9 @@ export async function deleteLabel(
   user: CtxUser,
   id: string,
 ): Promise<{ ok: true }> {
-  await loadLabelFor(db, user, id, "edit");
+  const row = await loadLabelFor(db, user, id, "edit");
   await repo.deleteLabel(db, id);
+  publishBoardChanged(row.board_id, user.id);
   return { ok: true };
 }
 

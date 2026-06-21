@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import {
   ActivityType,
   BoardError,
+  BoardEventType,
   type Column,
   type CreateColumnInput,
   type MoveColumnInput,
@@ -10,6 +11,7 @@ import {
 import type { CtxUser } from "../board/board.service.js";
 import { loadBoardFor } from "../board/board.service.js";
 import { record } from "../activity/activity.recorder.js";
+import { bus } from "../realtime/realtime.bus.js";
 import * as boardRepo from "../board/board.repo.js";
 import * as repo from "./column.repo.js";
 import type { Db } from "./column.repo.js";
@@ -31,6 +33,10 @@ function columnNotFound() {
     code: "NOT_FOUND",
     message: BoardError.COLUMN_NOT_FOUND,
   });
+}
+
+function publishBoardChanged(boardId: string, actorId: string): void {
+  bus.publish({ boardId, actorId, ts: Date.now(), type: BoardEventType.BOARD_CHANGED });
 }
 
 function toColumn(row: ColumnRow): Column {
@@ -88,6 +94,7 @@ export async function createColumn(
     name: input.name,
     position: max + 1,
   });
+  publishBoardChanged((row as ColumnRow).board_id, user.id);
   return toColumn(row as ColumnRow);
 }
 
@@ -100,6 +107,7 @@ export async function updateColumn(
   await loadColumnFor(db, user, id, "edit");
   const updated = await repo.updateColumn(db, id, patch);
   if (!updated) throw columnNotFound();
+  publishBoardChanged((updated as ColumnRow).board_id, user.id);
   return toColumn(updated as ColumnRow);
 }
 
@@ -108,8 +116,9 @@ export async function deleteColumn(
   user: CtxUser,
   id: string,
 ): Promise<{ ok: true }> {
-  await loadColumnFor(db, user, id, "edit");
+  const row = await loadColumnFor(db, user, id, "edit");
   await repo.deleteColumn(db, id);
+  publishBoardChanged(row.board_id, user.id);
   return { ok: true };
 }
 
@@ -180,6 +189,7 @@ export async function moveColumn(
   );
   const updated = await repo.setPosition(db, id, position);
   if (!updated) throw columnNotFound();
+  publishBoardChanged(row.board_id, user.id);
   return toColumn(updated as ColumnRow);
 }
 

@@ -1,6 +1,7 @@
-import type { ActivityMeta, ActivityTypeValue } from "shared";
+import { BoardEventType, type ActivityMeta, type ActivityTypeValue } from "shared";
 import { LogEvent } from "../../config/const.config.js";
 import { logger } from "../../logger.js";
+import { bus } from "../realtime/realtime.bus.js";
 import type { Db } from "./activity.repo.js";
 
 // Resolve a card's title for meta on call sites that do not already hold the
@@ -48,6 +49,22 @@ export async function record(db: Db, input: RecordInput): Promise<void> {
         cardId: input.cardId ?? null,
       },
       LogEvent.ActivityRecordFailed,
+    );
+  }
+  // Realtime chokepoint: fan a board-change event to other viewers. Own
+  // try/catch so a bus failure never affects the audit insert, and vice-versa.
+  try {
+    bus.publish({
+      boardId: input.boardId,
+      actorId: input.actorId,
+      ts: Date.now(),
+      type: input.cardId ? BoardEventType.CARD_ACTIVITY : BoardEventType.BOARD_CHANGED,
+      cardId: input.cardId ?? undefined,
+    });
+  } catch (err) {
+    logger.error(
+      { err, event: LogEvent.RealtimePublishFailed },
+      LogEvent.RealtimePublishFailed,
     );
   }
 }

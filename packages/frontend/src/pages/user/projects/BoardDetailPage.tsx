@@ -45,6 +45,7 @@ import {
   type MentionMember,
 } from "../../../features/board/utils";
 import { boardErrorMessage } from "../../../features/board/errors";
+import { useBoardRealtime } from "../../../features/board/hooks/useBoardRealtime";
 
 // Reorder neighbours: midpoint between the surrounding positions. Mirrors the
 // backend's double-precision strategy so the optimistic order matches the
@@ -61,6 +62,7 @@ export function BoardDetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { id, boardId } = useParams<{ id: string; boardId: string }>();
+  useBoardRealtime(boardId);
   const [searchParams, setSearchParams] = useSearchParams();
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [showArchived, setShowArchived] = useState(false);

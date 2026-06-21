@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import {
   ActivityType,
+  BoardEventType,
   type Checklist,
   ChecklistError,
   type ChecklistItem,
@@ -13,6 +14,7 @@ import {
 import type { CtxUser } from "../board/board.service.js";
 import { loadBoardFor } from "../board/board.service.js";
 import { cardTitle, record } from "../activity/activity.recorder.js";
+import { bus } from "../realtime/realtime.bus.js";
 import { computePosition } from "../column/column.service.js";
 import * as repo from "./checklist.repo.js";
 import type { Db } from "./checklist.repo.js";
@@ -58,6 +60,10 @@ function cardNotFound() {
     code: "NOT_FOUND",
     message: ChecklistError.CARD_NOT_FOUND,
   });
+}
+
+function publishCardActivity(boardId: string, cardId: string, actorId: string): void {
+  bus.publish({ boardId, cardId, actorId, ts: Date.now(), type: BoardEventType.CARD_ACTIVITY });
 }
 
 function toItem(row: ItemRow): ChecklistItem {
@@ -200,9 +206,10 @@ export async function updateChecklist(
   id: string,
   patch: UpdateChecklistInput,
 ): Promise<Checklist> {
-  await loadChecklistFor(db, user, id, "edit");
+  const { checklist, boardId } = await loadChecklistFor(db, user, id, "edit");
   const updated = await repo.updateChecklist(db, id, patch);
   if (!updated) throw checklistNotFound();
+  publishCardActivity(boardId, checklist.card_id, user.id);
   const items = (await repo.listItemsByChecklist(db, id)) as ItemRow[];
   return toChecklist(updated as ChecklistRow, items);
 }
@@ -262,7 +269,8 @@ export async function updateItem(
     is_done: patch.isDone,
   })) as ItemRow | undefined;
   if (!updated) throw itemNotFound();
-  if (patch.isDone !== undefined && item.is_done !== updated.is_done) {
+  const isDoneChanged = patch.isDone !== undefined && item.is_done !== updated.is_done;
+  if (isDoneChanged) {
     await record(db, {
       boardId,
       cardId: checklist.card_id,
@@ -272,6 +280,9 @@ export async function updateItem(
         : ActivityType.CHECKLIST_ITEM_UNCHECKED,
       meta: { text: updated.text, cardTitle: await cardTitle(db, checklist.card_id) },
     });
+  } else {
+    // Text-only edit records no activity; publish so other viewers refetch.
+    publishCardActivity(boardId, checklist.card_id, user.id);
   }
   return toItem(updated);
 }
@@ -281,8 +292,9 @@ export async function deleteItem(
   user: CtxUser,
   id: string,
 ): Promise<{ ok: true }> {
-  await loadItemFor(db, user, id, "edit");
+  const { checklist, boardId } = await loadItemFor(db, user, id, "edit");
   await repo.deleteItem(db, id);
+  publishCardActivity(boardId, checklist.card_id, user.id);
   return { ok: true };
 }
 
@@ -292,7 +304,7 @@ export async function moveItem(
   id: string,
   input: MoveChecklistItemInput,
 ): Promise<ChecklistItem> {
-  const { item } = await loadItemFor(db, user, id, "edit");
+  const { item, checklist, boardId } = await loadItemFor(db, user, id, "edit");
   const siblings = (await repo.listItemsByChecklist(
     db,
     item.checklist_id,
@@ -304,5 +316,6 @@ export async function moveItem(
   );
   const updated = await repo.setItemPosition(db, id, position);
   if (!updated) throw itemNotFound();
+  publishCardActivity(boardId, checklist.card_id, user.id);
   return toItem(updated as ItemRow);
 }
