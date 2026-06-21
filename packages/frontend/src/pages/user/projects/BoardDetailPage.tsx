@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -12,8 +12,12 @@ import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortabl
 import { ArrowLeft, Pencil, Archive, Plus, Users, Maximize2, Minimize2, Tag, History } from "lucide-react";
 import {
   COLUMN_NAME_MAX,
+  BoardViewMode,
   type BoardData,
+  type BoardViewModeValue,
   type Card,
+  type DueViewFilter,
+  type SwimlaneGrouping,
 } from "shared";
 import { useTRPC } from "../../../lib/trpc";
 import { useAuthStore } from "../../../hooks/useAuthStore";
@@ -26,13 +30,18 @@ import { BoardActivityPanel } from "../../../features/board/components/BoardActi
 import { ArchivedItemsPanel } from "../../../features/board/components/ArchivedItemsPanel";
 import { LabelFilterBar } from "../../../features/board/components/LabelFilterBar";
 import { AssigneeFilterBar } from "../../../features/board/components/AssigneeFilterBar";
+import { DueFilterBar } from "../../../features/board/components/DueFilterBar";
+import { ViewSwitcher } from "../../../features/board/components/ViewSwitcher";
+import { BoardTableView } from "../../../features/board/components/BoardTableView";
+import { BoardCalendarView } from "../../../features/board/components/BoardCalendarView";
+import { BoardSwimlanesView } from "../../../features/board/components/BoardSwimlanesView";
+import { toConfig, fromConfig } from "../../../features/board/boardView";
 import {
   canEdit,
   isOwner,
   sortByPosition,
-  cardMatchesLabels,
-  cardMatchesAssignees,
-  cardAssignedToUser,
+  filterCards,
+  type CardFilter,
   type MentionMember,
 } from "../../../features/board/utils";
 import { boardErrorMessage } from "../../../features/board/errors";
@@ -61,6 +70,9 @@ export function BoardDetailPage() {
   const [labelFilter, setLabelFilter] = useState<string[]>([]);
   const [assigneeFilter, setAssigneeFilter] = useState<string[]>([]);
   const [assignedToMe, setAssignedToMe] = useState(false);
+  const [dueFilter, setDueFilter] = useState<DueViewFilter | null>(null);
+  const [viewMode, setViewMode] = useState<BoardViewModeValue>(BoardViewMode.KANBAN);
+  const [swimlaneBy, setSwimlaneBy] = useState<SwimlaneGrouping | null>(null);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const currentUser = useAuthStore((s) => s.user);
   // Full-width by default; only "fit" is an explicit opt-out stored as "0".
@@ -96,6 +108,45 @@ export function BoardDetailPage() {
   const members: MentionMember[] = (accessQuery.data ?? []).map((a) => ({
     name: a.email.split("@")[0],
   }));
+
+  // Saved view: hydrate ONCE on first resolve (behind a ref so a later refetch
+  // never clobbers user edits), then persist changes debounced.
+  const hydrated = useRef(false);
+  // Snapshot of the last persisted (or hydrated) view; a save is skipped when the
+  // current state still matches it, so hydration never triggers a save loop.
+  const lastSaved = useRef<string | null>(null);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const viewQuery = useQuery(trpc.boardViews.get.queryOptions({ boardId: boardId! }));
+  const saveView = useMutation(trpc.boardViews.set.mutationOptions());
+
+  useEffect(() => {
+    if (hydrated.current || !viewQuery.data) return;
+    const s = fromConfig(viewQuery.data.config);
+    setViewMode(viewQuery.data.mode);
+    setLabelFilter(s.labelFilter);
+    setAssigneeFilter(s.assigneeFilter);
+    setAssignedToMe(s.assignedToMe);
+    setDueFilter(s.dueFilter);
+    setSwimlaneBy(s.swimlaneBy);
+    hydrated.current = true;
+    lastSaved.current = JSON.stringify({ mode: viewQuery.data.mode, config: viewQuery.data.config });
+  }, [viewQuery.data]);
+
+  useEffect(() => {
+    if (!hydrated.current || !boardId) return;
+    const config = toConfig({ labelFilter, assigneeFilter, assignedToMe, dueFilter, swimlaneBy });
+    const snapshot = JSON.stringify({ mode: viewMode, config });
+    if (snapshot === lastSaved.current) return; // unchanged (e.g. just hydrated)
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      lastSaved.current = snapshot;
+      saveView.mutate({ boardId, mode: viewMode, config });
+    }, 500);
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode, swimlaneBy, labelFilter, assigneeFilter, assignedToMe, dueFilter, boardId]);
 
   const dataKey = trpc.boards.getData.queryKey({ id: boardId! });
   const setData = (updater: (d: BoardData) => BoardData) =>
@@ -161,6 +212,14 @@ export function BoardDetailPage() {
 
   const editable = canEdit(board);
   const columns = sortByPosition(board.columns);
+  const cardFilter: CardFilter = {
+    labelIds: labelFilter,
+    assigneeIds: assigneeFilter,
+    assignedToMe,
+    due: dueFilter,
+    currentUserId: currentUser?.id ?? "",
+  };
+  const filteredColumns = columns.map((c) => ({ ...c, cards: filterCards(c.cards, cardFilter) }));
   const activeCard =
     columns.flatMap((c) => c.cards).find((c) => c.id === activeCardId) ?? null;
 
@@ -307,7 +366,13 @@ export function BoardDetailPage() {
               <h1 className="text-2xl font-bold text-slate-800">{board.name}</h1>
             </div>
           </div>
-          <div className="flex gap-2 text-sm">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <ViewSwitcher
+              mode={viewMode}
+              onModeChange={setViewMode}
+              swimlaneBy={swimlaneBy}
+              onSwimlaneByChange={setSwimlaneBy}
+            />
             <button
               type="button"
               onClick={toggleWide}
@@ -392,26 +457,20 @@ export function BoardDetailPage() {
             onAssignedToMeChange={setAssignedToMe}
             currentUserId={currentUser?.id ?? ""}
           />
+          <DueFilterBar value={dueFilter} onChange={setDueFilter} />
         </div>
 
+        {viewMode === BoardViewMode.KANBAN ? (
         <DndContext sensors={sensors} onDragEnd={onDragEnd}>
           <div className="mt-6 flex flex-1 items-start gap-4 overflow-x-auto pb-4">
             <SortableContext
               items={columns.map((c) => c.id)}
               strategy={horizontalListSortingStrategy}
             >
-              {columns.map((column) => (
+              {filteredColumns.map((column) => (
                 <Column
                   key={column.id}
-                  column={{
-                    ...column,
-                    cards: column.cards.filter(
-                      (c) =>
-                        cardMatchesLabels(c, labelFilter) &&
-                        cardMatchesAssignees(c, assigneeFilter) &&
-                        (!assignedToMe || cardAssignedToUser(c, currentUser?.id ?? "")),
-                    ),
-                  }}
+                  column={column}
                   editable={editable}
                   onRename={(name) =>
                     updateColumnMutation.mutate({ id: column.id, name })
@@ -437,6 +496,31 @@ export function BoardDetailPage() {
             ) : null}
           </div>
         </DndContext>
+        ) : null}
+
+        {viewMode === BoardViewMode.TABLE ? (
+          <BoardTableView
+            columns={filteredColumns}
+            onOpenCard={(card) => setActiveCardId(card.id)}
+          />
+        ) : null}
+
+        {viewMode === BoardViewMode.CALENDAR ? (
+          <BoardCalendarView
+            boardId={board.id}
+            filter={cardFilter}
+            onOpenCard={(card) => setActiveCardId(card.id)}
+          />
+        ) : null}
+
+        {viewMode === BoardViewMode.SWIMLANES ? (
+          <BoardSwimlanesView
+            boardId={board.id}
+            columns={filteredColumns}
+            swimlaneBy={swimlaneBy ?? "label"}
+            onOpenCard={(card) => setActiveCardId(card.id)}
+          />
+        ) : null}
 
       </main>
 

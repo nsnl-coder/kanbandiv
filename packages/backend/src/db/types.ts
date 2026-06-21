@@ -1,6 +1,7 @@
 import type { ColumnType, Generated } from "kysely";
 import type {
   ActivityMeta,
+  BoardViewConfig,
   BackupStatus,
   BackupTrigger,
   OtpPurpose,
@@ -252,6 +253,18 @@ export interface ActivitiesTable {
   created_at: GeneratedTimestamp;
 }
 
+export interface BoardViewsTable {
+  user_id: string;
+  board_id: string;
+  mode: string; // BoardViewMode value; validated by Zod at the boundary
+  // jsonb: select returns a parsed object; INSERT/UPDATE MUST send JSON TEXT
+  // (the repo JSON.stringify's it on BOTH insert and on-conflict-update —
+  // node-pg sends a raw object as "[object Object]" and corrupts the row,
+  // mirror activity audit B1). So the insert/update type is string.
+  config: ColumnType<BoardViewConfig, string, string>;
+  updated_at: GeneratedTimestamp;
+}
+
 export interface Database {
   users: UsersTable;
   roles: RolesTable;
@@ -276,4 +289,5 @@ export interface Database {
   backup_settings: BackupSettingsTable;
   backup_runs: BackupRunsTable;
   activities: ActivitiesTable;
+  board_views: BoardViewsTable;
 }

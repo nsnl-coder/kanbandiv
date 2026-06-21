@@ -1,4 +1,4 @@
-import type { Assignee, Board, Card, Label } from "shared";
+import type { Assignee, Board, Card, DueViewFilter, Label } from "shared";
 import { LABEL_COLORS, ATTACHMENT_MAX_BYTES, ATTACHMENT_ALLOWED_MIME } from "shared";
 
 export { LABEL_COLORS };
@@ -128,6 +128,38 @@ export function dueState(card: Pick<Card, "dueAt" | "isOverdue">): DueState {
   const ms = card.dueAt.getTime() - Date.now();
   if (ms <= 24 * 60 * 60 * 1000) return "soon";
   return "upcoming";
+}
+
+// Due filter for views. Reuses dueState so the "soon" 24h window matches the badge.
+export function cardMatchesDue(
+  card: Pick<Card, "dueAt" | "isOverdue">,
+  due: DueViewFilter | null,
+): boolean {
+  if (!due) return true;
+  if (due === "has_due") return !!card.dueAt;
+  if (due === "overdue") return dueState(card) === "overdue";
+  return dueState(card) === "soon"; // due_soon
+}
+
+// Single source of truth applied by every view (kanban/table/calendar/swimlanes).
+export interface CardFilter {
+  labelIds: string[];
+  assigneeIds: string[];
+  assignedToMe: boolean;
+  due: DueViewFilter | null;
+  currentUserId: string;
+}
+
+export function filterCards<
+  T extends Pick<Card, "labels" | "assignees" | "dueAt" | "isOverdue">,
+>(cards: T[], f: CardFilter): T[] {
+  return cards.filter(
+    (c) =>
+      cardMatchesLabels(c, f.labelIds) &&
+      cardMatchesAssignees(c, f.assigneeIds) &&
+      (!f.assignedToMe || cardAssignedToUser(c, f.currentUserId)) &&
+      cardMatchesDue(c, f.due),
+  );
 }
 
 export function formatDueDate(date: Date): string {

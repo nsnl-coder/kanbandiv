@@ -14,6 +14,7 @@ import { attachmentsRouter } from "../features/attachment/attachment.router.js";
 import { backupRouter } from "../features/backup/backup.router.js";
 import { activityRouter } from "../features/activity/activity.router.js";
 import { searchRouter } from "../features/search/search.router.js";
+import { boardViewsRouter } from "../features/board-view/board-view.router.js";
 
 export const appRouter = router({
   health: healthRouter,
@@ -32,6 +33,7 @@ export const appRouter = router({
   backup: backupRouter,
   activity: activityRouter,
   search: searchRouter,
+  boardViews: boardViewsRouter,
 });
 
 export type AppRouter = typeof appRouter;

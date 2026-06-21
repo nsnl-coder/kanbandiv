@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within, fireEvent, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import type { DragEndEvent } from "@dnd-kit/core";
-import type { BoardData, PublicUser } from "shared";
+import type { BoardData, BoardView, PublicUser } from "shared";
+import { defaultBoardView } from "shared";
 import { useAuthStore } from "../../../hooks/useAuthStore";
 
 const h = vi.hoisted(() => ({
@@ -128,8 +129,8 @@ function makeData(over: Partial<BoardData> = {}): BoardData {
         createdAt: new Date(),
         updatedAt: new Date(),
         cards: [
-          { id: "k1", columnId: "c1", title: "Card 1", description: null, position: 0, dueAt: null, reminderMinutes: null, isOverdue: false, labels: [], checklistProgress: { done: 0, total: 0 }, commentCount: 0, attachmentCount: 0, createdAt: new Date(), updatedAt: new Date() },
-          { id: "k2", columnId: "c1", title: "Card 2", description: null, position: 1, dueAt: null, reminderMinutes: null, isOverdue: false, labels: [], checklistProgress: { done: 0, total: 0 }, commentCount: 0, attachmentCount: 0, createdAt: new Date(), updatedAt: new Date() },
+          { id: "k1", columnId: "c1", title: "Card 1", description: null, position: 0, dueAt: null, reminderMinutes: null, isOverdue: false, cover: null, labels: [], assignees: [], checklistProgress: { done: 0, total: 0 }, commentCount: 0, attachmentCount: 0, archivedAt: null, createdAt: new Date(), updatedAt: new Date() },
+          { id: "k2", columnId: "c1", title: "Card 2", description: null, position: 1, dueAt: null, reminderMinutes: null, isOverdue: false, cover: null, labels: [], assignees: [], checklistProgress: { done: 0, total: 0 }, commentCount: 0, attachmentCount: 0, archivedAt: null, createdAt: new Date(), updatedAt: new Date() },
         ],
       },
       {
@@ -140,7 +141,7 @@ function makeData(over: Partial<BoardData> = {}): BoardData {
         createdAt: new Date(),
         updatedAt: new Date(),
         cards: [
-          { id: "k3", columnId: "c2", title: "Card 3", description: null, position: 0, dueAt: null, reminderMinutes: null, isOverdue: false, labels: [], checklistProgress: { done: 0, total: 0 }, commentCount: 0, attachmentCount: 0, createdAt: new Date(), updatedAt: new Date() },
+          { id: "k3", columnId: "c2", title: "Card 3", description: null, position: 0, dueAt: null, reminderMinutes: null, isOverdue: false, cover: null, labels: [], assignees: [], checklistProgress: { done: 0, total: 0 }, commentCount: 0, attachmentCount: 0, archivedAt: null, createdAt: new Date(), updatedAt: new Date() },
         ],
       },
     ],
@@ -162,7 +163,7 @@ function renderPage(entry = "/projects/p1/boards/b1") {
 
 beforeEach(() => {
   const data = makeData();
-  h.queryData = { getData: data, accessList: [] };
+  h.queryData = { getData: data, accessList: [], get: defaultBoardView };
   h.queryError = {};
   h.mutateCalls = {};
   h.mutationError = {};
@@ -350,5 +351,84 @@ describe("BoardDetailPage (drag)", () => {
       over: { id: "c2" },
     } as unknown as DragEndEvent);
     expect(h.mutateCalls.move).toContainEqual({ id: "c1", afterId: "c2" });
+  });
+});
+
+const labelled = (): BoardData => {
+  const d = makeData();
+  d.columns[0].cards[0].labels = [
+    { id: "l1", boardId: "b1", name: "Bug", color: "#eb5a46", createdAt: new Date(), updatedAt: new Date() },
+  ];
+  return d;
+};
+
+describe("BoardDetailPage (saved views - switch + persist)", () => {
+  it("switching the view mode renders Table and debounced-persists boardViews.set", () => {
+    vi.useFakeTimers();
+    try {
+      renderPage();
+      // hydration must not have saved
+      expect(h.mutateCalls.set ?? []).toHaveLength(0);
+      act(() => {
+        fireEvent.click(screen.getByRole("button", { name: "Table" }));
+      });
+      // not yet saved (debounced)
+      expect(h.mutateCalls.set ?? []).toHaveLength(0);
+      act(() => {
+        vi.advanceTimersByTime(600);
+      });
+      expect(h.mutateCalls.set).toContainEqual(
+        expect.objectContaining({ boardId: "b1", mode: "table" }),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe("BoardDetailPage (saved views - hydrate)", () => {
+  it("hydrates mode + filters from boardViews.get and does NOT save on hydration", () => {
+    vi.useFakeTimers();
+    try {
+      const saved: BoardView = {
+        mode: "table",
+        config: { labelIds: ["l1"], assigneeIds: [], assignedToMe: false, due: null, swimlaneBy: null },
+      };
+      h.queryData = { getData: labelled(), accessList: [], get: saved, list: [] };
+      renderPage();
+      // restored to table view (table header present)
+      expect(screen.getByLabelText("sort by Title")).toBeInTheDocument();
+      // hydration alone must not trigger a save
+      vi.advanceTimersByTime(600);
+      expect(h.mutateCalls.set ?? []).toHaveLength(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe("BoardDetailPage (saved views - filters across modes)", () => {
+  it("a label filter narrows the same set in kanban and table", async () => {
+    const u = userEvent.setup();
+    h.queryData = {
+      getData: labelled(),
+      accessList: [],
+      get: defaultBoardView,
+      list: [
+        { id: "l1", boardId: "b1", name: "Bug", color: "#eb5a46", createdAt: new Date(), updatedAt: new Date() },
+      ],
+    };
+    renderPage();
+    // kanban: all 3 cards visible
+    expect(screen.getByText("Card 1")).toBeInTheDocument();
+    expect(screen.getByText("Card 2")).toBeInTheDocument();
+    // apply label filter -> only the labelled card (k1/Card 1) remains
+    await u.click(screen.getByLabelText("filter Bug"));
+    expect(screen.getByText("Card 1")).toBeInTheDocument();
+    expect(screen.queryByText("Card 2")).toBeNull();
+    // switch to table: same filtered set
+    await u.click(screen.getByRole("button", { name: "Table" }));
+    expect(screen.getByText("Card 1")).toBeInTheDocument();
+    expect(screen.queryByText("Card 2")).toBeNull();
   });
 });
