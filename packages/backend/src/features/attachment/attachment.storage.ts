@@ -20,12 +20,24 @@ class MinioStorage implements Storage {
   }
 
   // Lazily build the client so an empty/invalid endpoint never throws at boot.
+  // MINIO_ENDPOINT may be a bare host ("minio", "localhost") with separate
+  // MINIO_PORT/MINIO_USE_SSL, OR a full URL ("http://minio:9000") as the infra
+  // compose sets it. Parse the URL form so both deployments work.
   private c(): MinioClient {
     if (!this.client) {
+      let endPoint = env.MINIO_ENDPOINT;
+      let port = env.MINIO_PORT;
+      let useSSL = env.MINIO_USE_SSL;
+      if (/:\/\//.test(endPoint)) {
+        const url = new URL(endPoint);
+        endPoint = url.hostname;
+        useSSL = url.protocol === "https:";
+        port = url.port ? Number(url.port) : useSSL ? 443 : 80;
+      }
       this.client = new MinioClient({
-        endPoint: env.MINIO_ENDPOINT,
-        port: env.MINIO_PORT,
-        useSSL: env.MINIO_USE_SSL,
+        endPoint,
+        port,
+        useSSL,
         accessKey: env.MINIO_ACCESS_KEY,
         secretKey: env.MINIO_SECRET_KEY,
       });
