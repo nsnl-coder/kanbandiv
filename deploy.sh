@@ -32,4 +32,16 @@ for svc in backend frontend landing; do
 done
 
 $COMPOSE up -d
+
+# Apply pending DB migrations (idempotent). backend depends_on a healthy db, so
+# the container is up here; exec runs the compiled migrate script in it.
+echo "=== running migrations ==="
+$COMPOSE exec -T backend node packages/backend/dist/scripts/migrate.script.js
+
+# nginx resolves upstream IPs once at startup. When `up -d` recreates the app
+# containers they get NEW IPs, but the unchanged proxy keeps the stale ones ->
+# 502. Restart the proxy so it re-resolves the current backend/web/landing IPs.
+echo "=== restarting proxy ==="
+$COMPOSE restart proxy
+
 docker image prune -f
