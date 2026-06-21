@@ -101,7 +101,7 @@ describe("realtime SSE http route", () => {
             expect(res.headers["x-accel-buffering"]).toBe("no");
             expect(res.statusCode).toBe(200);
             expect(text).toContain(": connected");
-            res.destroy();
+            (res as { destroy?: () => void }).destroy?.();
             resolve();
           });
         })
@@ -138,7 +138,7 @@ describe("realtime SSE http route", () => {
               const payload = JSON.parse(text.replace(/^data:\s*/, "").trim());
               expect(payload.boardId).toBe(board.id);
               expect(payload.type).toBe(BoardEventType.BOARD_CHANGED);
-              res.destroy();
+              (res as { destroy?: () => void }).destroy?.();
               resolve();
             }
           });
@@ -189,7 +189,7 @@ describe("realtime SSE http route", () => {
               const payload = JSON.parse(text.replace(/^data:\s*/, "").trim());
               expect(payload.userId).toBe(me.id);
               expect(payload.kind).toBe(UserEventKind.NOTIFICATION);
-              res.destroy();
+              (res as { destroy?: () => void }).destroy?.();
               resolve();
             }
           });
