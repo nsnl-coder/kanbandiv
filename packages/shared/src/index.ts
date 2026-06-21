@@ -12,6 +12,7 @@ export * from "./activity.schema.js";
 export * from "./column.schema.js";
 export * from "./board.schema.js";
 export * from "./backup.schema.js";
+export * from "./search.schema.js";
 export * from "./logger.schema.js";
 export * from "./errors/auth.error.js";
 export * from "./errors/rbac.error.js";

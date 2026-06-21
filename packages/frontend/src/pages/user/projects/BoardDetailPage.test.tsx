@@ -148,9 +148,9 @@ function makeData(over: Partial<BoardData> = {}): BoardData {
   };
 }
 
-function renderPage() {
+function renderPage(entry = "/projects/p1/boards/b1") {
   return render(
-    <MemoryRouter initialEntries={["/projects/p1/boards/b1"]}>
+    <MemoryRouter initialEntries={[entry]}>
       <Routes>
         <Route path="/projects/:id/boards/:boardId" element={<BoardDetailPage />} />
         <Route path="/projects/:id/boards" element={<div>boards-list</div>} />
@@ -222,6 +222,27 @@ describe("BoardDetailPage (render)", () => {
     h.queryError = { getData: new Error("nope") };
     renderPage();
     expect(screen.getByText(/not found or no access/)).toBeInTheDocument();
+  });
+});
+
+describe("BoardDetailPage (?card= deep-link)", () => {
+  it("opens the CardEditor for an existing ?card= id", () => {
+    renderPage("/projects/p1/boards/b1?card=k1");
+    expect(screen.getByRole("heading", { name: "Edit card" })).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Card 1")).toBeInTheDocument();
+  });
+
+  it("ignores a ?card= id not present on the board", () => {
+    renderPage("/projects/p1/boards/b1?card=nope");
+    expect(screen.queryByRole("heading", { name: "Edit card" })).toBeNull();
+  });
+
+  it("closing the editor removes the card param", async () => {
+    const u = userEvent.setup();
+    renderPage("/projects/p1/boards/b1?card=k1");
+    expect(screen.getByRole("heading", { name: "Edit card" })).toBeInTheDocument();
+    await u.click(screen.getByRole("button", { name: "Close" }));
+    expect(screen.queryByRole("heading", { name: "Edit card" })).toBeNull();
   });
 });
 

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   DndContext,
@@ -51,6 +51,7 @@ export function BoardDetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { id, boardId } = useParams<{ id: string; boardId: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showAccess, setShowAccess] = useState(false);
   const [showLabels, setShowLabels] = useState(false);
@@ -71,6 +72,23 @@ export function BoardDetailPage() {
 
   const dataQuery = useQuery(trpc.boards.getData.queryOptions({ id: boardId! }));
   const board = dataQuery.data;
+
+  // Deep-link: open the card named by ?card= once the board data is loaded and
+  // that card exists. Additive to the in-board click flow (local activeCardId).
+  const cardParam = searchParams.get("card");
+  useEffect(() => {
+    if (!cardParam || !board) return;
+    const exists = board.columns.some((col) => col.cards.some((c) => c.id === cardParam));
+    if (exists) setActiveCardId(cardParam);
+  }, [cardParam, board]);
+
+  const clearCardParam = () => {
+    if (searchParams.has("card")) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("card");
+      setSearchParams(next, { replace: true });
+    }
+  };
 
   const accessQuery = useQuery(trpc.boards.accessList.queryOptions({ id: boardId! }));
   const members: MentionMember[] = (accessQuery.data ?? []).map((a) => ({
@@ -456,6 +474,7 @@ export function BoardDetailPage() {
                 onSuccess: () => {
                   invalidateData();
                   setActiveCardId(null);
+                  clearCardParam();
                 },
               },
             )
@@ -467,11 +486,15 @@ export function BoardDetailPage() {
                 onSuccess: () => {
                   invalidateData();
                   setActiveCardId(null);
+                  clearCardParam();
                 },
               },
             )
           }
-          onClose={() => setActiveCardId(null)}
+          onClose={() => {
+            setActiveCardId(null);
+            clearCardParam();
+          }}
         />
       ) : null}
 

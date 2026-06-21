@@ -131,6 +131,7 @@ export interface CardsTable {
   cover_attachment_id: string | null;
   created_at: GeneratedTimestamp;
   updated_at: GeneratedTimestamp;
+  search_vector: ColumnType<string, never, never>;
 }
 
 export interface LabelsTable {

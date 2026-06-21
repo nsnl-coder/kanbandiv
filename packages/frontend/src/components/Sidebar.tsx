@@ -8,10 +8,12 @@ import {
   Settings,
   Shield,
   LogOut,
+  Search,
 } from "lucide-react";
 import type { Project } from "shared";
 import { useTRPC } from "../lib/trpc";
 import { useAuthStore } from "../hooks/useAuthStore";
+import { useSearchStore } from "../hooks/useSearchStore";
 import { useLogout } from "../hooks/useLogout";
 import { useCanAny } from "../features/rbac/hooks/useCan";
 import { ADMIN_READ_PERMS } from "../features/rbac/constants";
@@ -23,6 +25,7 @@ export function Sidebar() {
   const trpc = useTRPC();
   const user = useAuthStore((s) => s.user);
   const canAdmin = useCanAny(ADMIN_READ_PERMS);
+  const openSearch = useSearchStore((s) => s.setOpen);
   const [showPassword, setShowPassword] = useState(false);
   const [sharedOpen, setSharedOpen] = useState(false);
   const logout = useLogout();
@@ -70,6 +73,14 @@ export function Sidebar() {
         {user ? (
           <p className="mt-1 truncate px-3 text-xs text-slate-500">{user.email}</p>
         ) : null}
+        <button
+          type="button"
+          onClick={() => openSearch(true)}
+          className={`${itemBase} mt-2 w-full text-slate-600 hover:bg-slate-100`}
+        >
+          <Search className="h-4 w-4" />
+          Search
+        </button>
       </div>
 
       <div className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
