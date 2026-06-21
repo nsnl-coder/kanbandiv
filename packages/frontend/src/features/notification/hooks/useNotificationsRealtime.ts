@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "../../../lib/trpc";
 import { refreshSession } from "../../../lib/trpc";
 import { authStore } from "../../../hooks/useAuthStore";
+import { connectionStore } from "../../../hooks/useConnectionStore";
 import { config } from "../../../config/env.config";
 
 // Coalesce a burst of nudges into one invalidation per key.
@@ -67,6 +68,7 @@ export function useNotificationsRealtime(): void {
 
       es.onopen = () => {
         consecutiveErrors = 0;
+        connectionStore.setOnline(true);
         // Skip the very first open; on a reconnect, catch up on the count.
         if (seenOpen) queueCount();
         seenOpen = true;
@@ -84,6 +86,7 @@ export function useNotificationsRealtime(): void {
         // auto-reconnect. Act only once the errors persist (likely an expired
         // access cookie the reconnect keeps replaying).
         if (consecutiveErrors < REFRESH_AFTER_ERRORS) return;
+        connectionStore.setOnline(false);
         consecutiveErrors = 0;
         void refreshSession().then((ok) => {
           if (closed) return;

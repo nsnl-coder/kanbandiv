@@ -21,13 +21,19 @@ set -a
 set +a
 
 # Default the target site from the tier unless E2E_BASE_URL is already set.
+# Destructive specs (user creation / password change) run on dev only; prod runs
+# the non-destructive subset.
 if [ -z "${E2E_BASE_URL:-}" ]; then
   case "${VPS_ENV:-dev}" in
     prod) export E2E_BASE_URL="https://app.trello-clone.shop" ;;
     *)    export E2E_BASE_URL="https://dev-app.trello-clone.shop" ;;
   esac
 fi
-echo "=== e2e target: $E2E_BASE_URL ==="
+case "${VPS_ENV:-dev}" in
+  prod) export E2E_ALLOW_DESTRUCTIVE=false ;;
+  *)    export E2E_ALLOW_DESTRUCTIVE=true ;;
+esac
+echo "=== e2e target: $E2E_BASE_URL (destructive=$E2E_ALLOW_DESTRUCTIVE) ==="
 
 cleanup() {
   echo "=== e2e teardown ==="

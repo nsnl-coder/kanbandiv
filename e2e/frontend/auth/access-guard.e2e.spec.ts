@@ -1,6 +1,6 @@
 import { test, expect } from "../support/fixtures";
 import { login, getStore, PW } from "./helpers";
-import { user, freshEmail } from "../support/users";
+import { user, freshEmail, allowDestructive } from "../support/users";
 
 test.describe("access guard", () => {
   test("protected route redirects to /login with next", async ({ page }) => {
@@ -28,6 +28,7 @@ test.describe("access guard", () => {
   });
 
   test("must verify email before logging in", async ({ page }) => {
+    test.skip(!allowDestructive, "registers a user (no delete-user API); dev-only");
     // Register a fresh account but never verify it, then try to log in.
     const email = freshEmail("unverified");
     await page.goto("/register");

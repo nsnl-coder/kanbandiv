@@ -2,6 +2,11 @@
 // (set per tier on the VPS, see run-e2e.sh). The accounts must already exist in
 // the target environment's DB; tests never seed or reset the DB.
 
+// Destructive tests (register new users / change a password) leave persistent
+// state the API can't undo, so they run on dev only. Prod sets this false (or
+// leaves it unset) and the suite runs the non-destructive subset.
+export const allowDestructive = process.env.E2E_ALLOW_DESTRUCTIVE === "true";
+
 function need(name: string): string {
   const v = process.env[name];
   if (!v) throw new Error(`${name} not set (e2e test account env)`);

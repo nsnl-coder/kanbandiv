@@ -23,6 +23,7 @@ function ToastItem({ toast, onClose }: { toast: ToastData; onClose: () => void }
 
   return (
     <Toast.Root
+      type={success ? "background" : "foreground"}
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
