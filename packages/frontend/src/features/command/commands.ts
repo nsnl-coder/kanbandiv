@@ -15,6 +15,7 @@ import {
   History,
   Archive,
   Tag,
+  LayoutTemplate,
   Users,
   FilterX,
   type LucideIcon,
@@ -191,6 +192,17 @@ export function buildCommands(args: BuildCommandsArgs): Command[] {
         run: () => {
           close();
           handlers.openLabels();
+        },
+      });
+      commands.push({
+        id: "board-templates",
+        label: "Manage templates",
+        group: "Board",
+        keywords: ["templates", "card", "preset"],
+        icon: LayoutTemplate,
+        run: () => {
+          close();
+          handlers.openTemplates();
         },
       });
     }

@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CARD_TITLE_MAX,
   CARD_TITLE_MIN,
   type Card,
+  type CardTemplatePayload,
 } from "shared";
 import { Modal } from "../../../components/Modal";
 import { useTRPC } from "../../../lib/trpc";
+import { cardToTemplatePayload } from "../cardTemplateUtils";
+import { TemplateForm } from "./TemplateForm";
 import { ChecklistSection } from "./ChecklistSection";
 import { LabelPicker } from "./LabelPicker";
 import { AssigneePicker } from "./AssigneePicker";
@@ -47,8 +50,25 @@ export function CardEditor({
   onClose,
 }: Props) {
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description ?? "");
+  const [savingTemplate, setSavingTemplate] = useState(false);
+
+  const checklistsQuery = useQuery(trpc.checklists.listByCard.queryOptions({ cardId: card.id }));
+  const createTemplateMutation = useMutation(
+    trpc.cardTemplates.create.mutationOptions({
+      onSettled: () =>
+        queryClient.invalidateQueries({
+          queryKey: trpc.cardTemplates.list.queryKey({ boardId }),
+        }),
+    }),
+  );
+
+  const templatePrefill: CardTemplatePayload = cardToTemplatePayload(
+    card,
+    checklistsQuery.data ?? [],
+  );
 
   const attachmentsQuery = useQuery(trpc.attachments.list.queryOptions({ cardId: card.id }));
   const imageAttachments = (attachmentsQuery.data ?? []).filter((a) =>
@@ -151,13 +171,22 @@ export function CardEditor({
 
         <div className="mt-4 flex items-center justify-between gap-2">
           {editable ? (
-            <button
-              type="button"
-              onClick={onArchive}
-              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            >
-              Archive
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onArchive}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+              >
+                Archive
+              </button>
+              <button
+                type="button"
+                onClick={() => setSavingTemplate(true)}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+              >
+                Save as template
+              </button>
+            </div>
           ) : (
             <span />
           )}
@@ -182,6 +211,27 @@ export function CardEditor({
           </div>
         </div>
       </div>
+
+      {editable && savingTemplate ? (
+        <Modal
+          open
+          onClose={() => setSavingTemplate(false)}
+          title="Save as template"
+          widthClassName="max-w-lg"
+        >
+          <TemplateForm
+            boardId={boardId}
+            initialName={card.title}
+            initialPayload={templatePrefill}
+            submitLabel="Create template"
+            onSubmit={(values) => {
+              createTemplateMutation.mutate({ boardId, ...values });
+              setSavingTemplate(false);
+            }}
+            onCancel={() => setSavingTemplate(false)}
+          />
+        </Modal>
+      ) : null}
     </Modal>
   );
 }

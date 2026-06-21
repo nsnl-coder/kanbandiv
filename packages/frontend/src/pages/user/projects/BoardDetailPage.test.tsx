@@ -464,6 +464,43 @@ describe("BoardDetailPage (realtime)", () => {
   });
 });
 
+describe("BoardDetailPage (card templates)", () => {
+  const templates = [
+    {
+      id: "t1",
+      boardId: "b1",
+      name: "Bug",
+      payload: { description: null, coverColor: null, labelIds: [], checklists: [] },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
+
+  it("editor opens Manage templates modal", async () => {
+    const u = userEvent.setup();
+    h.queryData = { getData: makeData(), accessList: [], get: defaultBoardView, list: templates };
+    renderPage();
+    await u.click(screen.getByRole("button", { name: "Manage templates" }));
+    expect(screen.getByRole("heading", { name: "Card templates" })).toBeInTheDocument();
+  });
+
+  it("view-only hides Manage templates", () => {
+    h.queryData = { getData: makeData({ myPermission: "view" }), accessList: [], list: templates };
+    renderPage();
+    expect(screen.queryByRole("button", { name: "Manage templates" })).toBeNull();
+  });
+
+  it("from-template flow calls cardTemplates.instantiate with {id, columnId}", async () => {
+    const u = userEvent.setup();
+    h.queryData = { getData: makeData(), accessList: [], get: defaultBoardView, list: templates };
+    renderPage();
+    const todo = screen.getByText("Todo").closest("div")!.parentElement as HTMLElement;
+    await u.click(within(todo).getByLabelText("add card from template to Todo"));
+    await u.click(within(todo).getByLabelText("use template Bug"));
+    expect(h.mutateCalls.instantiate).toContainEqual({ id: "t1", columnId: "c1" });
+  });
+});
+
 describe("BoardDetailPage (saved views - filters across modes)", () => {
   it("a label filter narrows the same set in kanban and table", async () => {
     const u = userEvent.setup();

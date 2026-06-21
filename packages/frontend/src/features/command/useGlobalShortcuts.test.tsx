@@ -94,7 +94,7 @@ describe("useGlobalShortcuts", () => {
       { projectId: "p1", boardId: "b1", boardName: "B", canEdit: true, isOwner: false },
       {
         setView: vi.fn(), openArchived: vi.fn(), openHistory: vi.fn(),
-        openLabels: vi.fn(), openAccess: vi.fn(), clearFilters: vi.fn(), newCard,
+        openLabels: vi.fn(), openTemplates: vi.fn(), openAccess: vi.fn(), clearFilters: vi.fn(), newCard,
       },
     );
     key({ key: "c" });
@@ -107,7 +107,7 @@ describe("useGlobalShortcuts", () => {
       { projectId: "p1", boardId: "b1", boardName: "B", canEdit: false, isOwner: false },
       {
         setView: vi.fn(), openArchived: vi.fn(), openHistory: vi.fn(),
-        openLabels: vi.fn(), openAccess: vi.fn(), clearFilters: vi.fn(), newCard,
+        openLabels: vi.fn(), openTemplates: vi.fn(), openAccess: vi.fn(), clearFilters: vi.fn(), newCard,
       },
     );
     mount();
@@ -120,7 +120,7 @@ describe("useGlobalShortcuts", () => {
       { projectId: "p7", boardId: "b1", boardName: "B", canEdit: true, isOwner: true },
       {
         setView: vi.fn(), openArchived: vi.fn(), openHistory: vi.fn(),
-        openLabels: vi.fn(), openAccess: vi.fn(), clearFilters: vi.fn(), newCard: vi.fn(),
+        openLabels: vi.fn(), openTemplates: vi.fn(), openAccess: vi.fn(), clearFilters: vi.fn(), newCard: vi.fn(),
       },
     );
     mount();

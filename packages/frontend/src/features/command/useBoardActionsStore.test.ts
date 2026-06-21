@@ -8,6 +8,7 @@ function handlers(): BoardActionsHandlers {
     openArchived: vi.fn(),
     openHistory: vi.fn(),
     openLabels: vi.fn(),
+    openTemplates: vi.fn(),
     openAccess: vi.fn(),
     clearFilters: vi.fn(),
     newCard: vi.fn(),

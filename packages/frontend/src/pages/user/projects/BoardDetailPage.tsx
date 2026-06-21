@@ -9,7 +9,7 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
-import { ArrowLeft, Pencil, Archive, Plus, Users, Maximize2, Minimize2, Tag, History } from "lucide-react";
+import { ArrowLeft, Pencil, Archive, Plus, Users, Maximize2, Minimize2, Tag, History, LayoutTemplate } from "lucide-react";
 import {
   COLUMN_NAME_MAX,
   BoardViewMode,
@@ -26,6 +26,7 @@ import { Column } from "../../../features/board/components/Column";
 import { CardEditor } from "../../../features/board/components/CardEditor";
 import { BoardAccessPanel } from "../../../features/board/components/BoardAccessPanel";
 import { LabelManager } from "../../../features/board/components/LabelManager";
+import { TemplatesManager } from "../../../features/board/components/TemplatesManager";
 import { BoardActivityPanel } from "../../../features/board/components/BoardActivityPanel";
 import { ArchivedItemsPanel } from "../../../features/board/components/ArchivedItemsPanel";
 import { LabelFilterBar } from "../../../features/board/components/LabelFilterBar";
@@ -69,6 +70,7 @@ export function BoardDetailPage() {
   const [showArchived, setShowArchived] = useState(false);
   const [showAccess, setShowAccess] = useState(false);
   const [showLabels, setShowLabels] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
   const [showActivity, setShowActivity] = useState(false);
   const [labelFilter, setLabelFilter] = useState<string[]>([]);
   const [assigneeFilter, setAssigneeFilter] = useState<string[]>([]);
@@ -183,6 +185,9 @@ export function BoardDetailPage() {
   const createCardMutation = useMutation(
     trpc.cards.create.mutationOptions({ onSettled: invalidateData }),
   );
+  const instantiateMutation = useMutation(
+    trpc.cardTemplates.instantiate.mutationOptions({ onSettled: invalidateData }),
+  );
   const updateCardMutation = useMutation(trpc.cards.update.mutationOptions());
   const archiveCardMutation = useMutation(trpc.cards.archive.mutationOptions());
   const moveCardMutation = useMutation(trpc.cards.move.mutationOptions());
@@ -208,6 +213,7 @@ export function BoardDetailPage() {
         openArchived: () => setShowArchived(true),
         openHistory: () => setShowActivity(true),
         openLabels: () => setShowLabels(true),
+        openTemplates: () => setShowTemplates(true),
         openAccess: () => setShowAccess(true),
         clearFilters: () => {
           setLabelFilter([]);
@@ -459,6 +465,16 @@ export function BoardDetailPage() {
             {editable ? (
               <button
                 type="button"
+                onClick={() => setShowTemplates(true)}
+                className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
+              >
+                <LayoutTemplate className="h-4 w-4" />
+                Manage templates
+              </button>
+            ) : null}
+            {editable ? (
+              <button
+                type="button"
                 onClick={() => setShowArchived(true)}
                 className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
               >
@@ -517,6 +533,7 @@ export function BoardDetailPage() {
                 <Column
                   key={column.id}
                   column={column}
+                  boardId={board.id}
                   editable={editable}
                   onRename={(name) =>
                     updateColumnMutation.mutate({ id: column.id, name })
@@ -524,6 +541,12 @@ export function BoardDetailPage() {
                   onArchive={() => archiveColumnMutation.mutate({ id: column.id })}
                   onAddCard={(title) =>
                     createCardMutation.mutate({ columnId: column.id, title })
+                  }
+                  onAddFromTemplate={(templateId) =>
+                    instantiateMutation.mutate(
+                      { id: templateId, columnId: column.id },
+                      { onSuccess: (created) => created && setActiveCardId(created.id) },
+                    )
                   }
                   onOpenCard={(card) => setActiveCardId(card.id)}
                 />
@@ -589,6 +612,17 @@ export function BoardDetailPage() {
           widthClassName="max-w-md"
         >
           <LabelManager boardId={board.id} editable={editable} />
+        </Modal>
+      ) : null}
+
+      {editable ? (
+        <Modal
+          open={showTemplates}
+          onClose={() => setShowTemplates(false)}
+          title="Card templates"
+          widthClassName="max-w-lg"
+        >
+          <TemplatesManager boardId={board.id} editable={editable} />
         </Modal>
       ) : null}
 

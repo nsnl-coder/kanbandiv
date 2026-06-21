@@ -17,6 +17,7 @@ export interface BoardActionsHandlers {
   openArchived: () => void;
   openHistory: () => void;
   openLabels: () => void;
+  openTemplates: () => void;
   openAccess: () => void;
   clearFilters: () => void;
   newCard: () => void;

@@ -34,10 +34,12 @@ function renderColumn(editable: boolean, onArchive = vi.fn()) {
   render(
     <Column
       column={makeColumn()}
+      boardId="b1"
       editable={editable}
       onRename={vi.fn()}
       onArchive={onArchive}
       onAddCard={vi.fn()}
+      onAddFromTemplate={vi.fn()}
       onOpenCard={vi.fn()}
     />,
   );

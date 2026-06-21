@@ -1,6 +1,7 @@
 import type { ColumnType, Generated } from "kysely";
 import type {
   ActivityMeta,
+  CardTemplatePayload,
   NotificationPayload,
   BoardViewConfig,
   BackupStatus,
@@ -278,6 +279,18 @@ export interface NotificationsTable {
   created_at: GeneratedTimestamp;
 }
 
+export interface CardTemplatesTable {
+  id: Generated<string>;
+  board_id: string;
+  name: string;
+  // jsonb: select returns a parsed object; INSERT/UPDATE MUST send JSON TEXT
+  // (the repo JSON.stringify's it on BOTH paths — node-pg sends a raw object as
+  // "[object Object]" and corrupts the row, mirror activity audit B1).
+  payload: ColumnType<CardTemplatePayload, string, string>;
+  created_at: GeneratedTimestamp;
+  updated_at: GeneratedTimestamp;
+}
+
 export interface Database {
   users: UsersTable;
   roles: RolesTable;
@@ -304,4 +317,5 @@ export interface Database {
   activities: ActivitiesTable;
   board_views: BoardViewsTable;
   notifications: NotificationsTable;
+  card_templates: CardTemplatesTable;
 }

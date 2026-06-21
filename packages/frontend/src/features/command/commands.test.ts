@@ -8,6 +8,7 @@ function handlers(): BoardActionsHandlers {
     openArchived: vi.fn(),
     openHistory: vi.fn(),
     openLabels: vi.fn(),
+    openTemplates: vi.fn(),
     openAccess: vi.fn(),
     clearFilters: vi.fn(),
     newCard: vi.fn(),
@@ -62,12 +63,14 @@ describe("buildCommands", () => {
     expect(l).toContain("New card on current board");
     expect(l).toContain("Clear filters");
     expect(l).toContain("Board members / access");
+    expect(l).toContain("Manage templates");
   });
 
   it("board ctx canEdit:false excludes new card, labels, archived; keeps view + history + clear", () => {
     const l = labels(build({ ctx: ctx({ canEdit: false, isOwner: false }), handlers: handlers() }));
     expect(l).not.toContain("New card on current board");
     expect(l).not.toContain("Manage labels");
+    expect(l).not.toContain("Manage templates");
     expect(l).not.toContain("Open Archived items");
     expect(l).toContain("Switch to Table view");
     expect(l).toContain("Open History");

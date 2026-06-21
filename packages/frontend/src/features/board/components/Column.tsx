@@ -2,32 +2,38 @@ import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Pencil, Archive, Plus } from "lucide-react";
+import { Pencil, Archive, Plus, LayoutTemplate } from "lucide-react";
 import { COLUMN_NAME_MAX, COLUMN_NAME_MIN, type Card, type Column as ColumnType } from "shared";
 import { sortByPosition } from "../utils";
 import { CardTile } from "./CardTile";
+import { TemplatePicker } from "./TemplatePicker";
 
 interface Props {
   column: ColumnType;
+  boardId: string;
   editable: boolean;
   onRename: (name: string) => void;
   onArchive: () => void;
   onAddCard: (title: string) => void;
+  onAddFromTemplate: (templateId: string) => void;
   onOpenCard: (card: Card) => void;
 }
 
 export function Column({
   column,
+  boardId,
   editable,
   onRename,
   onArchive,
   onAddCard,
+  onAddFromTemplate,
   onOpenCard,
 }: Props) {
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(column.name);
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState("");
+  const [picking, setPicking] = useState(false);
 
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: column.id,
@@ -141,15 +147,35 @@ export function Column({
               className="rounded-lg border border-slate-300 px-2 py-1 text-sm"
             />
           </div>
+        ) : picking ? (
+          <TemplatePicker
+            boardId={boardId}
+            onPick={(templateId) => {
+              onAddFromTemplate(templateId);
+              setPicking(false);
+            }}
+            onClose={() => setPicking(false)}
+          />
         ) : (
-          <button
-            type="button"
-            onClick={() => setAdding(true)}
-            className="flex items-center gap-1 rounded-lg px-2 py-1 text-left text-sm font-medium text-slate-500 hover:bg-slate-200"
-          >
-            <Plus className="h-4 w-4" />
-            Add card
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setAdding(true)}
+              className="flex flex-1 items-center gap-1 rounded-lg px-2 py-1 text-left text-sm font-medium text-slate-500 hover:bg-slate-200"
+            >
+              <Plus className="h-4 w-4" />
+              Add card
+            </button>
+            <button
+              type="button"
+              aria-label={`add card from template to ${column.name}`}
+              title="From template"
+              onClick={() => setPicking(true)}
+              className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-200"
+            >
+              <LayoutTemplate className="h-4 w-4" />
+            </button>
+          </div>
         )
       ) : null}
     </div>

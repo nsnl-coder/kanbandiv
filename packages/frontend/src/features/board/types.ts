@@ -13,6 +13,9 @@ export type {
   Assignee,
   CoverColor,
   CardCover,
+  CardTemplate,
+  CardTemplatePayload,
+  CardTemplateChecklist,
 } from "shared";
 
 export {
@@ -20,4 +23,5 @@ export {
   ATTACHMENT_ALLOWED_MIME,
   ATTACHMENT_FILENAME_MAX,
   COVER_COLORS,
+  CARD_TEMPLATE_NAME_MAX,
 } from "shared";
