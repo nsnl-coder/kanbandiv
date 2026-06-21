@@ -15,9 +15,13 @@ import { Sentry, sentryEnabled } from "./sentry.js";
 import { metricsMiddleware, metricsHandler } from "./metrics.js";
 import { healthHttpRouter } from "./features/health/health.http.js";
 import { clientLogRouter } from "./features/health/client-log.http.js";
+import { backupHttpRouter } from "./features/backup/backup.http.js";
 import { appRouter } from "./trpc/router.js";
 import { createContext } from "./trpc/context.js";
 import { openApiDocument } from "./openapi.js";
+import { appDb } from "./db/index.js";
+import { startScheduler } from "./features/backup/backup.scheduler.js";
+import { loadMaintenanceFlag } from "./features/backup/backup.service.js";
 
 const app = express();
 // Docs are served only on local; never on a deployed tier (auth attack surface).
@@ -92,6 +96,10 @@ const csrfGuard: RequestHandler = (req, res, next) => {
 // Browser behaviour logs -> Loki (csrf + auth + rate-limit + allowlist inside).
 app.use("/api", clientLogRouter);
 
+// Google Drive OAuth redirect lands here (plain GET; re-auths from the cookie).
+// Mounted before the tRPC/REST handlers so it owns this exact path.
+app.use("/api", backupHttpRouter);
+
 // Native tRPC endpoint (used by the typed frontend client).
 app.use(
   "/trpc",
@@ -119,4 +127,11 @@ if (sentryEnabled) Sentry.setupExpressErrorHandler(app);
 app.listen(env.PORT, () => {
   logger.info({ port: env.PORT, vpsEnv: env.VPS_ENV }, "backend listening");
   if (showDocs) logger.info(`API docs at http://localhost:${env.PORT}/docs`);
+  // Hydrate the maintenance flag and register the backup schedule from the DB.
+  loadMaintenanceFlag(appDb).catch((err) =>
+    logger.error({ err }, "failed to load maintenance flag"),
+  );
+  startScheduler(appDb).catch((err) =>
+    logger.error({ err }, "failed to start backup scheduler"),
+  );
 });

@@ -8,7 +8,7 @@ export const openApiDocument = generateOpenApiDocument(appRouter, {
   version: "1.0.0",
   baseUrl: `http://localhost:${env.PORT}/api`,
   docsUrl: "/docs",
-  tags: ["auth"],
+  tags: ["auth", "admin", "backup"],
   securitySchemes: {
     Authorization: { type: "http", scheme: "bearer", bearerFormat: "JWT" },
   },

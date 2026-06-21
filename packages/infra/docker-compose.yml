@@ -93,6 +93,14 @@ services:
       # Frontend lives on a different subdomain than the API -> credentialed CORS.
       # Prod must override (comma-separated origins) in packages/infra/.env.
       - CORS_ORIGINS=${CORS_ORIGINS:-https://dev-app.trello-clone.shop}
+      # Backup: staging dir + MinIO creds for `mc` mirror. GDRIVE_*, APP_BASE_URL,
+      # and BACKUP_ENCRYPTION_PASSPHRASE come from backend/.env.prod (env_file).
+      - BACKUP_WORK_DIR=/var/backups/work
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
+      - MINIO_BACKUP_BUCKETS=${MINIO_BACKUP_BUCKETS:-}
+    volumes:
+      - backupwork:/var/backups/work
     expose:
       - "4000"
       - "9464" # OTel Prometheus metrics
@@ -270,6 +278,7 @@ services:
 
 volumes:
   pgdata:
+  backupwork:
   miniodata:
   lokidata:
   tempodata:

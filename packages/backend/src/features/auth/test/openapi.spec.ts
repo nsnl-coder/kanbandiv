@@ -14,4 +14,20 @@ describe("openapi document", () => {
     const me = openApiDocument.paths?.["/auth/me"]?.get;
     expect(me?.security).toBeTruthy();
   });
+
+  it("exposes the backup endpoints, all protected", () => {
+    const paths = openApiDocument.paths ?? {};
+    expect(Object.keys(paths)).toEqual(
+      expect.arrayContaining([
+        "/admin/backup/settings",
+        "/admin/backup/gdrive/auth-url",
+        "/admin/backup/runs",
+        "/admin/backup/runs/{runId}",
+        "/admin/backup/runs/{runId}/restore",
+        "/admin/backup/maintenance",
+      ]),
+    );
+    expect(paths["/admin/backup/settings"]?.get?.security).toBeTruthy();
+    expect(paths["/admin/backup/runs/{runId}/restore"]?.post?.security).toBeTruthy();
+  });
 });

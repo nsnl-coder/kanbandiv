@@ -61,7 +61,8 @@ make health    # smoke test
 
 - [ ] DB migrations ran without error
 - [ ] `GET /health` → `{"status":"ok"}`
-- [ ] Login / logout flow works
+- [ ] check if login logout work using mcp
+- [ ] all tests are passed including: frontend tests, backend tests, landing tests & e2e tests
 - [ ] New feature behaves per spec
 - [ ] No regression on existing features
 

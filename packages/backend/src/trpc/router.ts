@@ -6,6 +6,7 @@ import { projectsRouter } from "../features/project/project.router.js";
 import { boardsRouter } from "../features/board/board.router.js";
 import { columnsRouter } from "../features/column/column.router.js";
 import { cardsRouter } from "../features/card/card.router.js";
+import { backupRouter } from "../features/backup/backup.router.js";
 
 export const appRouter = router({
   health: healthRouter,
@@ -15,6 +16,7 @@ export const appRouter = router({
   boards: boardsRouter,
   columns: columnsRouter,
   cards: cardsRouter,
+  backup: backupRouter,
 });
 
 export type AppRouter = typeof appRouter;

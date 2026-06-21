@@ -13,6 +13,8 @@ import { up as up003 } from "../../../migrations/003.project.js";
 import { up as up004 } from "../../../migrations/004.board.js";
 import { up as up005 } from "../../../migrations/005.column.js";
 import { up as up006 } from "../../../migrations/006.card.js";
+import { up as up007 } from "../../../migrations/007.backup.js";
+import { up as up008 } from "../../../migrations/008.backup-folder.js";
 import type { EmailPort } from "../../email/email.service.js";
 
 export type TestDb = Kysely<Database>;
@@ -36,6 +38,8 @@ export async function newTestDb(): Promise<TestDb> {
   await up004(db);
   await up005(db);
   await up006(db);
+  await up007(db);
+  await up008(db);
   return db;
 }
 
