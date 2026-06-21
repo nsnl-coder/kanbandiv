@@ -16,6 +16,7 @@ import { activityRouter } from "../features/activity/activity.router.js";
 import { searchRouter } from "../features/search/search.router.js";
 import { boardViewsRouter } from "../features/board-view/board-view.router.js";
 import { notificationsRouter } from "../features/notification/notification.router.js";
+import { invitesRouter } from "../features/invite/invite.router.js";
 import { cardTemplatesRouter } from "../features/card-template/card-template.router.js";
 
 export const appRouter = router({
@@ -37,6 +38,7 @@ export const appRouter = router({
   search: searchRouter,
   boardViews: boardViewsRouter,
   notifications: notificationsRouter,
+  invites: invitesRouter,
   cardTemplates: cardTemplatesRouter,
 });
 

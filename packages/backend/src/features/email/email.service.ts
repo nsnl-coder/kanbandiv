@@ -14,6 +14,12 @@ export interface EmailPort {
     link: string,
   ): Promise<void>;
   sendCardAssigned(to: string, cardTitle: string, link: string): Promise<void>;
+  sendInvite(
+    to: string,
+    inviterHandle: string,
+    scopeLabel: string,
+    link: string,
+  ): Promise<void>;
 }
 
 function render(template: string): string {
@@ -63,6 +69,22 @@ function noticeTemplate(title: string, body: string, link: string): string {
             <mj-text font-size="20px" font-weight="bold">${esc(title)}</mj-text>
             <mj-text>${esc(body)}</mj-text>
             <mj-button href="${esc(link)}">Open card</mj-button>
+          </mj-column>
+        </mj-section>
+      </mj-body>
+    </mjml>
+  `);
+}
+
+function inviteTemplate(inviterHandle: string, scopeLabel: string, link: string): string {
+  return render(`
+    <mjml>
+      <mj-body>
+        <mj-section>
+          <mj-column>
+            <mj-text font-size="20px" font-weight="bold">You've been invited</mj-text>
+            <mj-text>${esc(inviterHandle)} invited you to ${esc(scopeLabel)}. Create an account with this email to join automatically.</mj-text>
+            <mj-button href="${esc(link)}">Sign up to join</mj-button>
           </mj-column>
         </mj-section>
       </mj-body>
@@ -130,6 +152,12 @@ export function createEmailService(): EmailPort {
           `You were assigned to "${cardTitle}".`,
           link,
         ),
+      ),
+    sendInvite: (to, inviterHandle, scopeLabel, link) =>
+      send(
+        to,
+        `You've been invited to ${scopeLabel}`,
+        inviteTemplate(inviterHandle, scopeLabel, link),
       ),
   };
 }

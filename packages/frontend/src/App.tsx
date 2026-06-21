@@ -15,6 +15,7 @@ import { LoginPage } from "./pages/auth/LoginPage";
 import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
 import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
+import { SettingsPage } from "./pages/user/SettingsPage";
 import { ProjectsLanding } from "./pages/user/projects/ProjectsLanding";
 import { ProjectFormPage } from "./pages/user/projects/ProjectFormPage";
 import { ProjectDetailPage } from "./pages/user/projects/ProjectDetailPage";
@@ -89,6 +90,7 @@ export function App() {
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
+          <Route path="/settings" element={<SettingsPage />} />
           <Route path="/projects" element={<ProjectsLanding />} />
           <Route path="/projects/new" element={<ProjectFormPage />} />
           <Route path="/projects/:id" element={<ProjectDetailPage />} />

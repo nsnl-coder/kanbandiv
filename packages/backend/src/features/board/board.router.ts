@@ -97,7 +97,7 @@ export const boardsRouter = router({
     .output(z.array(boardAccessEntrySchema))
     .mutation(({ ctx, input }) => {
       const { id, ...grant } = input;
-      return board.grantBoardAccess(ctx.db, user(ctx), id, grant);
+      return board.grantBoardAccess(ctx.db, user(ctx), id, grant, ctx.email);
     }),
 
   accessRevoke: protectedProcedure

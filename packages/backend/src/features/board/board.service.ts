@@ -9,6 +9,7 @@ import {
   BoardError,
   type CreateBoardInput,
   type GrantBoardAccessInput,
+  InviteScope,
   type MyPermission,
   ProjectVisibility,
   type RevokeBoardAccessInput,
@@ -20,6 +21,8 @@ import * as cardRepo from "../card/card.repo.js";
 import * as columnRepo from "../column/column.repo.js";
 import { record } from "../activity/activity.recorder.js";
 import { bus } from "../realtime/realtime.bus.js";
+import type { EmailPort } from "../email/email.service.js";
+import * as invite from "../invite/invite.service.js";
 import * as repo from "./board.repo.js";
 import type { Db } from "./board.repo.js";
 
@@ -352,14 +355,22 @@ export async function grantBoardAccess(
   user: CtxUser,
   id: string,
   input: GrantBoardAccessInput,
+  email: EmailPort,
 ): Promise<BoardAccessEntry[]> {
   const { row } = await loadBoardFor(db, user, id, "owner");
   const target = await repo.findUserByEmail(db, input.email);
   if (!target) {
-    throw new TRPCError({
-      code: "NOT_FOUND",
-      message: BoardError.USER_NOT_FOUND,
+    // No account yet: record a pending invite + email instead of erroring. It
+    // becomes a real grant when this address signs up and verifies.
+    await invite.createOrUpdateInvite(db, email, {
+      inviteeEmail: input.email,
+      scope: InviteScope.Board,
+      scopeId: id,
+      permission: input.permission,
+      invitedBy: user.id,
+      scopeLabel: row.name,
     });
+    return listBoardAccess(db, user, id);
   }
   if (target.id === row.owner_id) {
     throw new TRPCError({

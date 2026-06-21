@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  InviteScope,
   ProjectPermission,
   grantBoardAccessInput,
   type GrantBoardAccessInput,
@@ -17,17 +18,27 @@ export function BoardAccessPanel({ boardId }: { boardId: string }) {
   const [permission, setPermission] = useState<ProjectPermission>(ProjectPermission.View);
 
   const accessQuery = useQuery(trpc.boards.accessList.queryOptions({ id: boardId }));
+  const invitesQuery = useQuery(
+    trpc.invites.listForScope.queryOptions({ scope: InviteScope.Board, scopeId: boardId }),
+  );
 
-  const invalidate = () =>
+  const invalidate = () => {
     queryClient.invalidateQueries({
       queryKey: trpc.boards.accessList.queryKey({ id: boardId }),
     });
+    queryClient.invalidateQueries({
+      queryKey: trpc.invites.listForScope.queryKey({ scope: InviteScope.Board, scopeId: boardId }),
+    });
+  };
 
   const grantMutation = useMutation(
     trpc.boards.accessGrant.mutationOptions({ onSuccess: invalidate }),
   );
   const revokeMutation = useMutation(
     trpc.boards.accessRevoke.mutationOptions({ onSuccess: invalidate }),
+  );
+  const revokeInviteMutation = useMutation(
+    trpc.invites.revoke.mutationOptions({ onSuccess: invalidate }),
   );
 
   const {
@@ -52,6 +63,7 @@ export function BoardAccessPanel({ boardId }: { boardId: string }) {
   };
 
   const entries = accessQuery.data ?? [];
+  const invites = invitesQuery.data ?? [];
 
   return (
     <section className="mt-4">
@@ -119,6 +131,38 @@ export function BoardAccessPanel({ boardId }: { boardId: string }) {
           <li className="px-4 py-3 text-sm text-muted">Not shared with anyone yet.</li>
         ) : null}
       </ul>
+
+      {invites.length > 0 ? (
+        <>
+          <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-muted">
+            Pending invites
+          </p>
+          <ul className="mt-1 divide-y divide-border rounded-lg border border-border bg-surface">
+            {invites.map((inv) => (
+              <li key={inv.id} className="flex items-center justify-between gap-2 px-4 py-2 text-sm">
+                <span className="flex min-w-0 items-center gap-2">
+                  <span className="truncate text-foreground/80">{inv.email}</span>
+                  <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                    Invited
+                  </span>
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted">
+                    {inv.permission === ProjectPermission.Edit ? "Editor" : "Viewer"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => revokeInviteMutation.mutate({ id: inv.id })}
+                    className="font-medium text-red-600 hover:text-red-700"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
     </section>
   );
 }

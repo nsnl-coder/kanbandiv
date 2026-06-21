@@ -1,7 +1,10 @@
-import { BoardError, ProjectPermission } from "shared";
+import { BoardError, InviteScope, ProjectPermission } from "shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { fakeEmail } from "../../auth/test/helpers.js";
 import {
   authedCaller,
+  createCaller,
+  makeContext,
   newTestDb,
   seedBoard,
   seedBoardAccess,
@@ -67,19 +70,31 @@ describe("boards access grant/revoke", () => {
     });
   });
 
-  it("rejects an unknown email with USER_NOT_FOUND", async () => {
-    const { user, caller } = await seedUserCaller(db, "owner@example.com");
+  it("an unknown email creates a pending invite + sends invite mail, no grant added", async () => {
+    const user = await seedUser(db, { email: "owner@example.com", verified: true });
     const project = await seedProject(db, { ownerId: user.id });
     const board = await seedBoard(db, { projectId: project.id, ownerId: user.id });
-    await expect(
-      caller.boards.accessGrant({
-        id: board.id,
-        email: "ghost@example.com",
-        permission: ProjectPermission.Edit,
-      }),
-    ).rejects.toMatchObject({
-      code: "NOT_FOUND",
-      message: BoardError.USER_NOT_FOUND,
+    const email = fakeEmail();
+    const caller = createCaller(makeContext({ db, userId: user.id, email }));
+
+    const res = await caller.boards.accessGrant({
+      id: board.id,
+      email: "ghost@example.com",
+      permission: ProjectPermission.Edit,
+    });
+
+    // No active grant yet (account does not exist).
+    expect(res).toEqual([]);
+    expect(email.sent.filter((e) => e.type === "invite")).toHaveLength(1);
+
+    const invites = await caller.invites.listForScope({
+      scope: InviteScope.Board,
+      scopeId: board.id,
+    });
+    expect(invites).toHaveLength(1);
+    expect(invites[0]).toMatchObject({
+      email: "ghost@example.com",
+      permission: ProjectPermission.Edit,
     });
   });
 

@@ -22,7 +22,6 @@ import { useUiStore } from "../hooks/useUiStore";
 import { useLogout } from "../hooks/useLogout";
 import { useCanAny } from "../features/rbac/hooks/useCan";
 import { ADMIN_READ_PERMS } from "../features/rbac/constants";
-import { ChangePasswordModal } from "../features/auth/components/ChangePasswordModal";
 import { NotificationBell } from "../features/notification/components/NotificationBell";
 import { ThemeToggle } from "./ThemeToggle";
 import { SidebarProject } from "./SidebarProject";
@@ -37,7 +36,6 @@ function SidebarContent({ headerAction }: { headerAction?: ReactNode }) {
   const user = useAuthStore((s) => s.user);
   const canAdmin = useCanAny(ADMIN_READ_PERMS);
   const openSearch = useSearchStore((s) => s.setOpen);
-  const [showPassword, setShowPassword] = useState(false);
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [sharedOpen, setSharedOpen] = useState(false);
   const logout = useLogout();
@@ -129,14 +127,19 @@ function SidebarContent({ headerAction }: { headerAction?: ReactNode }) {
       </div>
 
       <div className="border-t border-border p-3">
-        <button
-          type="button"
-          onClick={() => setShowPassword(true)}
-          className={`${itemBase} w-full text-foreground/80 hover:bg-surface-muted`}
+        <NavLink
+          to="/settings"
+          className={({ isActive }) =>
+            `${itemBase} w-full ${
+              isActive
+                ? "bg-indigo-50 font-medium text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300"
+                : "text-foreground/80 hover:bg-surface-muted"
+            }`
+          }
         >
           <Settings className="h-4 w-4" />
           Settings
-        </button>
+        </NavLink>
         <ThemeToggle />
         {canAdmin ? (
           <NavLink
@@ -167,9 +170,6 @@ function SidebarContent({ headerAction }: { headerAction?: ReactNode }) {
         </div>
       </div>
 
-      {showPassword ? (
-        <ChangePasswordModal onClose={() => setShowPassword(false)} />
-      ) : null}
       <CreateProjectModal
         open={showCreateProject}
         onClose={() => setShowCreateProject(false)}
@@ -186,7 +186,6 @@ export function Sidebar() {
   const openSearch = useSearchStore((s) => s.setOpen);
   const collapsed = useSidebarStore((s) => s.collapsed);
   const toggleCollapsed = useSidebarStore((s) => s.toggle);
-  const [showPassword, setShowPassword] = useState(false);
   const [showCreateProject, setShowCreateProject] = useState(false);
   const logout = useLogout();
 
@@ -228,14 +227,19 @@ export function Sidebar() {
 
         <div className="mt-auto flex flex-col items-center gap-1">
           <ThemeToggle compact />
-          <button
-            type="button"
-            onClick={() => setShowPassword(true)}
+          <NavLink
+            to="/settings"
             aria-label="Settings"
-            className="rounded-lg p-2 text-muted hover:bg-surface-muted hover:text-foreground"
+            className={({ isActive }) =>
+              `rounded-lg p-2 ${
+                isActive
+                  ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300"
+                  : "text-muted hover:bg-surface-muted hover:text-foreground"
+              }`
+            }
           >
             <Settings className="h-4 w-4" />
-          </button>
+          </NavLink>
           {canAdmin ? (
             <NavLink
               to="/admin"
@@ -262,9 +266,6 @@ export function Sidebar() {
           </button>
         </div>
 
-        {showPassword ? (
-          <ChangePasswordModal onClose={() => setShowPassword(false)} />
-        ) : null}
         <CreateProjectModal
           open={showCreateProject}
           onClose={() => setShowCreateProject(false)}

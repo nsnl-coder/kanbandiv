@@ -279,6 +279,23 @@ export interface NotificationsTable {
   created_at: GeneratedTimestamp;
 }
 
+export interface InvitesTable {
+  id: Generated<string>;
+  email: string;
+  scope: string;
+  scope_id: string;
+  permission: string;
+  invited_by: string;
+  created_at: GeneratedTimestamp;
+}
+
+export interface NotificationPrefsTable {
+  user_id: string;
+  type: string;
+  in_app: ColumnType<boolean, boolean | undefined, boolean>;
+  email: ColumnType<boolean, boolean | undefined, boolean>;
+}
+
 export interface CardTemplatesTable {
   id: Generated<string>;
   board_id: string;
@@ -317,5 +334,7 @@ export interface Database {
   activities: ActivitiesTable;
   board_views: BoardViewsTable;
   notifications: NotificationsTable;
+  notification_prefs: NotificationPrefsTable;
+  invites: InvitesTable;
   card_templates: CardTemplatesTable;
 }

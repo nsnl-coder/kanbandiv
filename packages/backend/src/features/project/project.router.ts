@@ -64,7 +64,7 @@ export const projectsRouter = router({
     .output(z.array(projectAccessEntrySchema))
     .mutation(({ ctx, input }) => {
       const { id, ...grant } = input;
-      return project.grantAccess(ctx.db, user(ctx), id, grant);
+      return project.grantAccess(ctx.db, user(ctx), id, grant, ctx.email);
     }),
 
   accessRevoke: protectedProcedure

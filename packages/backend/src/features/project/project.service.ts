@@ -4,6 +4,7 @@ import {
   ProjectVisibility,
   type CreateProjectInput,
   type GrantAccessInput,
+  InviteScope,
   type ListProjectsInput,
   type MyPermission,
   type Project,
@@ -11,6 +12,8 @@ import {
   type RevokeAccessInput,
   type UpdateProjectInput,
 } from "shared";
+import type { EmailPort } from "../email/email.service.js";
+import * as invite from "../invite/invite.service.js";
 import * as repo from "./project.repo.js";
 import type { Db } from "./project.repo.js";
 
@@ -172,14 +175,21 @@ export async function grantAccess(
   user: CtxUser,
   id: string,
   input: GrantAccessInput,
+  email: EmailPort,
 ): Promise<ProjectAccessEntry[]> {
   const { row } = await loadFor(db, user, id, "owner");
   const target = await repo.findUserByEmail(db, input.email);
   if (!target) {
-    throw new TRPCError({
-      code: "NOT_FOUND",
-      message: ProjectError.USER_NOT_FOUND,
+    // No account yet: record a pending invite + email instead of erroring.
+    await invite.createOrUpdateInvite(db, email, {
+      inviteeEmail: input.email,
+      scope: InviteScope.Project,
+      scopeId: id,
+      permission: input.permission,
+      invitedBy: user.id,
+      scopeLabel: row.name,
     });
+    return listAccess(db, user, id);
   }
   if (target.id === row.owner_id) {
     throw new TRPCError({

@@ -13,7 +13,11 @@ import {
 import type { CtxUser } from "../board/board.service.js";
 import { loadBoardFor } from "../board/board.service.js";
 import { cardTitle, record } from "../activity/activity.recorder.js";
-import { create as createNotification, handleFromEmail } from "../notification/notification.recorder.js";
+import {
+  create as createNotification,
+  handleFromEmail,
+  shouldNotify,
+} from "../notification/notification.recorder.js";
 import { bus } from "../realtime/realtime.bus.js";
 import type { EmailPort } from "../email/email.service.js";
 import { env } from "../../config/env.config.js";
@@ -215,7 +219,9 @@ export async function createComment(
         .executeTakeFirst();
       const actorHandle = actor ? handleFromEmail(actor.email) : null;
       for (const m of matched) {
-        await email.sendCommentMention(m.email, title, snippet, link);
+        if (await shouldNotify(db, m.id, NotificationType.MENTION, "email")) {
+          await email.sendCommentMention(m.email, title, snippet, link);
+        }
         await createNotification(db, bus, {
           userId: m.id,
           type: NotificationType.MENTION,

@@ -51,5 +51,19 @@ export type NotificationPage = z.infer<typeof notificationPageSchema>;
 export const unreadCountSchema = z.object({ count: z.number().int() });
 export type UnreadCount = z.infer<typeof unreadCountSchema>;
 
+// One delivery preference per notification type. Returned for ALL types (an
+// absent DB row resolves to the on/on default), so the UI always has 3 rows.
+export const notificationChannelSchema = z.enum(["MENTION", "CARD_ASSIGNED", "CARD_DUE_SOON"]);
+
+export const notificationPrefSchema = z.object({
+  type: notificationChannelSchema,
+  inApp: z.boolean(),
+  email: z.boolean(),
+});
+export type NotificationPref = z.infer<typeof notificationPrefSchema>;
+
+export const updateNotificationPrefInput = notificationPrefSchema;
+export type UpdateNotificationPrefInput = z.infer<typeof updateNotificationPrefInput>;
+
 export const markAllResultSchema = z.object({ updated: z.number().int() });
 export type MarkAllResult = z.infer<typeof markAllResultSchema>;

@@ -1,8 +1,9 @@
 import { Link, Outlet } from "react-router-dom";
-import { LayoutDashboard, LogOut, Menu, Search } from "lucide-react";
+import { LayoutDashboard, LogOut, Menu, Search, WifiOff } from "lucide-react";
 import { useLogout } from "../hooks/useLogout";
 import { useSearchStore } from "../hooks/useSearchStore";
 import { useUiStore } from "../hooks/useUiStore";
+import { useConnectionStore } from "../hooks/useConnectionStore";
 import { SearchPalette } from "../features/search/components/SearchPalette";
 import { CommandPalette } from "../features/command/components/CommandPalette";
 import { ShortcutHelp } from "../features/command/components/ShortcutHelp";
@@ -18,6 +19,7 @@ export function AppLayout() {
   const logout = useLogout();
   const setOpen = useSearchStore((s) => s.setOpen);
   const openMobileNav = useUiStore((s) => s.setMobileNavOpen);
+  const online = useConnectionStore((s) => s.online);
 
   // Single per-user SSE stream shared by the desktop + mobile bell.
   useNotificationsRealtime();
@@ -30,6 +32,15 @@ export function AppLayout() {
       <Sidebar />
       <MobileNav />
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        {!online ? (
+          <div
+            role="status"
+            className="flex shrink-0 items-center justify-center gap-2 bg-amber-500/90 px-4 py-1.5 text-xs font-medium text-white"
+          >
+            <WifiOff className="h-3.5 w-3.5" />
+            Reconnecting...
+          </div>
+        ) : null}
         <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-4 md:hidden">
           <div className="flex items-center gap-2">
             <button

@@ -17,6 +17,7 @@ import {
 import { env } from "../../config/env.config.js";
 import type { EmailPort } from "../email/email.service.js";
 import { findUserGlobalPerms } from "../rbac/rbac.repo.js";
+import * as invite from "../invite/invite.service.js";
 import * as repo from "./auth.repo.js";
 import type { Db } from "./auth.repo.js";
 
@@ -261,6 +262,8 @@ export async function verifyEmail(
   }
   await consumeValidOtp(deps, user.id, OtpPurpose.VerifyEmail, input.otp);
   await repo.setEmailVerified(deps.db, user.id);
+  // Apply any pending invites addressed to this email (best-effort, never throws).
+  await invite.consumeForEmail(deps.db, user.id, user.email);
   return { ok: true };
 }
 

@@ -28,6 +28,8 @@ import { up as up018 } from "../../../migrations/018.archiving.js";
 import { up as up019 } from "../../../migrations/019.board-view.js";
 import { up as up020 } from "../../../migrations/020.notification.js";
 import { up as up021 } from "../../../migrations/021.card-template.js";
+import { up as up022 } from "../../../migrations/022.notification-prefs.js";
+import { up as up023 } from "../../../migrations/023.invite.js";
 import type { EmailPort } from "../../email/email.service.js";
 
 export type TestDb = Kysely<Database>;
@@ -66,6 +68,8 @@ export async function newTestDb(): Promise<TestDb> {
   await up019(db);
   await up020(db);
   await up021(db);
+  await up022(db);
+  await up023(db);
   // pg-mem DEFECT: a partial index `(user_id) WHERE read_at IS NULL` is wrongly
   // applied to plain `WHERE user_id = ?` queries, hiding rows once read_at is set
   // (real Postgres only uses it when the query implies the partial predicate).
@@ -75,12 +79,14 @@ export async function newTestDb(): Promise<TestDb> {
 }
 
 export interface SentEmail {
-  type: "verify" | "reset" | "locked" | "due" | "mention" | "assigned";
+  type: "verify" | "reset" | "locked" | "due" | "mention" | "assigned" | "invite";
   to: string;
   code?: string;
   cardTitle?: string;
   link?: string;
   snippet?: string;
+  inviterHandle?: string;
+  scopeLabel?: string;
 }
 
 export interface FakeEmail extends EmailPort {
@@ -110,6 +116,9 @@ export function fakeEmail(): FakeEmail {
     },
     sendCardAssigned: async (to, cardTitle, link) => {
       sent.push({ type: "assigned", to, cardTitle, link });
+    },
+    sendInvite: async (to, inviterHandle, scopeLabel, link) => {
+      sent.push({ type: "invite", to, inviterHandle, scopeLabel, link });
     },
     lastCodeFor(to) {
       for (let i = sent.length - 1; i >= 0; i--) {

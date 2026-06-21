@@ -4,7 +4,9 @@ import {
   markAllResultSchema,
   markReadInput,
   notificationPageSchema,
+  notificationPrefSchema,
   unreadCountSchema,
+  updateNotificationPrefInput,
 } from "shared";
 import { protectedProcedure, router } from "../../trpc/trpc.js";
 import * as notification from "./notification.service.js";
@@ -38,4 +40,16 @@ export const notificationsRouter = router({
     .input(z.void())
     .output(markAllResultSchema)
     .mutation(({ ctx }) => notification.markAllRead(ctx.db, user(ctx))),
+
+  prefsList: protectedProcedure
+    .meta({ openapi: { method: "GET", path: "/me/notifications/prefs", tags: ["notifications"], protect: true, summary: "List the caller's notification delivery preferences" } })
+    .input(z.void())
+    .output(z.array(notificationPrefSchema))
+    .query(({ ctx }) => notification.listPrefs(ctx.db, user(ctx))),
+
+  prefsSet: protectedProcedure
+    .meta({ openapi: { method: "PUT", path: "/me/notifications/prefs", tags: ["notifications"], protect: true, summary: "Update one notification type's delivery preference" } })
+    .input(updateNotificationPrefInput)
+    .output(notificationPrefSchema)
+    .mutation(({ ctx, input }) => notification.setPref(ctx.db, user(ctx), input)),
 });

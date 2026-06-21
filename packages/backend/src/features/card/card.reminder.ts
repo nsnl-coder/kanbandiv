@@ -2,7 +2,10 @@ import { NotificationType } from "shared";
 import { env } from "../../config/env.config.js";
 import type { EmailPort } from "../email/email.service.js";
 import * as commentRepo from "../comment/comment.repo.js";
-import { create as createNotification } from "../notification/notification.recorder.js";
+import {
+  create as createNotification,
+  shouldNotify,
+} from "../notification/notification.recorder.js";
 import { bus } from "../realtime/realtime.bus.js";
 import * as repo from "./card.repo.js";
 import type { Db } from "./card.repo.js";
@@ -42,7 +45,9 @@ export async function runDueReminders(
     const members = await commentRepo.listBoardMembers(db, column.board_id);
     const link = cardLink(column.board_id, card.id);
     for (const m of members) {
-      await email.sendCardDueSoon(m.email, card.title, link);
+      if (await shouldNotify(db, m.id, NotificationType.CARD_DUE_SOON, "email")) {
+        await email.sendCardDueSoon(m.email, card.title, link);
+      }
       await createNotification(db, bus, {
         userId: m.id,
         type: NotificationType.CARD_DUE_SOON,

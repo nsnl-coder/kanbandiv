@@ -7,7 +7,28 @@ import {
 import { LogEvent } from "../../config/const.config.js";
 import { logger } from "../../logger.js";
 import type { Bus } from "../realtime/realtime.bus.js";
+import * as repo from "./notification.repo.js";
 import type { Db } from "./notification.repo.js";
+
+export type NotifyChannel = "in_app" | "email";
+
+// Single gate consulted by BOTH the email sites and the in-app recorder. An
+// absent prefs row resolves to ON (legacy behaviour). Best-effort: a query
+// failure must not silence a notification, so it defaults to true.
+export async function shouldNotify(
+  db: Db,
+  userId: string,
+  type: NotificationTypeValue,
+  channel: NotifyChannel,
+): Promise<boolean> {
+  try {
+    const pref = await repo.getPref(db, userId, type);
+    if (!pref) return true;
+    return channel === "in_app" ? pref.in_app : pref.email;
+  } catch {
+    return true;
+  }
+}
 
 export interface CreateInput {
   userId: string;
@@ -27,6 +48,7 @@ export function handleFromEmail(email: string): string {
 // must not publish a phantom nudge. payload MUST be JSON.stringify'd (jsonb).
 export async function create(db: Db, bus: Bus, input: CreateInput): Promise<void> {
   try {
+    if (!(await shouldNotify(db, input.userId, input.type, "in_app"))) return;
     const payload = notificationPayloadSchema.parse(input.payload);
     await db
       .insertInto("notifications")

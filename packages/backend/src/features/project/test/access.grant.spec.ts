@@ -1,7 +1,10 @@
-import { ProjectError, ProjectPermission } from "shared";
+import { InviteScope, ProjectError, ProjectPermission } from "shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { fakeEmail } from "../../auth/test/helpers.js";
 import {
   authedCaller,
+  createCaller,
+  makeContext,
   newTestDb,
   seedAccess,
   seedProject,
@@ -66,18 +69,29 @@ describe("projects.accessGrant", () => {
     });
   });
 
-  it("rejects an unknown target email with USER_NOT_FOUND", async () => {
-    const { user, caller } = await seedUserCaller(db, "owner@example.com");
+  it("an unknown target email creates a pending invite + sends invite mail", async () => {
+    const user = await seedUser(db, { email: "owner@example.com", verified: true });
     const p = await seedProject(db, { ownerId: user.id });
-    await expect(
-      caller.projects.accessGrant({
-        id: p.id,
-        email: "ghost@example.com",
-        permission: ProjectPermission.Edit,
-      }),
-    ).rejects.toMatchObject({
-      code: "NOT_FOUND",
-      message: ProjectError.USER_NOT_FOUND,
+    const email = fakeEmail();
+    const caller = createCaller(makeContext({ db, userId: user.id, email }));
+
+    const res = await caller.projects.accessGrant({
+      id: p.id,
+      email: "ghost@example.com",
+      permission: ProjectPermission.Edit,
+    });
+
+    expect(res).toEqual([]);
+    expect(email.sent.filter((e) => e.type === "invite")).toHaveLength(1);
+
+    const invites = await caller.invites.listForScope({
+      scope: InviteScope.Project,
+      scopeId: p.id,
+    });
+    expect(invites).toHaveLength(1);
+    expect(invites[0]).toMatchObject({
+      email: "ghost@example.com",
+      permission: ProjectPermission.Edit,
     });
   });
 

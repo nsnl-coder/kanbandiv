@@ -53,3 +53,40 @@ export function existsForUser(db: Db, userId: string, id: string) {
     .where("user_id", "=", userId)
     .executeTakeFirst();
 }
+
+// --- delivery preferences (absent row = both channels on) ---
+
+export function listPrefs(db: Db, userId: string) {
+  return db
+    .selectFrom("notification_prefs")
+    .select(["type", "in_app", "email"])
+    .where("user_id", "=", userId)
+    .execute();
+}
+
+export function getPref(db: Db, userId: string, type: string) {
+  return db
+    .selectFrom("notification_prefs")
+    .select(["in_app", "email"])
+    .where("user_id", "=", userId)
+    .where("type", "=", type)
+    .executeTakeFirst();
+}
+
+export async function upsertPref(
+  db: Db,
+  userId: string,
+  type: string,
+  values: { in_app: boolean; email: boolean },
+): Promise<void> {
+  await db
+    .insertInto("notification_prefs")
+    .values({ user_id: userId, type, in_app: values.in_app, email: values.email })
+    .onConflict((oc) =>
+      oc.columns(["user_id", "type"]).doUpdateSet({
+        in_app: values.in_app,
+        email: values.email,
+      }),
+    )
+    .execute();
+}

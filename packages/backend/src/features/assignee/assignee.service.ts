@@ -12,7 +12,11 @@ import {
 import type { CtxUser } from "../board/board.service.js";
 import { loadBoardFor } from "../board/board.service.js";
 import { cardTitle, record } from "../activity/activity.recorder.js";
-import { create as createNotification, handleFromEmail } from "../notification/notification.recorder.js";
+import {
+  create as createNotification,
+  handleFromEmail,
+  shouldNotify,
+} from "../notification/notification.recorder.js";
 import { bus } from "../realtime/realtime.bus.js";
 import * as commentRepo from "../comment/comment.repo.js";
 import type { EmailPort } from "../email/email.service.js";
@@ -112,7 +116,9 @@ export async function assign(
     await repo.assign(db, cardId, userId);
     const title = await cardTitle(db, cardId);
     if (target.id !== user.id) {
-      await email.sendCardAssigned(target.email, title, cardLink(boardId, cardId));
+      if (await shouldNotify(db, target.id, NotificationType.CARD_ASSIGNED, "email")) {
+        await email.sendCardAssigned(target.email, title, cardLink(boardId, cardId));
+      }
       const actor = await db
         .selectFrom("users")
         .select(["email"])

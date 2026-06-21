@@ -16,6 +16,7 @@ import {
   type BoardData,
   type BoardViewModeValue,
   type Card,
+  type Column as ColumnData,
   type DueViewFilter,
   type SwimlaneGrouping,
 } from "shared";
@@ -59,6 +60,48 @@ function midpoint(prev: number | undefined, next: number | undefined): number {
   if (prev === undefined) return next! - 1;
   if (next === undefined) return prev + 1;
   return (prev + next) / 2;
+}
+
+// Optimistic placeholders: rendered instantly on create, reconciled (replaced by
+// the server row) in onSuccess and finally re-fetched in onSettled. The `tmp_`
+// id prefix marks them so nothing mistakes a placeholder for a persisted row.
+function tempCard(id: string, columnId: string, title: string, siblings: Card[]): Card {
+  const now = new Date();
+  const maxPos = siblings.reduce((m, c) => Math.max(m, c.position), 0);
+  return {
+    id,
+    columnId,
+    title,
+    description: null,
+    position: maxPos + 1,
+    dueAt: null,
+    reminderMinutes: null,
+    isOverdue: false,
+    cover: null,
+    labels: [],
+    assignees: [],
+    checklistProgress: { done: 0, total: 0 },
+    commentCount: 0,
+    attachmentCount: 0,
+    archivedAt: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+function tempColumn(id: string, boardId: string, name: string, siblings: ColumnData[]): ColumnData {
+  const now = new Date();
+  const maxPos = siblings.reduce((m, c) => Math.max(m, c.position), 0);
+  return {
+    id,
+    boardId,
+    name,
+    position: maxPos + 1,
+    archivedAt: null,
+    createdAt: now,
+    updatedAt: now,
+    cards: [],
+  };
 }
 
 export function BoardDetailPage() {
@@ -177,7 +220,26 @@ export function BoardDetailPage() {
   );
 
   const createColumnMutation = useMutation(
-    trpc.columns.create.mutationOptions({ onSettled: invalidateData }),
+    trpc.columns.create.mutationOptions({
+      onMutate: (input) => {
+        const snapshot = queryClient.getQueryData<BoardData>(dataKey);
+        const tempId = `tmp_${crypto.randomUUID()}`;
+        setData((d) => ({
+          ...d,
+          columns: [...d.columns, tempColumn(tempId, input.boardId, input.name, d.columns)],
+        }));
+        return { snapshot, tempId };
+      },
+      onSuccess: (created, _input, ctx) =>
+        setData((d) => ({
+          ...d,
+          columns: d.columns.map((c) => (c.id === ctx?.tempId ? created : c)),
+        })),
+      onError: (_e, _v, ctx) => {
+        if (ctx?.snapshot) queryClient.setQueryData(dataKey, ctx.snapshot);
+      },
+      onSettled: invalidateData,
+    }),
   );
   const updateColumnMutation = useMutation(
     trpc.columns.update.mutationOptions({ onSettled: invalidateData }),
@@ -188,7 +250,33 @@ export function BoardDetailPage() {
   const moveColumnMutation = useMutation(trpc.columns.move.mutationOptions());
 
   const createCardMutation = useMutation(
-    trpc.cards.create.mutationOptions({ onSettled: invalidateData }),
+    trpc.cards.create.mutationOptions({
+      onMutate: (input) => {
+        const snapshot = queryClient.getQueryData<BoardData>(dataKey);
+        const tempId = `tmp_${crypto.randomUUID()}`;
+        setData((d) => ({
+          ...d,
+          columns: d.columns.map((c) =>
+            c.id === input.columnId
+              ? { ...c, cards: [...c.cards, tempCard(tempId, input.columnId, input.title, c.cards)] }
+              : c,
+          ),
+        }));
+        return { snapshot, tempId };
+      },
+      onSuccess: (created, _input, ctx) =>
+        setData((d) => ({
+          ...d,
+          columns: d.columns.map((c) => ({
+            ...c,
+            cards: c.cards.map((card) => (card.id === ctx?.tempId ? created : card)),
+          })),
+        })),
+      onError: (_e, _v, ctx) => {
+        if (ctx?.snapshot) queryClient.setQueryData(dataKey, ctx.snapshot);
+      },
+      onSettled: invalidateData,
+    }),
   );
   const instantiateMutation = useMutation(
     trpc.cardTemplates.instantiate.mutationOptions({ onSettled: invalidateData }),
