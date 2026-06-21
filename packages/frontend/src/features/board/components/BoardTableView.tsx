@@ -63,16 +63,16 @@ export function BoardTableView({ columns, onOpenCard }: Props) {
   };
 
   if (rows.length === 0) {
-    return <p className="mt-6 text-sm text-slate-500">No cards match the current filters.</p>;
+    return <p className="mt-6 text-sm text-muted">No cards match the current filters.</p>;
   }
 
   const header = (key: SortKey, label: string) => (
-    <th className="px-3 py-2 text-left font-semibold text-slate-600">
+    <th className="px-3 py-2 text-left font-semibold text-foreground/70">
       <button
         type="button"
         aria-label={`sort by ${label}`}
         onClick={() => toggleSort(key)}
-        className="inline-flex items-center gap-1 hover:text-slate-900"
+        className="inline-flex items-center gap-1 hover:text-foreground"
       >
         {label}
         {sortKey === key ? (
@@ -90,27 +90,27 @@ export function BoardTableView({ columns, onOpenCard }: Props) {
     <div className="mt-6 overflow-x-auto">
       <table className="w-full border-collapse text-sm">
         <thead>
-          <tr className="border-b border-slate-200">
+          <tr className="border-b border-border">
             {header("title", "Title")}
             {header("column", "Column")}
-            <th className="px-3 py-2 text-left font-semibold text-slate-600">Assignees</th>
-            <th className="px-3 py-2 text-left font-semibold text-slate-600">Labels</th>
+            <th className="px-3 py-2 text-left font-semibold text-foreground/70">Assignees</th>
+            <th className="px-3 py-2 text-left font-semibold text-foreground/70">Labels</th>
             {header("due", "Due")}
           </tr>
         </thead>
         <tbody>
           {sorted.map(({ card, columnName }) => (
-            <tr key={card.id} className="border-b border-slate-100 hover:bg-slate-50">
+            <tr key={card.id} className="border-b border-border hover:bg-canvas">
               <td className="px-3 py-2">
                 <button
                   type="button"
                   onClick={() => onOpenCard(card)}
-                  className="text-left font-medium text-slate-800 hover:text-indigo-600"
+                  className="text-left font-medium text-foreground hover:text-indigo-600"
                 >
                   {card.title}
                 </button>
               </td>
-              <td className="px-3 py-2 text-slate-600">{columnName}</td>
+              <td className="px-3 py-2 text-foreground/70">{columnName}</td>
               <td className="px-3 py-2">
                 <AssigneeStack assignees={card.assignees} />
               </td>

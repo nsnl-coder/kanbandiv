@@ -63,13 +63,13 @@ export function BoardCalendarView({ boardId, filter, onOpenCard }: Props) {
   return (
     <div className="mt-6">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-slate-800">{monthLabel}</h2>
+        <h2 className="text-lg font-semibold text-foreground">{monthLabel}</h2>
         <div className="flex gap-1">
           <button
             type="button"
             aria-label="previous month"
             onClick={() => setCursor((c) => new Date(c.getFullYear(), c.getMonth() - 1, 1))}
-            className="rounded-lg border border-slate-300 p-1.5 text-slate-700 hover:bg-slate-100"
+            className="rounded-lg border border-border p-1.5 text-foreground/80 hover:bg-surface-muted"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -77,7 +77,7 @@ export function BoardCalendarView({ boardId, filter, onOpenCard }: Props) {
             type="button"
             aria-label="next month"
             onClick={() => setCursor((c) => new Date(c.getFullYear(), c.getMonth() + 1, 1))}
-            className="rounded-lg border border-slate-300 p-1.5 text-slate-700 hover:bg-slate-100"
+            className="rounded-lg border border-border p-1.5 text-foreground/80 hover:bg-surface-muted"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -85,14 +85,14 @@ export function BoardCalendarView({ boardId, filter, onOpenCard }: Props) {
       </div>
 
       {dueQuery.isLoading ? (
-        <p className="text-sm text-slate-500">Loading...</p>
+        <p className="text-sm text-muted">Loading...</p>
       ) : cards.length === 0 ? (
-        <p className="text-sm text-slate-500">No cards with due dates this month.</p>
+        <p className="text-sm text-muted">No cards with due dates this month.</p>
       ) : null}
 
-      <div className="grid grid-cols-7 gap-px rounded-lg bg-slate-200">
+      <div className="grid grid-cols-7 gap-px rounded-lg bg-surface-muted">
         {WEEKDAYS.map((d) => (
-          <div key={d} className="bg-slate-50 px-2 py-1 text-center text-xs font-semibold text-slate-500">
+          <div key={d} className="bg-canvas px-2 py-1 text-center text-xs font-semibold text-muted">
             {d}
           </div>
         ))}
@@ -103,16 +103,16 @@ export function BoardCalendarView({ boardId, filter, onOpenCard }: Props) {
             <div
               key={day.toISOString()}
               data-day={`${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}`}
-              className={`min-h-24 bg-white p-1.5 ${inMonth ? "" : "opacity-40"}`}
+              className={`min-h-24 bg-surface p-1.5 ${inMonth ? "" : "opacity-40"}`}
             >
-              <div className="text-right text-xs font-medium text-slate-400">{day.getDate()}</div>
+              <div className="text-right text-xs font-medium text-muted">{day.getDate()}</div>
               <div className="mt-1 flex flex-col gap-1">
                 {dayCards.map((card) => (
                   <button
                     key={card.id}
                     type="button"
                     onClick={() => onOpenCard(card)}
-                    className="rounded border border-slate-200 bg-white p-1 text-left text-xs text-slate-700 shadow-sm hover:bg-slate-50"
+                    className="rounded border border-border bg-surface p-1 text-left text-xs text-foreground/80 shadow-sm hover:bg-canvas"
                   >
                     <span className="block truncate font-medium">{card.title}</span>
                     {card.labels.length > 0 ? (

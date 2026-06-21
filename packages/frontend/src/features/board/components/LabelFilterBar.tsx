@@ -21,7 +21,7 @@ export function LabelFilterBar({ boardId, selected, onChange }: Props) {
 
   return (
     <div className="flex flex-wrap items-center gap-1.5" aria-label="filter by labels">
-      <span className="text-xs font-medium text-slate-500">Filter:</span>
+      <span className="text-xs font-medium text-muted">Filter:</span>
       {labels.map((label: Label) => {
         const on = selected.includes(label.id);
         return (
@@ -33,7 +33,7 @@ export function LabelFilterBar({ boardId, selected, onChange }: Props) {
             onClick={() => toggle(label.id)}
             style={on ? { backgroundColor: label.color, color: "#fff" } : { borderColor: label.color }}
             className={`rounded-full border px-2 py-0.5 text-xs font-medium ${
-              on ? "" : "bg-white text-slate-600"
+              on ? "" : "bg-surface text-foreground/70"
             }`}
           >
             {label.name || "(no name)"}
@@ -45,7 +45,7 @@ export function LabelFilterBar({ boardId, selected, onChange }: Props) {
           type="button"
           aria-label="clear label filter"
           onClick={() => onChange([])}
-          className="flex items-center gap-0.5 text-xs font-medium text-slate-500 hover:text-slate-700"
+          className="flex items-center gap-0.5 text-xs font-medium text-muted hover:text-foreground/80"
         >
           <X className="h-3 w-3" />
           Clear

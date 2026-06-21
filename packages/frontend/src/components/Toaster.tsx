@@ -26,7 +26,7 @@ function ToastItem({ toast, onClose }: { toast: ToastData; onClose: () => void }
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
-      className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-lg data-[state=closed]:animate-[fadeOut_150ms_ease-in] data-[swipe=end]:animate-[fadeOut_150ms_ease-in]"
+      className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-3 text-sm text-foreground/80 shadow-lg data-[state=closed]:animate-[fadeOut_150ms_ease-in] data-[swipe=end]:animate-[fadeOut_150ms_ease-in]"
     >
       {success ? (
         <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
@@ -36,7 +36,7 @@ function ToastItem({ toast, onClose }: { toast: ToastData; onClose: () => void }
       <Toast.Title className="flex-1">{toast.message}</Toast.Title>
       <Toast.Close
         aria-label="Dismiss"
-        className="rounded p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+        className="rounded p-0.5 text-muted hover:bg-surface-muted hover:text-foreground/70"
       >
         <X className="h-3.5 w-3.5" />
       </Toast.Close>

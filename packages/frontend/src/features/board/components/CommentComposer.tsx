@@ -69,12 +69,12 @@ export function CommentComposer({
         placeholder={placeholder}
         maxLength={COMMENT_BODY_MAX}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+        className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-indigo-500"
       />
       {suggestions.length > 0 ? (
         <ul
           aria-label="mention suggestions"
-          className="absolute z-10 mt-1 w-48 rounded-lg border border-slate-200 bg-white shadow-lg"
+          className="absolute z-10 mt-1 w-48 rounded-lg border border-border bg-surface shadow-lg"
         >
           {suggestions.map((m) => (
             <li key={m.name}>
@@ -82,7 +82,7 @@ export function CommentComposer({
                 type="button"
                 aria-label={`mention ${m.name}`}
                 onClick={() => applyMention(m.name)}
-                className="block w-full px-3 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-100"
+                className="block w-full px-3 py-1.5 text-left text-sm text-foreground/80 hover:bg-surface-muted"
               >
                 @{m.name}
               </button>
@@ -103,7 +103,7 @@ export function CommentComposer({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
+            className="rounded-lg px-3 py-1.5 text-sm font-medium text-foreground/70 hover:bg-surface-muted"
           >
             Cancel
           </button>

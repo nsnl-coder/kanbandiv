@@ -18,7 +18,7 @@ export function AssigneeStack({ assignees, cap = 3 }: Props) {
         ))}
       </div>
       {extra > 0 ? (
-        <span className="ml-1 text-[10px] font-medium text-slate-500">+{extra}</span>
+        <span className="ml-1 text-[10px] font-medium text-muted">+{extra}</span>
       ) : null}
     </div>
   );

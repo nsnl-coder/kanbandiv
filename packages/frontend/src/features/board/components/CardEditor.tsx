@@ -93,7 +93,7 @@ export function CardEditor({
       <div>
         <CardCoverBanner cover={card.cover} />
         <div className="flex flex-col gap-1">
-          <label htmlFor="card-title" className="text-sm font-medium text-slate-700">
+          <label htmlFor="card-title" className="text-sm font-medium text-foreground/80">
             Title
           </label>
           <input
@@ -102,7 +102,7 @@ export function CardEditor({
             disabled={!editable}
             maxLength={CARD_TITLE_MAX}
             onChange={(e) => setTitle(e.target.value)}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 disabled:bg-slate-100"
+            className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-indigo-500 disabled:bg-surface-muted"
           />
           {!valid ? (
             <p className="text-xs text-red-600">Title is required.</p>
@@ -110,7 +110,7 @@ export function CardEditor({
         </div>
 
         <div className="mt-3 flex flex-col gap-1">
-          <label htmlFor="card-description" className="text-sm font-medium text-slate-700">
+          <label htmlFor="card-description" className="text-sm font-medium text-foreground/80">
             Description
           </label>
           <DescriptionEditor
@@ -175,14 +175,14 @@ export function CardEditor({
               <button
                 type="button"
                 onClick={onArchive}
-                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground/80 hover:bg-surface-muted"
               >
                 Archive
               </button>
               <button
                 type="button"
                 onClick={() => setSavingTemplate(true)}
-                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground/80 hover:bg-surface-muted"
               >
                 Save as template
               </button>
@@ -194,7 +194,7 @@ export function CardEditor({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
+              className="rounded-lg px-3 py-1.5 text-sm font-medium text-foreground/70 hover:bg-surface-muted"
             >
               {editable ? "Cancel" : "Close"}
             </button>

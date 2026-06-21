@@ -41,7 +41,7 @@ export function ChecklistItemRow({ item, editable, onToggle, onRename, onDelete 
         <button
           type="button"
           aria-label="reorder item"
-          className="cursor-grab text-slate-300 hover:text-slate-500 active:cursor-grabbing"
+          className="cursor-grab text-muted hover:text-muted active:cursor-grabbing"
           {...attributes}
           {...listeners}
         >
@@ -54,7 +54,7 @@ export function ChecklistItemRow({ item, editable, onToggle, onRename, onDelete 
         disabled={!editable}
         aria-label={`toggle ${item.text}`}
         onChange={(e) => onToggle(e.target.checked)}
-        className="h-4 w-4 rounded border-slate-300"
+        className="h-4 w-4 rounded border-border"
       />
       {editing && editable ? (
         <input
@@ -71,12 +71,12 @@ export function ChecklistItemRow({ item, editable, onToggle, onRename, onDelete 
               setEditing(false);
             }
           }}
-          className="flex-1 rounded border border-slate-300 px-2 py-0.5 text-sm outline-none focus:border-indigo-500"
+          className="flex-1 rounded border border-border px-2 py-0.5 text-sm outline-none focus:border-indigo-500"
         />
       ) : (
         <span
           onClick={() => editable && setEditing(true)}
-          className={`flex-1 text-sm ${item.isDone ? "text-slate-400 line-through" : "text-slate-700"} ${editable ? "cursor-text" : ""}`}
+          className={`flex-1 text-sm ${item.isDone ? "text-muted line-through" : "text-foreground/80"} ${editable ? "cursor-text" : ""}`}
         >
           {item.text}
         </span>
@@ -86,7 +86,7 @@ export function ChecklistItemRow({ item, editable, onToggle, onRename, onDelete 
           type="button"
           aria-label={`delete ${item.text}`}
           onClick={onDelete}
-          className="text-slate-300 hover:text-red-500"
+          className="text-muted hover:text-red-500"
         >
           <Trash2 className="h-4 w-4" />
         </button>

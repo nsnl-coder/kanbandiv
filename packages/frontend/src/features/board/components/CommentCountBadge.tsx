@@ -10,7 +10,7 @@ export function CommentCountBadge({ count }: Props) {
   return (
     <span
       aria-label={`${count} comments`}
-      className="mt-2 inline-flex items-center gap-1 text-xs text-slate-500"
+      className="mt-2 inline-flex items-center gap-1 text-xs text-muted"
     >
       <MessageSquare className="h-3.5 w-3.5" />
       {count}

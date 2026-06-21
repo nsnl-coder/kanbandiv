@@ -71,7 +71,7 @@ export function DueDatePicker({ boardId, card, editable }: Props) {
 
   return (
     <div className="mt-4">
-      <h3 className="text-sm font-semibold text-slate-700">Due date</h3>
+      <h3 className="text-sm font-semibold text-foreground/80">Due date</h3>
       {updateMutation.error ? (
         <p className="mt-1 text-xs text-red-600">{boardErrorMessage(updateMutation.error)}</p>
       ) : null}
@@ -82,14 +82,14 @@ export function DueDatePicker({ boardId, card, editable }: Props) {
           disabled={!editable}
           value={card.dueAt ? toInputValue(card.dueAt) : ""}
           onChange={(e) => onDateChange(e.target.value)}
-          className="rounded border border-slate-300 px-2 py-1 text-sm outline-none focus:border-indigo-500 disabled:bg-slate-100"
+          className="rounded border border-border px-2 py-1 text-sm outline-none focus:border-indigo-500 disabled:bg-surface-muted"
         />
         <select
           aria-label="reminder"
           disabled={!editable || !card.dueAt}
           value={card.reminderMinutes ?? ""}
           onChange={(e) => onReminderChange(e.target.value)}
-          className="rounded border border-slate-300 px-2 py-1 text-sm disabled:bg-slate-100"
+          className="rounded border border-border px-2 py-1 text-sm disabled:bg-surface-muted"
         >
           {REMINDER_OPTIONS.map((o) => (
             <option key={String(o.value)} value={o.value ?? ""}>
@@ -102,7 +102,7 @@ export function DueDatePicker({ boardId, card, editable }: Props) {
             type="button"
             aria-label="clear due date"
             onClick={() => save({ dueAt: null, reminderMinutes: null })}
-            className="flex items-center gap-0.5 rounded px-1.5 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100"
+            className="flex items-center gap-0.5 rounded px-1.5 py-1 text-xs font-medium text-muted hover:bg-surface-muted"
           >
             <X className="h-3.5 w-3.5" />
             Clear

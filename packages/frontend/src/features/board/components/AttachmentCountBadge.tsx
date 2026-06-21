@@ -10,7 +10,7 @@ export function AttachmentCountBadge({ count }: Props) {
   return (
     <span
       aria-label={`${count} attachments`}
-      className="mt-2 inline-flex items-center gap-1 text-xs text-slate-500"
+      className="mt-2 inline-flex items-center gap-1 text-xs text-muted"
     >
       <Paperclip className="h-3.5 w-3.5" />
       {count}

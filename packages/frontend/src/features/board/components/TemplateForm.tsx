@@ -97,7 +97,7 @@ export function TemplateForm({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <label htmlFor="template-name" className="text-sm font-medium text-slate-700">
+        <label htmlFor="template-name" className="text-sm font-medium text-foreground/80">
           Name
         </label>
         <input
@@ -107,13 +107,13 @@ export function TemplateForm({
           maxLength={CARD_TEMPLATE_NAME_MAX}
           onChange={(e) => setName(e.target.value)}
           placeholder="Template name"
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+          className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-indigo-500"
         />
         {!valid ? <p className="text-xs text-red-600">Name is required.</p> : null}
       </div>
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="template-description" className="text-sm font-medium text-slate-700">
+        <label htmlFor="template-description" className="text-sm font-medium text-foreground/80">
           Description
         </label>
         <textarea
@@ -123,15 +123,15 @@ export function TemplateForm({
           maxLength={CARD_DESCRIPTION_MAX}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+          className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-indigo-500"
         />
       </div>
 
       <div className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-slate-700">Labels</span>
+        <span className="text-sm font-medium text-foreground/80">Labels</span>
         <div className="flex flex-wrap gap-2">
           {boardLabels.length === 0 ? (
-            <span className="text-sm text-slate-500">No labels on this board.</span>
+            <span className="text-sm text-muted">No labels on this board.</span>
           ) : null}
           {boardLabels.map((label) => {
             const active = labelIds.includes(label.id);
@@ -152,16 +152,16 @@ export function TemplateForm({
       </div>
 
       <div className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-slate-700">Cover color</span>
+        <span className="text-sm font-medium text-foreground/80">Cover color</span>
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             aria-label="cover color none"
             aria-pressed={coverColor === null}
             onClick={() => setCoverColor(null)}
-            className={`flex h-6 w-6 items-center justify-center rounded border border-slate-300 ${coverColor === null ? "ring-2 ring-indigo-500" : ""}`}
+            className={`flex h-6 w-6 items-center justify-center rounded border border-border ${coverColor === null ? "ring-2 ring-indigo-500" : ""}`}
           >
-            <X className="h-3 w-3 text-slate-400" />
+            <X className="h-3 w-3 text-muted" />
           </button>
           {COVER_COLORS.map((c) => (
             <button
@@ -178,7 +178,7 @@ export function TemplateForm({
 
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-slate-700">Checklists</span>
+          <span className="text-sm font-medium text-foreground/80">Checklists</span>
           <button
             type="button"
             aria-label="add checklist"
@@ -190,7 +190,7 @@ export function TemplateForm({
           </button>
         </div>
         {checklists.map((cl, idx) => (
-          <div key={idx} className="rounded-lg border border-slate-200 p-2">
+          <div key={idx} className="rounded-lg border border-border p-2">
             <div className="flex items-center gap-2">
               <input
                 aria-label={`checklist ${idx + 1} title`}
@@ -198,13 +198,13 @@ export function TemplateForm({
                 maxLength={CHECKLIST_TITLE_MAX}
                 onChange={(e) => setChecklistTitle(idx, e.target.value)}
                 placeholder="Checklist title"
-                className="flex-1 rounded border border-slate-300 px-2 py-1 text-sm outline-none focus:border-indigo-500"
+                className="flex-1 rounded border border-border px-2 py-1 text-sm outline-none focus:border-indigo-500"
               />
               <button
                 type="button"
                 aria-label={`remove checklist ${idx + 1}`}
                 onClick={() => removeChecklist(idx)}
-                className="text-slate-300 hover:text-red-500"
+                className="text-muted hover:text-red-500"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -218,13 +218,13 @@ export function TemplateForm({
                     maxLength={CHECKLIST_ITEM_TEXT_MAX}
                     onChange={(e) => setItem(idx, itemIdx, e.target.value)}
                     placeholder="Item"
-                    className="flex-1 rounded border border-slate-300 px-2 py-1 text-sm outline-none focus:border-indigo-500"
+                    className="flex-1 rounded border border-border px-2 py-1 text-sm outline-none focus:border-indigo-500"
                   />
                   <button
                     type="button"
                     aria-label={`remove checklist ${idx + 1} item ${itemIdx + 1}`}
                     onClick={() => removeItem(idx, itemIdx)}
-                    className="text-slate-300 hover:text-red-500"
+                    className="text-muted hover:text-red-500"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -235,7 +235,7 @@ export function TemplateForm({
               type="button"
               aria-label={`add item to checklist ${idx + 1}`}
               onClick={() => addItem(idx)}
-              className="mt-1 flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100"
+              className="mt-1 flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-muted hover:bg-surface-muted"
             >
               <Plus className="h-3 w-3" />
               Add item
@@ -248,7 +248,7 @@ export function TemplateForm({
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
+          className="rounded-lg px-3 py-1.5 text-sm font-medium text-foreground/70 hover:bg-surface-muted"
         >
           Cancel
         </button>

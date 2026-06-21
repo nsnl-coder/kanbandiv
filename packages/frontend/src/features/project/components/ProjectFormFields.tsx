@@ -20,7 +20,7 @@ interface Props {
 }
 
 const inputClass =
-  "rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 disabled:bg-slate-100";
+  "rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-indigo-500 disabled:bg-surface-muted";
 
 export function ProjectFormFields({
   register,
@@ -33,7 +33,7 @@ export function ProjectFormFields({
   return (
     <>
       <div className="flex flex-col gap-1">
-        <label htmlFor="name" className="text-sm font-medium text-slate-700">
+        <label htmlFor="name" className="text-sm font-medium text-foreground/80">
           Name
         </label>
         <input id="name" disabled={disabled} {...register("name")} className={inputClass} />
@@ -43,7 +43,7 @@ export function ProjectFormFields({
       </div>
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="description" className="text-sm font-medium text-slate-700">
+        <label htmlFor="description" className="text-sm font-medium text-foreground/80">
           Description
         </label>
         <textarea
@@ -59,7 +59,7 @@ export function ProjectFormFields({
       </div>
 
       <div className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-slate-700">Color</span>
+        <span className="text-sm font-medium text-foreground/80">Color</span>
         <div className="flex flex-wrap gap-2">
           {PROJECT_COLORS.map((c) => (
             <button
@@ -79,7 +79,7 @@ export function ProjectFormFields({
       </div>
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="visibility" className="text-sm font-medium text-slate-700">
+        <label htmlFor="visibility" className="text-sm font-medium text-foreground/80">
           Visibility
         </label>
         <select
@@ -96,7 +96,7 @@ export function ProjectFormFields({
           </option>
         </select>
         {visibilityDisabled && !disabled ? (
-          <p className="text-xs text-slate-500">Only the owner can change visibility.</p>
+          <p className="text-xs text-muted">Only the owner can change visibility.</p>
         ) : null}
       </div>
     </>

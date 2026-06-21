@@ -13,15 +13,15 @@ export function CardActivity({ cardId }: Props) {
 
   return (
     <section className="mt-5">
-      <h3 className="text-sm font-semibold text-slate-700">Activity</h3>
+      <h3 className="text-sm font-semibold text-foreground/80">Activity</h3>
       <div className="mt-3 flex flex-col gap-2">
         {items.map((a) => (
           <ActivityLine key={a.id} activity={a} scope="card" />
         ))}
         {!activityQuery.isLoading && items.length === 0 ? (
-          <p className="text-sm text-slate-400">No activity yet.</p>
+          <p className="text-sm text-muted">No activity yet.</p>
         ) : null}
-        {activityQuery.isLoading ? <p className="text-sm text-slate-400">Loading...</p> : null}
+        {activityQuery.isLoading ? <p className="text-sm text-muted">Loading...</p> : null}
       </div>
     </section>
   );

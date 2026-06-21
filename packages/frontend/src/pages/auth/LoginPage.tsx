@@ -53,14 +53,14 @@ export function LoginPage() {
           <Link
             to="/verify-email"
             state={{ email: getValues("email") }}
-            className="-mt-2 text-sm font-medium text-slate-800 underline"
+            className="-mt-2 text-sm font-medium text-foreground underline"
           >
             Resend verification code
           </Link>
         ) : null}
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="email" className="text-sm font-medium text-slate-700">
+          <label htmlFor="email" className="text-sm font-medium text-foreground/80">
             Email
           </label>
           <input
@@ -68,7 +68,7 @@ export function LoginPage() {
             type="email"
             autoComplete="email"
             {...register("email")}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-indigo-500"
           />
           {errors.email ? (
             <p className="text-xs text-red-600">{errors.email.message}</p>
@@ -82,13 +82,13 @@ export function LoginPage() {
           {...register("password")}
         />
 
-        <div className="flex justify-between text-sm text-slate-600">
-          <Link to="/register" className="font-medium text-slate-800 underline">
+        <div className="flex justify-between text-sm text-foreground/70">
+          <Link to="/register" className="font-medium text-foreground underline">
             Create account
           </Link>
           <Link
             to="/forgot-password"
-            className="font-medium text-slate-800 underline"
+            className="font-medium text-foreground underline"
           >
             Forgot password?
           </Link>

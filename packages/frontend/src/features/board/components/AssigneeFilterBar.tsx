@@ -34,7 +34,7 @@ export function AssigneeFilterBar({
 
   return (
     <div className="flex flex-wrap items-center gap-1.5" aria-label="filter by assignees">
-      <span className="text-xs font-medium text-slate-500">Members:</span>
+      <span className="text-xs font-medium text-muted">Members:</span>
       {currentUserId ? (
         <button
           type="button"
@@ -42,7 +42,7 @@ export function AssigneeFilterBar({
           aria-pressed={assignedToMe}
           onClick={() => onAssignedToMeChange(!assignedToMe)}
           className={`rounded-full border px-2 py-0.5 text-xs font-medium ${
-            assignedToMe ? "border-indigo-600 bg-indigo-600 text-white" : "bg-white text-slate-600"
+            assignedToMe ? "border-indigo-600 bg-indigo-600 text-white" : "bg-surface text-foreground/70"
           }`}
         >
           Assigned to me
@@ -59,7 +59,7 @@ export function AssigneeFilterBar({
             title={member.email}
             onClick={() => toggle(member.id)}
             className={`rounded-full border px-2 py-0.5 text-xs font-medium ${
-              on ? "border-indigo-600 bg-indigo-600 text-white" : "bg-white text-slate-600"
+              on ? "border-indigo-600 bg-indigo-600 text-white" : "bg-surface text-foreground/70"
             }`}
           >
             {assigneeDisplayName(member.email)}
@@ -74,7 +74,7 @@ export function AssigneeFilterBar({
             onChange([]);
             onAssignedToMeChange(false);
           }}
-          className="flex items-center gap-0.5 text-xs font-medium text-slate-500 hover:text-slate-700"
+          className="flex items-center gap-0.5 text-xs font-medium text-muted hover:text-foreground/80"
         >
           <X className="h-3 w-3" />
           Clear

@@ -25,18 +25,18 @@ function LazyImg(props: ComponentPropsWithoutRef<"img">) {
 // To block remote images entirely (tracking-pixel / exfil concern), drop `img`
 // from the sanitize schema and the `components` map. Kept allowed + lazy here.
 const proseClass =
-  "text-sm text-slate-700 leading-relaxed [&_p]:my-2 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5 " +
+  "text-sm text-foreground/80 leading-relaxed [&_p]:my-2 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5 " +
   "[&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-indigo-600 [&_a]:underline " +
   "[&_h1]:text-lg [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold " +
-  "[&_h3]:font-semibold [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:py-0.5 " +
-  "[&_pre]:my-2 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-slate-100 [&_pre]:p-2 " +
-  "[&_blockquote]:border-l-2 [&_blockquote]:border-slate-300 [&_blockquote]:pl-3 [&_blockquote]:text-slate-500 " +
-  "[&_table]:my-2 [&_th]:border [&_th]:border-slate-300 [&_th]:px-2 [&_th]:py-1 " +
-  "[&_td]:border [&_td]:border-slate-200 [&_td]:px-2 [&_td]:py-1";
+  "[&_h3]:font-semibold [&_code]:rounded [&_code]:bg-surface-muted [&_code]:px-1 [&_code]:py-0.5 " +
+  "[&_pre]:my-2 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-surface-muted [&_pre]:p-2 " +
+  "[&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_blockquote]:text-muted " +
+  "[&_table]:my-2 [&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1 " +
+  "[&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1";
 
 export function MarkdownView({ source }: Props) {
   if (!source.trim()) {
-    return <p className="text-sm text-slate-400">No description</p>;
+    return <p className="text-sm text-muted">No description</p>;
   }
   return (
     <div className={proseClass}>

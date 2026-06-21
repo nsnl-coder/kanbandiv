@@ -46,19 +46,19 @@ export function NotificationItem({ notification, onNavigate }: Props) {
     <button
       type="button"
       onClick={handleClick}
-      className={`flex w-full items-start gap-2 px-3 py-2 text-left text-sm transition hover:bg-slate-50 ${
+      className={`flex w-full items-start gap-2 px-3 py-2 text-left text-sm transition hover:bg-canvas ${
         unread ? "bg-indigo-50/40" : ""
       }`}
     >
-      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted" />
       <span className="min-w-0 flex-1">
-        <span className={`block ${unread ? "font-medium text-slate-900" : "text-slate-600"}`}>
+        <span className={`block ${unread ? "font-medium text-foreground" : "text-foreground/70"}`}>
           {text}
         </span>
         {snippet ? (
-          <span className="mt-0.5 block truncate text-xs text-slate-500">{snippet}</span>
+          <span className="mt-0.5 block truncate text-xs text-muted">{snippet}</span>
         ) : null}
-        <span className="mt-0.5 block text-xs text-slate-400">
+        <span className="mt-0.5 block text-xs text-muted">
           {relativeTime(notification.createdAt)}
         </span>
       </span>

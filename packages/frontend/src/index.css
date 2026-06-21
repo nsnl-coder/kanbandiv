@@ -1,8 +1,39 @@
 @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
+/* Selector-based dark mode: toggled by adding `.dark` to <html>. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "Outfit", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Semantic surface/text/border tokens, themed via CSS vars below. These
+     generate utilities like bg-surface, text-foreground, border-border. */
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+}
+
+:root {
+  --canvas: #f6f7f9;
+  --surface: #ffffff;
+  --surface-muted: #f1f5f9;
+  --foreground: #0f172a;
+  --muted: #64748b;
+  --border: #e2e8f0;
+}
+
+.dark {
+  --canvas: #0b1120;
+  --surface: #131c31;
+  --surface-muted: #1c2740;
+  --foreground: #e5e7eb;
+  --muted: #93a4bd;
+  --border: #273349;
+  color-scheme: dark;
 }
 
 @layer base {
@@ -28,6 +59,12 @@
     radial-gradient(1100px 560px at 12% -12%, rgb(99 102 241 / 0.07), transparent 58%),
     radial-gradient(820px 480px at 102% -4%, rgb(45 212 191 / 0.06), transparent 54%);
 }
+.dark .board-surface {
+  background-color: #0b1120;
+  background-image:
+    radial-gradient(1100px 560px at 12% -12%, rgb(99 102 241 / 0.14), transparent 58%),
+    radial-gradient(820px 480px at 102% -4%, rgb(45 212 191 / 0.10), transparent 54%);
+}
 
 /* Faint film grain to break digital flatness. Sits behind content. */
 .board-grain::before {
@@ -37,5 +74,9 @@
   z-index: 0;
   pointer-events: none;
   opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.dark .board-grain::before {
+  opacity: 0.025;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }

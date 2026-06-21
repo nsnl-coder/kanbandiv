@@ -17,7 +17,7 @@ export function DescriptionEditor({ value, onChange, editable }: Props) {
 
   const tabClass = (active: boolean) =>
     `rounded px-2 py-1 text-xs font-medium ${
-      active ? "bg-slate-200 text-slate-800" : "text-slate-500 hover:bg-slate-100"
+      active ? "bg-surface-muted text-foreground" : "text-muted hover:bg-surface-muted"
     }`;
 
   return (
@@ -39,7 +39,7 @@ export function DescriptionEditor({ value, onChange, editable }: Props) {
         >
           Preview
         </button>
-        <span className="ml-auto text-xs text-slate-400">Markdown supported</span>
+        <span className="ml-auto text-xs text-muted">Markdown supported</span>
       </div>
       {mode === "write" ? (
         <textarea
@@ -49,10 +49,10 @@ export function DescriptionEditor({ value, onChange, editable }: Props) {
           value={value}
           maxLength={CARD_DESCRIPTION_MAX}
           onChange={(e) => onChange(e.target.value)}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+          className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-indigo-500"
         />
       ) : (
-        <div className="min-h-[6rem] rounded-lg border border-slate-200 px-3 py-2">
+        <div className="min-h-[6rem] rounded-lg border border-border px-3 py-2">
           <MarkdownView source={value} />
         </div>
       )}

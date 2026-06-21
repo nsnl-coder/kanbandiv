@@ -35,7 +35,7 @@ export function ArchivedBoardsSection({ projectId }: Props) {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex items-center gap-1.5 text-sm font-semibold text-slate-700"
+        className="flex items-center gap-1.5 text-sm font-semibold text-foreground/80"
       >
         {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         Archived boards ({boards.length})
@@ -44,17 +44,17 @@ export function ArchivedBoardsSection({ projectId }: Props) {
       {open ? (
         <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {boards.map((b) => (
-            <div key={b.id} className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <div key={b.id} className="flex flex-col gap-2 rounded-lg border border-border bg-canvas p-4">
               <div className="flex items-center gap-2">
                 <KanbanSquare aria-hidden className="h-4 w-4 shrink-0" style={{ color: b.color }} />
-                <h3 className="truncate font-semibold text-slate-700">{b.name}</h3>
+                <h3 className="truncate font-semibold text-foreground/80">{b.name}</h3>
               </div>
               {isOwner(b) ? (
                 <div className="flex gap-2 text-xs">
                   <button
                     type="button"
                     onClick={() => restoreMutation.mutate({ id: b.id })}
-                    className="rounded-lg border border-slate-300 px-2 py-1 font-medium text-slate-700 hover:bg-slate-100"
+                    className="rounded-lg border border-border px-2 py-1 font-medium text-foreground/80 hover:bg-surface-muted"
                   >
                     Restore
                   </button>
@@ -74,7 +74,7 @@ export function ArchivedBoardsSection({ projectId }: Props) {
 
       {confirmDelete ? (
         <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3">
-          <p className="text-sm text-slate-700">
+          <p className="text-sm text-foreground/80">
             Permanently delete <strong>{confirmDelete.name}</strong>? This cannot be undone.
           </p>
           {deleteMutation.error ? (
@@ -84,7 +84,7 @@ export function ArchivedBoardsSection({ projectId }: Props) {
             <button
               type="button"
               onClick={() => setConfirmDelete(null)}
-              className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
+              className="rounded-lg px-3 py-1.5 text-sm font-medium text-foreground/70 hover:bg-surface-muted"
             >
               Cancel
             </button>

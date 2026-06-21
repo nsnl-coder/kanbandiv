@@ -65,7 +65,7 @@ export function AttachmentList({ boardId, cardId, canEdit, currentUserId, isOwne
 
   return (
     <section className="mt-5">
-      <h3 className="text-sm font-semibold text-slate-700">Attachments</h3>
+      <h3 className="text-sm font-semibold text-foreground/80">Attachments</h3>
 
       {listQuery.error ? (
         <p className="mt-2 text-xs text-red-600">{attachmentErrorMessage(listQuery.error)}</p>
@@ -80,7 +80,7 @@ export function AttachmentList({ boardId, cardId, canEdit, currentUserId, isOwne
           return (
             <li
               key={row.id}
-              className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm"
             >
               <div className="min-w-0">
                 <a
@@ -90,14 +90,14 @@ export function AttachmentList({ boardId, cardId, canEdit, currentUserId, isOwne
                 >
                   {row.filename}
                 </a>
-                <span className="text-xs text-slate-400">{formatBytes(row.sizeBytes)}</span>
+                <span className="text-xs text-muted">{formatBytes(row.sizeBytes)}</span>
               </div>
               {canDelete ? (
                 <button
                   type="button"
                   aria-label={`delete ${row.filename}`}
                   onClick={() => remove(row.id)}
-                  className="shrink-0 rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                  className="shrink-0 rounded p-1 text-muted hover:bg-red-50 hover:text-red-600"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -108,9 +108,9 @@ export function AttachmentList({ boardId, cardId, canEdit, currentUserId, isOwne
       </ul>
 
       {!listQuery.isLoading && rows.length === 0 ? (
-        <p className="mt-2 text-sm text-slate-400">No attachments yet.</p>
+        <p className="mt-2 text-sm text-muted">No attachments yet.</p>
       ) : null}
-      {listQuery.isLoading ? <p className="mt-2 text-sm text-slate-400">Loading...</p> : null}
+      {listQuery.isLoading ? <p className="mt-2 text-sm text-muted">Loading...</p> : null}
 
       {canEdit ? <AttachmentUpload boardId={boardId} cardId={cardId} /> : null}
     </section>

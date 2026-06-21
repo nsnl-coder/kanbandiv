@@ -75,10 +75,10 @@ export function BoardFormPage() {
   if (boardQuery.error) {
     return (
       <main className="max-w-2xl p-6">
-        <p className="text-sm text-slate-600">Board not found or no access.</p>
+        <p className="text-sm text-foreground/70">Board not found or no access.</p>
         <Link
           to={`/projects/${id}`}
-          className="text-sm font-medium text-slate-700 hover:text-slate-900"
+          className="text-sm font-medium text-foreground/80 hover:text-foreground"
         >
           Back to project
         </Link>
@@ -88,7 +88,7 @@ export function BoardFormPage() {
 
   return (
     <main className="max-w-2xl p-6">
-      <h1 className="mb-4 text-2xl font-bold text-slate-800">
+      <h1 className="mb-4 text-2xl font-bold text-foreground">
         {readOnly ? "Board" : "Edit board"}
       </h1>
 
@@ -116,7 +116,7 @@ export function BoardFormPage() {
             </button>
             <Link
               to={`/projects/${id}/boards/${boardId}`}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+              className="rounded-lg px-4 py-2 text-sm font-medium text-foreground/70 hover:bg-surface-muted"
             >
               Cancel
             </Link>

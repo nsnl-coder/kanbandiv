@@ -59,7 +59,7 @@ export function ArchivedItemsPanel({ boardId, editable }: Props) {
   };
 
   if (itemsQuery.isLoading) {
-    return <p className="text-sm text-slate-400">Loading...</p>;
+    return <p className="text-sm text-muted">Loading...</p>;
   }
 
   if (itemsQuery.error) {
@@ -70,7 +70,7 @@ export function ArchivedItemsPanel({ boardId, editable }: Props) {
   const cards: ArchivedCard[] = itemsQuery.data?.cards ?? [];
 
   if (columns.length === 0 && cards.length === 0) {
-    return <p className="text-sm text-slate-400">No archived items.</p>;
+    return <p className="text-sm text-muted">No archived items.</p>;
   }
 
   const grouped = groupByColumn(cards);
@@ -79,20 +79,20 @@ export function ArchivedItemsPanel({ boardId, editable }: Props) {
     <div className="flex flex-col gap-5">
       {columns.length > 0 ? (
         <section>
-          <h3 className="mb-2 text-sm font-semibold text-slate-700">Archived columns</h3>
+          <h3 className="mb-2 text-sm font-semibold text-foreground/80">Archived columns</h3>
           <div className="flex flex-col gap-1">
             {columns.map((col) => {
               const rowKey = `col-${col.id}`;
               return (
-                <div key={col.id} className="flex flex-col gap-1 rounded-lg border border-slate-200 px-3 py-2">
+                <div key={col.id} className="flex flex-col gap-1 rounded-lg border border-border px-3 py-2">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-sm font-medium text-slate-700">{col.name}</span>
+                    <span className="truncate text-sm font-medium text-foreground/80">{col.name}</span>
                     {editable ? (
                       <div className="flex shrink-0 gap-2 text-xs">
                         <button
                           type="button"
                           onClick={() => restore(restoreColumn.mutate, rowKey, col.id)}
-                          className="rounded-lg border border-slate-300 px-2 py-1 font-medium text-slate-700 hover:bg-slate-100"
+                          className="rounded-lg border border-border px-2 py-1 font-medium text-foreground/80 hover:bg-surface-muted"
                         >
                           Restore
                         </button>
@@ -118,23 +118,23 @@ export function ArchivedItemsPanel({ boardId, editable }: Props) {
 
       {cards.length > 0 ? (
         <section>
-          <h3 className="mb-2 text-sm font-semibold text-slate-700">Archived cards</h3>
+          <h3 className="mb-2 text-sm font-semibold text-foreground/80">Archived cards</h3>
           <div className="flex flex-col gap-3">
             {[...grouped.entries()].map(([columnName, group]) => (
               <div key={columnName} className="flex flex-col gap-1">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{columnName}</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted">{columnName}</p>
                 {group.map((card) => {
                   const rowKey = `card-${card.id}`;
                   return (
-                    <div key={card.id} className="flex flex-col gap-1 rounded-lg border border-slate-200 px-3 py-2">
+                    <div key={card.id} className="flex flex-col gap-1 rounded-lg border border-border px-3 py-2">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="truncate text-sm text-slate-700">{card.title}</span>
+                        <span className="truncate text-sm text-foreground/80">{card.title}</span>
                         {editable ? (
                           <div className="flex shrink-0 gap-2 text-xs">
                             <button
                               type="button"
                               onClick={() => restore(restoreCard.mutate, rowKey, card.id)}
-                              className="rounded-lg border border-slate-300 px-2 py-1 font-medium text-slate-700 hover:bg-slate-100"
+                              className="rounded-lg border border-border px-2 py-1 font-medium text-foreground/80 hover:bg-surface-muted"
                             >
                               Restore
                             </button>
@@ -162,14 +162,14 @@ export function ArchivedItemsPanel({ boardId, editable }: Props) {
 
       {confirmDelete ? (
         <div className="rounded-lg border border-red-200 bg-red-50 p-3">
-          <p className="text-sm text-slate-700">
+          <p className="text-sm text-foreground/80">
             Permanently delete <strong>{confirmDelete.name}</strong>? This cannot be undone.
           </p>
           <div className="mt-3 flex justify-end gap-2">
             <button
               type="button"
               onClick={() => setConfirmDelete(null)}
-              className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
+              className="rounded-lg px-3 py-1.5 text-sm font-medium text-foreground/70 hover:bg-surface-muted"
             >
               Cancel
             </button>

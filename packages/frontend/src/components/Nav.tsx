@@ -31,9 +31,9 @@ export function Nav() {
   };
 
   return (
-    <nav className="grid grid-cols-3 items-center border-b border-slate-200 bg-white px-4 py-3">
+    <nav className="grid grid-cols-3 items-center border-b border-border bg-surface px-4 py-3">
       <div className="flex items-center text-sm">
-        <Link to="/" className="flex items-center gap-1.5 font-semibold text-slate-800">
+        <Link to="/" className="flex items-center gap-1.5 font-semibold text-foreground">
           <LayoutDashboard className="h-4 w-4 text-indigo-600" />
           Trello Clone
         </Link>
@@ -42,8 +42,8 @@ export function Nav() {
         <NavLink
           to="/projects"
           className={({ isActive }) =>
-            `flex items-center gap-1.5 hover:text-slate-900 ${
-              isActive ? "font-medium text-indigo-600" : "text-slate-600"
+            `flex items-center gap-1.5 hover:text-foreground ${
+              isActive ? "font-medium text-indigo-600" : "text-foreground/70"
             }`
           }
         >
@@ -53,7 +53,7 @@ export function Nav() {
         <button
           type="button"
           onClick={() => setShowPassword(true)}
-          className="flex items-center gap-1.5 text-slate-600 hover:text-slate-900"
+          className="flex items-center gap-1.5 text-foreground/70 hover:text-foreground"
         >
           <Settings className="h-4 w-4" />
           Settings
@@ -62,8 +62,8 @@ export function Nav() {
           <NavLink
             to="/admin"
             className={({ isActive }) =>
-              `flex items-center gap-1.5 hover:text-slate-900 ${
-                isActive ? "font-medium text-indigo-600" : "text-slate-600"
+              `flex items-center gap-1.5 hover:text-foreground ${
+                isActive ? "font-medium text-indigo-600" : "text-foreground/70"
               }`
             }
           >
@@ -73,7 +73,7 @@ export function Nav() {
         ) : null}
       </div>
       <div className="flex items-center justify-end gap-3 text-sm">
-        {user ? <span className="text-slate-500">{user.email}</span> : null}
+        {user ? <span className="text-muted">{user.email}</span> : null}
         <button
           type="button"
           onClick={onLogout}

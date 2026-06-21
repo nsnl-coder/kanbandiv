@@ -7,13 +7,13 @@ export function BoardCard({ board }: { board: Board }) {
   return (
     <Link
       to={`/projects/${board.projectId}/boards/${board.id}`}
-      className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-4 hover:border-slate-300 hover:shadow-sm"
+      className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-4 hover:border-border hover:shadow-sm"
     >
       <div className="flex items-center gap-2">
         <KanbanSquare aria-hidden className="h-4 w-4 shrink-0" style={{ color: board.color }} />
-        <h2 className="truncate font-semibold text-slate-800">{board.name}</h2>
+        <h2 className="truncate font-semibold text-foreground">{board.name}</h2>
       </div>
-      <p className="line-clamp-2 min-h-[2.5rem] text-sm text-slate-600">
+      <p className="line-clamp-2 min-h-[2.5rem] text-sm text-foreground/70">
         {board.description || "No description"}
       </p>
       <div className="flex items-center gap-2 text-xs">

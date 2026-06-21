@@ -63,7 +63,7 @@ export function BoardSwimlanesView({ boardId, columns, swimlaneBy, onOpenCard }:
     <div className="mt-6 flex flex-col gap-6">
       {lanes.map((lane) => (
         <section key={lane.key} aria-label={`lane ${lane.label}`}>
-          <h3 className="mb-2 text-sm font-semibold text-slate-700">{lane.label}</h3>
+          <h3 className="mb-2 text-sm font-semibold text-foreground/80">{lane.label}</h3>
           <div className="flex items-start gap-4 overflow-x-auto pb-2">
             {sortedColumns.map((column) => {
               const colCards =
@@ -73,15 +73,15 @@ export function BoardSwimlanesView({ boardId, columns, swimlaneBy, onOpenCard }:
               return (
                 <div
                   key={column.id}
-                  className="flex w-72 shrink-0 flex-col gap-2 rounded-lg bg-slate-100 p-3"
+                  className="flex w-72 shrink-0 flex-col gap-2 rounded-lg bg-surface-muted p-3"
                 >
-                  <h4 className="truncate text-xs font-semibold text-slate-500">{column.name}</h4>
+                  <h4 className="truncate text-xs font-semibold text-muted">{column.name}</h4>
                   {sortByPosition(colCards).map((card) => (
                     <button
                       key={card.id}
                       type="button"
                       onClick={() => onOpenCard(card)}
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-sm text-slate-700 shadow-sm hover:bg-slate-50"
+                      className="rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm text-foreground/80 shadow-sm hover:bg-canvas"
                     >
                       {card.labels.length > 0 ? (
                         <span className="mb-1.5 flex flex-wrap gap-1">

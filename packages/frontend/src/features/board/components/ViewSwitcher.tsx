@@ -20,7 +20,7 @@ const ICONS: Record<BoardViewModeValue, typeof Columns3> = {
 export function ViewSwitcher({ mode, onModeChange, swimlaneBy, onSwimlaneByChange }: Props) {
   return (
     <div className="flex items-center gap-2">
-      <div className="flex items-center gap-0.5 rounded-xl border border-slate-200/80 bg-white/70 p-1 shadow-[0_1px_2px_rgb(15_23_42/0.04)] backdrop-blur-sm" role="group" aria-label="board view">
+      <div className="flex items-center gap-0.5 rounded-xl border border-border/80 bg-surface/70 p-1 shadow-[0_1px_2px_rgb(15_23_42/0.04)] backdrop-blur-sm" role="group" aria-label="board view">
         {VIEW_MODES.map((m) => {
           const Icon = ICONS[m.value];
           const active = mode === m.value;
@@ -33,7 +33,7 @@ export function ViewSwitcher({ mode, onModeChange, swimlaneBy, onSwimlaneByChang
               className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-medium transition-all duration-200 ${
                 active
                   ? "bg-indigo-600 text-white shadow-sm"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  : "text-foreground/70 hover:bg-surface-muted hover:text-foreground"
               }`}
             >
               <Icon className="h-4 w-4" />
@@ -43,7 +43,7 @@ export function ViewSwitcher({ mode, onModeChange, swimlaneBy, onSwimlaneByChang
         })}
       </div>
       {mode === BoardViewMode.SWIMLANES ? (
-        <div className="flex items-center gap-0.5 rounded-xl border border-slate-200/80 bg-white/70 p-1 shadow-[0_1px_2px_rgb(15_23_42/0.04)] backdrop-blur-sm" role="group" aria-label="group swimlanes by">
+        <div className="flex items-center gap-0.5 rounded-xl border border-border/80 bg-surface/70 p-1 shadow-[0_1px_2px_rgb(15_23_42/0.04)] backdrop-blur-sm" role="group" aria-label="group swimlanes by">
           {SWIMLANE_GROUPINGS.map((g) => {
             const active = (swimlaneBy ?? "label") === g.value;
             return (
@@ -53,7 +53,7 @@ export function ViewSwitcher({ mode, onModeChange, swimlaneBy, onSwimlaneByChang
                 aria-pressed={active}
                 onClick={() => onSwimlaneByChange(g.value)}
                 className={`rounded-lg px-3 py-1.5 font-medium transition-all duration-200 ${
-                  active ? "bg-indigo-600 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  active ? "bg-indigo-600 text-white shadow-sm" : "text-foreground/70 hover:bg-surface-muted hover:text-foreground"
                 }`}
               >
                 {g.label}

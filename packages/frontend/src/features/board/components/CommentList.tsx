@@ -119,7 +119,7 @@ export function CommentList({
 
   return (
     <section className="mt-5">
-      <h3 className="text-sm font-semibold text-slate-700">Comments</h3>
+      <h3 className="text-sm font-semibold text-foreground/80">Comments</h3>
 
       {editable ? (
         <div className="mt-2">
@@ -147,7 +147,7 @@ export function CommentList({
               onReply={(b) => create(b, thread.id)}
             />
             {thread.replies.length > 0 ? (
-              <div className="ml-5 flex flex-col gap-3 border-l border-slate-200 pl-3">
+              <div className="ml-5 flex flex-col gap-3 border-l border-border pl-3">
                 {[...thread.replies]
                   .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
                   .map((reply) => (
@@ -167,9 +167,9 @@ export function CommentList({
           </div>
         ))}
         {!listQuery.isLoading && threads.length === 0 ? (
-          <p className="text-sm text-slate-400">No comments yet.</p>
+          <p className="text-sm text-muted">No comments yet.</p>
         ) : null}
-        {listQuery.isLoading ? <p className="text-sm text-slate-400">Loading...</p> : null}
+        {listQuery.isLoading ? <p className="text-sm text-muted">Loading...</p> : null}
       </div>
     </section>
   );

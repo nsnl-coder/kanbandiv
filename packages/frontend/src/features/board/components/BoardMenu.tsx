@@ -27,9 +27,9 @@ interface Props {
 }
 
 const ITEM =
-  "flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-slate-700 outline-none transition-colors data-[highlighted]:bg-slate-100";
+  "flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-foreground/80 outline-none transition-colors data-[highlighted]:bg-surface-muted";
 
-const ICON = "h-4 w-4 text-slate-400";
+const ICON = "h-4 w-4 text-muted";
 
 export function BoardMenu({
   editable,
@@ -46,7 +46,7 @@ export function BoardMenu({
 }: Props) {
   return (
     <DropdownMenu.Root>
-      <DropdownMenu.Trigger className="flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white/70 px-3 py-2 font-medium text-slate-600 shadow-[0_1px_2px_rgb(15_23_42/0.04)] backdrop-blur-sm transition-all duration-200 hover:border-slate-300 hover:bg-white hover:text-slate-900 active:scale-[0.97] data-[state=open]:border-slate-300 data-[state=open]:bg-white">
+      <DropdownMenu.Trigger className="flex items-center gap-1.5 rounded-xl border border-border/80 bg-surface/70 px-3 py-2 font-medium text-foreground/70 shadow-[0_1px_2px_rgb(15_23_42/0.04)] backdrop-blur-sm transition-all duration-200 hover:border-border hover:bg-surface hover:text-foreground active:scale-[0.97] data-[state=open]:border-border data-[state=open]:bg-surface">
         <MoreHorizontal className="h-4 w-4" />
         Board menu
       </DropdownMenu.Trigger>
@@ -55,7 +55,7 @@ export function BoardMenu({
         <DropdownMenu.Content
           align="end"
           sideOffset={8}
-          className="z-30 w-60 origin-top-right rounded-2xl border border-slate-200/80 bg-white/95 p-1.5 shadow-[0_16px_40px_-12px_rgb(15_23_42/0.30)] backdrop-blur-md"
+          className="z-30 w-60 origin-top-right rounded-2xl border border-border/80 bg-surface/95 p-1.5 shadow-[0_16px_40px_-12px_rgb(15_23_42/0.30)] backdrop-blur-md"
         >
           <DropdownMenu.Item className={ITEM} onSelect={onToggleWide}>
             {wide ? <Minimize2 className={ICON} /> : <Maximize2 className={ICON} />}
@@ -70,7 +70,7 @@ export function BoardMenu({
 
           {editable ? (
             <>
-              <DropdownMenu.Separator className="my-1.5 h-px bg-slate-100" />
+              <DropdownMenu.Separator className="my-1.5 h-px bg-surface-muted" />
               <DropdownMenu.Item className={ITEM} onSelect={onEdit}>
                 <Pencil className={ICON} />
                 Edit board details
@@ -92,7 +92,7 @@ export function BoardMenu({
 
           {owner ? (
             <>
-              <DropdownMenu.Separator className="my-1.5 h-px bg-slate-100" />
+              <DropdownMenu.Separator className="my-1.5 h-px bg-surface-muted" />
               <DropdownMenu.Item className={ITEM} onSelect={onAccess}>
                 <Users className={ICON} />
                 Manage access

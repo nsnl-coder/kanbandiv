@@ -61,7 +61,7 @@ export function BoardAccessPanel({ boardId }: { boardId: string }) {
             type="email"
             placeholder="user@example.com"
             {...register("email")}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+            className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-indigo-500"
           />
           {errors.email ? (
             <p className="text-xs text-red-600">{errors.email.message}</p>
@@ -71,7 +71,7 @@ export function BoardAccessPanel({ boardId }: { boardId: string }) {
           aria-label="permission"
           value={permission}
           onChange={(e) => setPermission(e.target.value as ProjectPermission)}
-          className="rounded-lg border border-slate-300 px-2 py-2 text-sm"
+          className="rounded-lg border border-border px-2 py-2 text-sm"
         >
           <option value={ProjectPermission.View}>Viewer</option>
           <option value={ProjectPermission.Edit}>Editor</option>
@@ -89,10 +89,10 @@ export function BoardAccessPanel({ boardId }: { boardId: string }) {
         <p className="mt-2 text-sm text-red-600">{boardErrorMessage(grantMutation.error)}</p>
       ) : null}
 
-      <ul className="mt-4 divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
+      <ul className="mt-4 divide-y divide-border rounded-lg border border-border bg-surface">
         {entries.map((entry) => (
           <li key={entry.userId} className="flex items-center justify-between gap-2 px-4 py-2 text-sm">
-            <span className="truncate text-slate-700">{entry.email}</span>
+            <span className="truncate text-foreground/80">{entry.email}</span>
             <div className="flex items-center gap-2">
               <select
                 aria-label={`permission for ${entry.email}`}
@@ -100,7 +100,7 @@ export function BoardAccessPanel({ boardId }: { boardId: string }) {
                 onChange={(e) =>
                   onChangePermission(entry, e.target.value as ProjectPermission)
                 }
-                className="rounded-lg border border-slate-300 px-2 py-1 text-sm"
+                className="rounded-lg border border-border px-2 py-1 text-sm"
               >
                 <option value={ProjectPermission.View}>Viewer</option>
                 <option value={ProjectPermission.Edit}>Editor</option>
@@ -116,7 +116,7 @@ export function BoardAccessPanel({ boardId }: { boardId: string }) {
           </li>
         ))}
         {entries.length === 0 ? (
-          <li className="px-4 py-3 text-sm text-slate-500">Not shared with anyone yet.</li>
+          <li className="px-4 py-3 text-sm text-muted">Not shared with anyone yet.</li>
         ) : null}
       </ul>
     </section>

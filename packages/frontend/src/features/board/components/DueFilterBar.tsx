@@ -9,7 +9,7 @@ interface Props {
 export function DueFilterBar({ value, onChange }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-1.5" aria-label="filter by due">
-      <span className="text-xs font-medium text-slate-500">Due:</span>
+      <span className="text-xs font-medium text-muted">Due:</span>
       {DUE_FILTER_OPTIONS.map((opt) => {
         const on = value === opt.value;
         return (
@@ -20,7 +20,7 @@ export function DueFilterBar({ value, onChange }: Props) {
             aria-pressed={on}
             onClick={() => onChange(opt.value)}
             className={`rounded-full border px-2 py-0.5 text-xs font-medium ${
-              on ? "border-indigo-600 bg-indigo-600 text-white" : "bg-white text-slate-600"
+              on ? "border-indigo-600 bg-indigo-600 text-white" : "bg-surface text-foreground/70"
             }`}
           >
             {opt.label}

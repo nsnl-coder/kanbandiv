@@ -37,8 +37,8 @@ export function CommentItem({
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-2 text-xs text-slate-500">
-        <span className="font-semibold text-slate-700">{comment.author.name}</span>
+      <div className="flex items-center gap-2 text-xs text-muted">
+        <span className="font-semibold text-foreground/80">{comment.author.name}</span>
         <span>{relativeTime(comment.createdAt)}</span>
       </div>
 
@@ -55,7 +55,7 @@ export function CommentItem({
           onCancel={() => setEditing(false)}
         />
       ) : (
-        <p className="whitespace-pre-wrap text-sm text-slate-700">
+        <p className="whitespace-pre-wrap text-sm text-foreground/80">
           {segments.map((s, i) =>
             s.isMention ? (
               <span key={i} className="font-medium text-indigo-600">
@@ -75,7 +75,7 @@ export function CommentItem({
               type="button"
               aria-label="reply"
               onClick={() => setReplying((r) => !r)}
-              className="font-medium text-slate-500 hover:text-slate-700"
+              className="font-medium text-muted hover:text-foreground/80"
             >
               Reply
             </button>
@@ -85,7 +85,7 @@ export function CommentItem({
               type="button"
               aria-label={`edit comment ${comment.id}`}
               onClick={() => setEditing(true)}
-              className="font-medium text-slate-500 hover:text-slate-700"
+              className="font-medium text-muted hover:text-foreground/80"
             >
               Edit
             </button>

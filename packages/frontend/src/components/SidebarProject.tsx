@@ -26,7 +26,7 @@ export function SidebarProject({ project }: { project: Project }) {
 
   return (
     <div>
-      <div className="group flex items-center rounded-lg text-slate-600 transition hover:bg-slate-100">
+      <div className="group flex items-center rounded-lg text-foreground/70 transition hover:bg-surface-muted">
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
@@ -34,7 +34,7 @@ export function SidebarProject({ project }: { project: Project }) {
           className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2 text-sm"
         >
           <ChevronRight
-            className={`h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform duration-200 ${
+            className={`h-3.5 w-3.5 shrink-0 text-muted transition-transform duration-200 ${
               open ? "rotate-90" : ""
             }`}
           />
@@ -51,7 +51,7 @@ export function SidebarProject({ project }: { project: Project }) {
             onClick={() => setShowSettings(true)}
             aria-label={`Edit ${project.name}`}
             title="Edit project"
-            className="mr-1 shrink-0 rounded-md p-1.5 text-slate-400 opacity-0 transition hover:bg-slate-200 hover:text-slate-700 focus-visible:opacity-100 group-hover:opacity-100"
+            className="mr-1 shrink-0 rounded-md p-1.5 text-muted opacity-0 transition hover:bg-surface-muted hover:text-foreground/80 focus-visible:opacity-100 group-hover:opacity-100"
           >
             <Pencil className="h-3.5 w-3.5" />
           </button>
@@ -61,9 +61,9 @@ export function SidebarProject({ project }: { project: Project }) {
       {open ? (
         <div className="mt-0.5 flex flex-col gap-0.5 pl-5">
           {boardsQuery.isLoading ? (
-            <p className="px-3 py-1.5 text-xs text-slate-400">Loading boards...</p>
+            <p className="px-3 py-1.5 text-xs text-muted">Loading boards...</p>
           ) : boards.length === 0 ? (
-            <p className="px-3 py-1.5 text-xs text-slate-400">No boards yet</p>
+            <p className="px-3 py-1.5 text-xs text-muted">No boards yet</p>
           ) : (
             boards.map((b) => (
               <NavLink
@@ -73,7 +73,7 @@ export function SidebarProject({ project }: { project: Project }) {
                   `flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition ${
                     isActive
                       ? "bg-indigo-50 font-medium text-indigo-700"
-                      : "text-slate-600 hover:bg-slate-100"
+                      : "text-foreground/70 hover:bg-surface-muted"
                   }`
                 }
               >
@@ -88,7 +88,7 @@ export function SidebarProject({ project }: { project: Project }) {
           )}
 
           {editable ? (
-            <div className="mt-1 px-3 pb-1 pt-0.5 text-xs text-slate-400">
+            <div className="mt-1 px-3 pb-1 pt-0.5 text-xs text-muted">
               <button
                 type="button"
                 onClick={() => setShowCreate(true)}

@@ -91,7 +91,7 @@ export function CreateProjectModal({ open, onClose }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+            className="rounded-lg px-4 py-2 text-sm font-medium text-foreground/70 hover:bg-surface-muted"
           >
             Cancel
           </button>

@@ -66,7 +66,7 @@ export function Column({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex w-72 shrink-0 flex-col gap-2 rounded-2xl border border-slate-200/70 bg-white/55 p-3 shadow-[0_2px_10px_-4px_rgb(30_41_59/0.12)] backdrop-blur-sm"
+      className="flex w-[85vw] shrink-0 snap-start flex-col gap-2 rounded-2xl border border-border/70 bg-surface/55 p-3 shadow-[0_2px_10px_-4px_rgb(30_41_59/0.12)] backdrop-blur-sm sm:w-72 sm:snap-align-none"
     >
       <div className="flex items-center justify-between gap-2">
         {renaming ? (
@@ -84,12 +84,12 @@ export function Column({
                 setRenaming(false);
               }
             }}
-            className="w-full rounded-lg border border-slate-300 px-2 py-1 text-sm"
+            className="w-full rounded-lg border border-border px-2 py-1 text-sm"
           />
         ) : (
           <h3
             {...(editable ? { ...attributes, ...listeners } : {})}
-            className={`truncate font-semibold tracking-tight text-slate-800 ${editable ? "cursor-grab" : ""}`}
+            className={`truncate font-semibold tracking-tight text-foreground ${editable ? "cursor-grab" : ""}`}
           >
             {column.name}
           </h3>
@@ -103,7 +103,7 @@ export function Column({
                 setName(column.name);
                 setRenaming(true);
               }}
-              className="rounded-lg p-1 text-slate-500 hover:bg-slate-200 hover:text-slate-700"
+              className="rounded-lg p-1 text-muted hover:bg-surface-muted hover:text-foreground/80"
             >
               <Pencil className="h-3.5 w-3.5" />
             </button>
@@ -111,7 +111,7 @@ export function Column({
               type="button"
               aria-label={`archive ${column.name}`}
               onClick={onArchive}
-              className="rounded-lg p-1 text-slate-500 hover:bg-slate-200 hover:text-slate-700"
+              className="rounded-lg p-1 text-muted hover:bg-surface-muted hover:text-foreground/80"
             >
               <Archive className="h-3.5 w-3.5" />
             </button>
@@ -144,7 +144,7 @@ export function Column({
                 }
               }}
               placeholder="Card title"
-              className="rounded-lg border border-slate-300 px-2 py-1 text-sm"
+              className="rounded-lg border border-border px-2 py-1 text-sm"
             />
           </div>
         ) : picking ? (
@@ -161,7 +161,7 @@ export function Column({
             <button
               type="button"
               onClick={() => setAdding(true)}
-              className="flex flex-1 items-center gap-1 rounded-lg px-2 py-1 text-left text-sm font-medium text-slate-500 hover:bg-slate-200"
+              className="flex flex-1 items-center gap-1 rounded-lg px-2 py-1 text-left text-sm font-medium text-muted hover:bg-surface-muted"
             >
               <Plus className="h-4 w-4" />
               Add card
@@ -171,7 +171,7 @@ export function Column({
               aria-label={`add card from template to ${column.name}`}
               title="From template"
               onClick={() => setPicking(true)}
-              className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-200"
+              className="rounded-lg p-1.5 text-muted hover:bg-surface-muted"
             >
               <LayoutTemplate className="h-4 w-4" />
             </button>

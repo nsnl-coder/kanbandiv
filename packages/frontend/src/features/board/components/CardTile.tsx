@@ -37,7 +37,7 @@ export function CardTile({ card, editable, onOpen }: Props) {
       onKeyDown={(e) => {
         if (e.key === "Enter") onOpen(card);
       }}
-      className={`overflow-hidden rounded-xl border border-slate-200/80 bg-white text-sm text-slate-700 shadow-[0_1px_2px_rgb(30_41_59/0.08)] transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_8px_18px_-8px_rgb(30_41_59/0.28)] active:scale-[0.99] ${
+      className={`overflow-hidden rounded-xl border border-border/80 bg-surface text-sm text-foreground/80 shadow-[0_1px_2px_rgb(30_41_59/0.08)] transition-all duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-[0_8px_18px_-8px_rgb(30_41_59/0.28)] active:scale-[0.99] ${
         editable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
       }`}
     >

@@ -120,7 +120,7 @@ export function ChecklistSection({ cardId, editable }: Props) {
 
   return (
     <section className="mt-5">
-      <h3 className="text-sm font-semibold text-slate-700">Checklists</h3>
+      <h3 className="text-sm font-semibold text-foreground/80">Checklists</h3>
 
       {listQuery.error ? (
         <p className="mt-1 text-xs text-red-600">{checklistErrorMessage(listQuery.error)}</p>
@@ -134,15 +134,15 @@ export function ChecklistSection({ cardId, editable }: Props) {
           };
           const items = sortByPosition(cl.items);
           return (
-            <div key={cl.id} className="rounded-lg border border-slate-200 p-3">
+            <div key={cl.id} className="rounded-lg border border-border p-3">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-slate-700">{cl.title}</span>
+                <span className="text-sm font-medium text-foreground/80">{cl.title}</span>
                 {editable ? (
                   <button
                     type="button"
                     aria-label={`delete checklist ${cl.title}`}
                     onClick={() => deleteChecklist.mutate({ id: cl.id })}
-                    className="text-slate-300 hover:text-red-500"
+                    className="text-muted hover:text-red-500"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -150,9 +150,9 @@ export function ChecklistSection({ cardId, editable }: Props) {
               </div>
 
               {progress.total > 0 ? (
-                <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
+                <div className="mt-2 flex items-center gap-2 text-xs text-muted">
                   <span>{progressPercent(progress)}%</span>
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200">
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-muted">
                     <div
                       className="h-full rounded-full bg-indigo-500"
                       style={{ width: `${progressPercent(progress)}%` }}
@@ -195,7 +195,7 @@ export function ChecklistSection({ cardId, editable }: Props) {
 
       {editable ? (
         <div className="mt-3 flex items-center gap-2">
-          <Plus className="h-4 w-4 text-slate-400" />
+          <Plus className="h-4 w-4 text-muted" />
           <input
             aria-label="add checklist"
             value={newTitle}
@@ -205,7 +205,7 @@ export function ChecklistSection({ cardId, editable }: Props) {
             onKeyDown={(e) => {
               if (e.key === "Enter") addChecklist();
             }}
-            className="flex-1 rounded border border-slate-300 px-2 py-1 text-sm outline-none focus:border-indigo-500"
+            className="flex-1 rounded border border-border px-2 py-1 text-sm outline-none focus:border-indigo-500"
           />
         </div>
       ) : null}

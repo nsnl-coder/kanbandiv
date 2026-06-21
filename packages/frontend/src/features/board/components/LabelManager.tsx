@@ -51,7 +51,7 @@ export function LabelManager({ boardId, editable }: Props) {
                 })
               }
               style={{ backgroundColor: label.color, color: "#fff" }}
-              className="h-7 w-12 rounded border border-slate-300 text-xs"
+              className="h-7 w-12 rounded border border-border text-xs"
             >
               {LABEL_COLORS.map((c) => (
                 <option key={c} value={c} style={{ backgroundColor: c }}>
@@ -68,14 +68,14 @@ export function LabelManager({ boardId, editable }: Props) {
                 const next = e.target.value.trim();
                 if (next !== label.name) updateMutation.mutate({ id: label.id, name: next });
               }}
-              className="flex-1 rounded border border-slate-300 px-2 py-1 text-sm outline-none focus:border-indigo-500 disabled:bg-slate-100"
+              className="flex-1 rounded border border-border px-2 py-1 text-sm outline-none focus:border-indigo-500 disabled:bg-surface-muted"
             />
             {editable ? (
               <button
                 type="button"
                 aria-label={`delete label ${label.name || "label"}`}
                 onClick={() => deleteMutation.mutate({ id: label.id })}
-                className="text-slate-300 hover:text-red-500"
+                className="text-muted hover:text-red-500"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -83,7 +83,7 @@ export function LabelManager({ boardId, editable }: Props) {
           </li>
         ))}
         {labels.length === 0 ? (
-          <li className="text-sm text-slate-500">No labels yet.</li>
+          <li className="text-sm text-muted">No labels yet.</li>
         ) : null}
       </ul>
 
@@ -93,7 +93,7 @@ export function LabelManager({ boardId, editable }: Props) {
             aria-label="new label color"
             value={color}
             onChange={(e) => setColor(e.target.value as (typeof LABEL_COLORS)[number])}
-            className="h-8 rounded border border-slate-300 px-1 text-sm"
+            className="h-8 rounded border border-border px-1 text-sm"
             style={{ backgroundColor: color, color: "#fff" }}
           >
             {LABEL_COLORS.map((c) => (
@@ -111,7 +111,7 @@ export function LabelManager({ boardId, editable }: Props) {
             onKeyDown={(e) => {
               if (e.key === "Enter") create();
             }}
-            className="flex-1 rounded border border-slate-300 px-2 py-1 text-sm outline-none focus:border-indigo-500"
+            className="flex-1 rounded border border-border px-2 py-1 text-sm outline-none focus:border-indigo-500"
           />
           <button
             type="button"

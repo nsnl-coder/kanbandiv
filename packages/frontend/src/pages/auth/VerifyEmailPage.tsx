@@ -59,7 +59,7 @@ export function VerifyEmailPage() {
         onSubmit={onSubmit}
       >
         <div className="flex flex-col gap-1">
-          <label htmlFor="email" className="text-sm font-medium text-slate-700">
+          <label htmlFor="email" className="text-sm font-medium text-foreground/80">
             Email
           </label>
           <input
@@ -67,7 +67,7 @@ export function VerifyEmailPage() {
             type="email"
             autoComplete="email"
             {...register("email")}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-indigo-500"
           />
           {errors.email ? (
             <p className="text-xs text-red-600">{errors.email.message}</p>
@@ -89,7 +89,7 @@ export function VerifyEmailPage() {
           type="button"
           disabled={resend.isPending}
           onClick={() => resend.mutate({ email: getValues("email") })}
-          className="text-sm font-medium text-slate-800 underline disabled:opacity-50"
+          className="text-sm font-medium text-foreground underline disabled:opacity-50"
         >
           Resend code
         </button>

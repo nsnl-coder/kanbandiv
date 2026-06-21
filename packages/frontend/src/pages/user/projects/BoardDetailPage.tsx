@@ -245,10 +245,10 @@ export function BoardDetailPage() {
     return (
       <div className="board-surface min-h-screen">
         <main className="max-w-3xl p-6">
-          <p className="text-sm text-slate-600">Board not found or no access.</p>
+          <p className="text-sm text-foreground/70">Board not found or no access.</p>
           <Link
             to={`/projects/${id}`}
-            className="text-sm font-medium text-slate-700 transition-colors hover:text-slate-900"
+            className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
           >
             Back to project
           </Link>
@@ -261,10 +261,10 @@ export function BoardDetailPage() {
     return (
       <div className="board-surface min-h-screen">
         <main className="max-w-3xl space-y-3 p-6">
-          <div className="h-8 w-48 animate-pulse rounded-lg bg-slate-200/70" />
+          <div className="h-8 w-48 animate-pulse rounded-lg bg-surface-muted/70" />
           <div className="flex gap-4">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="h-64 w-72 animate-pulse rounded-2xl bg-slate-200/50" />
+              <div key={i} className="h-64 w-72 animate-pulse rounded-2xl bg-surface-muted/50" />
             ))}
           </div>
         </main>
@@ -419,7 +419,7 @@ export function BoardDetailPage() {
               style={{ backgroundColor: board.color, boxShadow: `0 4px 14px -2px ${board.color}80` }}
               className="h-7 w-7 shrink-0 rounded-full ring-2 ring-white/80"
             />
-            <h1 className="text-[1.75rem] font-bold leading-none tracking-tight text-slate-900 text-balance">
+            <h1 className="text-[1.75rem] font-bold leading-none tracking-tight text-foreground text-balance">
               {board.name}
             </h1>
           </div>
@@ -447,7 +447,7 @@ export function BoardDetailPage() {
         </div>
 
         {board.description ? (
-          <p className="mt-4 max-w-prose text-sm leading-relaxed text-slate-600">{board.description}</p>
+          <p className="mt-4 max-w-prose text-sm leading-relaxed text-foreground/70">{board.description}</p>
         ) : null}
 
         <div className="mt-4 flex flex-col gap-2">
@@ -465,7 +465,7 @@ export function BoardDetailPage() {
 
         {viewMode === BoardViewMode.KANBAN ? (
         <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-          <div className="mt-6 flex flex-1 items-start gap-4 overflow-x-auto pb-4">
+          <div className="mt-6 flex flex-1 snap-x snap-mandatory items-start gap-4 overflow-x-auto pb-4 sm:snap-none">
             <SortableContext
               items={columns.map((c) => c.id)}
               strategy={horizontalListSortingStrategy}
@@ -496,7 +496,7 @@ export function BoardDetailPage() {
 
             {editable ? (
               addingColumn ? (
-                <div className="flex w-72 shrink-0 flex-col gap-2 self-start rounded-2xl border border-slate-200/70 bg-white/70 p-3 shadow-[0_2px_10px_-4px_rgb(30_41_59/0.12)] backdrop-blur-sm">
+                <div className="flex w-72 shrink-0 flex-col gap-2 self-start rounded-2xl border border-border/70 bg-surface/70 p-3 shadow-[0_2px_10px_-4px_rgb(30_41_59/0.12)] backdrop-blur-sm">
                   <input
                     autoFocus
                     aria-label="new column name"
@@ -512,7 +512,7 @@ export function BoardDetailPage() {
                       }
                     }}
                     placeholder="List name, e.g. To do"
-                    className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm outline-none focus:border-indigo-400"
+                    className="rounded-lg border border-border px-2.5 py-1.5 text-sm outline-none focus:border-indigo-400"
                   />
                   <button
                     type="button"
@@ -527,7 +527,7 @@ export function BoardDetailPage() {
                 <button
                   type="button"
                   onClick={() => setAddingColumn(true)}
-                  className="flex w-72 shrink-0 items-center gap-1.5 self-start rounded-2xl border border-dashed border-slate-300 px-3 py-3 text-left text-sm font-semibold text-slate-500 transition-all duration-200 hover:border-indigo-300 hover:bg-white/60 hover:text-indigo-600 active:scale-[0.99]"
+                  className="flex w-72 shrink-0 items-center gap-1.5 self-start rounded-2xl border border-dashed border-border px-3 py-3 text-left text-sm font-semibold text-muted transition-all duration-200 hover:border-indigo-300 hover:bg-surface/60 hover:text-indigo-600 active:scale-[0.99]"
                 >
                   <Plus className="h-4 w-4" />
                   Add another list
@@ -674,7 +674,7 @@ export function BoardDetailPage() {
           title="Archive board"
         >
           <div>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-foreground/70">
               Archive <strong>{board.name}</strong>? It moves to the project's
               archived boards. You can restore it later.
             </p>
@@ -687,7 +687,7 @@ export function BoardDetailPage() {
               <button
                 type="button"
                 onClick={() => setConfirmArchive(false)}
-                className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
+                className="rounded-lg px-3 py-1.5 text-sm font-medium text-foreground/70 hover:bg-surface-muted"
               >
                 Cancel
               </button>

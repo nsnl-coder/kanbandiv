@@ -52,7 +52,7 @@ export function RolesListPage() {
           <div className="flex justify-end gap-2 text-sm">
             <Link
               to={`/admin/roles/${c.row.original.id}`}
-              className="font-medium text-slate-700 hover:text-slate-900"
+              className="font-medium text-foreground/80 hover:text-foreground"
             >
               {canManage ? "Edit" : "View"}
             </Link>
@@ -82,10 +82,10 @@ export function RolesListPage() {
     <div>
       <div className="mb-6 flex items-end justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Roles
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-muted">
             Define permission sets and assign them to members.
           </p>
         </div>
@@ -100,10 +100,10 @@ export function RolesListPage() {
       </div>
 
       {rolesQuery.isLoading ? (
-        <p className="text-sm text-slate-500">Loading...</p>
+        <p className="text-sm text-muted">Loading...</p>
       ) : (
-        <table className="w-full overflow-hidden rounded-xl bg-white text-sm shadow-sm ring-1 ring-slate-200/70">
-          <thead className="border-b border-slate-100 bg-slate-50/80 text-left text-xs uppercase tracking-wide text-slate-500">
+        <table className="w-full overflow-hidden rounded-xl bg-surface text-sm shadow-sm ring-1 ring-border/70">
+          <thead className="border-b border-border bg-canvas/80 text-left text-xs uppercase tracking-wide text-muted">
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
                 {hg.headers.map((h) => (
@@ -118,10 +118,10 @@ export function RolesListPage() {
             {table.getRowModel().rows.map((row) => (
               <tr
                 key={row.id}
-                className="border-t border-slate-100 transition-colors hover:bg-slate-50/60"
+                className="border-t border-border transition-colors hover:bg-canvas/60"
               >
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-2 text-slate-700">
+                  <td key={cell.id} className="px-4 py-2 text-foreground/80">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
@@ -131,7 +131,7 @@ export function RolesListPage() {
               <tr>
                 <td
                   colSpan={columns.length}
-                  className="px-4 py-10 text-center text-sm text-slate-500"
+                  className="px-4 py-10 text-center text-sm text-muted"
                 >
                   No roles yet. Create one to get started.
                 </td>
@@ -143,9 +143,9 @@ export function RolesListPage() {
 
       {pendingDelete ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/30 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl shadow-slate-900/10 ring-1 ring-slate-200">
-            <h2 className="text-lg font-semibold text-slate-800">Delete role</h2>
-            <p className="mt-2 text-sm text-slate-600">
+          <div className="w-full max-w-sm rounded-2xl bg-surface p-6 shadow-xl shadow-slate-900/10 ring-1 ring-border">
+            <h2 className="text-lg font-semibold text-foreground">Delete role</h2>
+            <p className="mt-2 text-sm text-foreground/70">
               Delete <strong>{pendingDelete.name}</strong>? Members keep their
               accounts but lose this role.
             </p>
@@ -158,7 +158,7 @@ export function RolesListPage() {
               <button
                 type="button"
                 onClick={() => setPendingDelete(null)}
-                className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
+                className="rounded-lg px-3 py-1.5 text-sm font-medium text-foreground/70 hover:bg-surface-muted"
               >
                 Cancel
               </button>

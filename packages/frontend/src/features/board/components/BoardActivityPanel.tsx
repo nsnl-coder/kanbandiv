@@ -38,10 +38,10 @@ export function BoardActivityPanel({ boardId }: Props) {
           <ActivityLine key={a.id} activity={a} scope="board" />
         ))}
         {!pageQuery.isLoading && items.length === 0 ? (
-          <p className="text-sm text-slate-400">No activity yet.</p>
+          <p className="text-sm text-muted">No activity yet.</p>
         ) : null}
         {pageQuery.isLoading && items.length === 0 ? (
-          <p className="text-sm text-slate-400">Loading...</p>
+          <p className="text-sm text-muted">Loading...</p>
         ) : null}
       </div>
 
@@ -49,7 +49,7 @@ export function BoardActivityPanel({ boardId }: Props) {
         <button
           type="button"
           onClick={() => setOffset(nextOffset)}
-          className="self-start rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+          className="self-start rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground/80 hover:bg-surface-muted"
         >
           Load more
         </button>

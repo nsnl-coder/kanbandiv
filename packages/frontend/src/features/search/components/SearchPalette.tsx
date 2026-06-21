@@ -88,8 +88,8 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
 
   return (
     <Modal open onClose={onClose} title="Search cards" widthClassName="max-w-2xl">
-      <div className="flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2">
-        <Search className="h-4 w-4 shrink-0 text-slate-400" />
+      <div className="flex items-center gap-2 rounded-lg border border-border px-3 py-2">
+        <Search className="h-4 w-4 shrink-0 text-muted" />
         <input
           ref={inputRef}
           autoFocus
@@ -98,7 +98,7 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
           placeholder="Search cards by title or description..."
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className="w-full bg-transparent text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none"
+          className="w-full bg-transparent text-sm text-foreground placeholder:text-muted focus:outline-none"
         />
       </div>
 
@@ -115,7 +115,7 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
               className={`rounded-full border px-2 py-0.5 text-xs font-medium ${
                 on
                   ? "border-indigo-600 bg-indigo-600 text-white"
-                  : "border-slate-300 bg-white text-slate-600 hover:bg-slate-100"
+                  : "border-border bg-surface text-foreground/70 hover:bg-surface-muted"
               }`}
             >
               {chip.label}
@@ -126,7 +126,7 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
           aria-label="project scope"
           value={projectId ?? ""}
           onChange={(e) => setProjectId(e.target.value || undefined)}
-          className="ml-auto rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-600"
+          className="ml-auto rounded-lg border border-border px-2 py-1 text-xs text-foreground/70"
         >
           <option value="">All projects</option>
           {projects.map((p) => (
@@ -139,7 +139,7 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
 
       <div className="mt-3 max-h-[50vh] overflow-y-auto">
         {showHint ? (
-          <p className="px-1 py-6 text-center text-sm text-slate-400">
+          <p className="px-1 py-6 text-center text-sm text-muted">
             Type to search
           </p>
         ) : null}
@@ -151,20 +151,20 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
         ) : null}
 
         {showEmpty ? (
-          <p className="px-1 py-6 text-center text-sm text-slate-400">
+          <p className="px-1 py-6 text-center text-sm text-muted">
             No cards found
           </p>
         ) : null}
 
         {searchQuery.isLoading && offset === 0 && enabled ? (
-          <p className="px-1 py-6 text-center text-sm text-slate-400">
+          <p className="px-1 py-6 text-center text-sm text-muted">
             Searching...
           </p>
         ) : null}
 
         {grouped.map((group) => (
           <div key={group.boardId} className="mb-3">
-            <p className="px-1 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <p className="px-1 pb-1 text-xs font-semibold uppercase tracking-wide text-muted">
               {group.boardName}
             </p>
             <ul className="flex flex-col gap-1">
@@ -173,16 +173,16 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
                   <button
                     type="button"
                     onClick={() => openResult(r)}
-                    className="flex w-full flex-col items-start gap-0.5 rounded-lg px-2 py-2 text-left hover:bg-slate-100"
+                    className="flex w-full flex-col items-start gap-0.5 rounded-lg px-2 py-2 text-left hover:bg-surface-muted"
                   >
-                    <span className="text-sm font-medium text-slate-800">
+                    <span className="text-sm font-medium text-foreground">
                       {r.title}
                     </span>
-                    <span className="text-xs text-slate-500">
-                      {`${r.boardName} › ${r.columnName}`}
+                    <span className="text-xs text-muted">
+                      {`${r.boardName} â€º ${r.columnName}`}
                     </span>
                     {r.snippet ? (
-                      <span className="text-xs text-slate-500">{r.snippet}</span>
+                      <span className="text-xs text-muted">{r.snippet}</span>
                     ) : null}
                     <DueDateBadge card={{ dueAt: r.dueAt, isOverdue: r.isOverdue }} />
                   </button>
@@ -196,7 +196,7 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={() => setOffset(nextOffset)}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+            className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground/70 hover:bg-surface-muted"
           >
             Load more
           </button>

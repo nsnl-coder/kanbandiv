@@ -13,7 +13,7 @@ export function BoardRedirect() {
     trpc.boards.get.queryOptions({ id: boardId }),
   );
 
-  if (isLoading) return <div className="p-6 text-slate-500">Loading...</div>;
+  if (isLoading) return <div className="p-6 text-muted">Loading...</div>;
   if (isError || !data) return <Navigate to="/projects" replace />;
 
   const card = params.get("card");

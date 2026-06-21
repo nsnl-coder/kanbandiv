@@ -8,7 +8,11 @@ import { BrowserRouter } from "react-router-dom";
 import { App } from "./App";
 import { queryClient } from "./lib/query-client";
 import { TRPCProvider, trpcClient } from "./lib/trpc";
+import { applyTheme, useThemeStore } from "./hooks/useThemeStore";
 import "./index.css";
+
+// Apply the stored theme before first paint to avoid a flash of the wrong theme.
+applyTheme(useThemeStore.getState().theme);
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

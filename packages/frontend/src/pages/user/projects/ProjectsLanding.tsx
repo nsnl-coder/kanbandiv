@@ -15,7 +15,7 @@ export function ProjectsLanding() {
   );
 
   if (projectsQuery.isLoading) {
-    return <main className="p-8 text-sm text-slate-500">Loading...</main>;
+    return <main className="p-8 text-sm text-muted">Loading...</main>;
   }
 
   const first = projectsQuery.data?.[0];
@@ -23,8 +23,8 @@ export function ProjectsLanding() {
 
   return (
     <main className="p-8">
-      <div className="rounded-lg border border-dashed border-slate-300 p-12 text-center">
-        <p className="text-sm text-slate-500">No projects yet. Create your first one.</p>
+      <div className="rounded-lg border border-dashed border-border p-12 text-center">
+        <p className="text-sm text-muted">No projects yet. Create your first one.</p>
         <button
           type="button"
           onClick={() => setShowCreate(true)}

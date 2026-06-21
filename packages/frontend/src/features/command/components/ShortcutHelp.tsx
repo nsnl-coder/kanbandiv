@@ -22,16 +22,16 @@ export function ShortcutHelp() {
             className="flex items-center justify-between gap-4 rounded-lg px-1 py-1.5"
           >
             <div className="flex flex-col">
-              <span className="text-sm text-slate-800">{row.description}</span>
+              <span className="text-sm text-foreground">{row.description}</span>
               {row.contextNote ? (
-                <span className="text-xs text-slate-400">{row.contextNote}</span>
+                <span className="text-xs text-muted">{row.contextNote}</span>
               ) : null}
             </div>
             <span className="flex shrink-0 items-center gap-1">
               {row.keys.map((k) => (
                 <kbd
                   key={k}
-                  className="rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-600"
+                  className="rounded border border-border bg-canvas px-1.5 py-0.5 text-xs text-foreground/70"
                 >
                   {k}
                 </kbd>
@@ -40,7 +40,7 @@ export function ShortcutHelp() {
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-xs text-slate-400">
+      <p className="mt-3 text-xs text-muted">
         Context shortcuts (c, b) require a board. Cmd/Ctrl+P overrides the browser
         Print dialog.
       </p>

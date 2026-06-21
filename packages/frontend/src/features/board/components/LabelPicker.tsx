@@ -64,13 +64,13 @@ export function LabelPicker({ boardId, cardId, labels, editable }: Props) {
 
   return (
     <div className="mt-4">
-      <h3 className="text-sm font-semibold text-slate-700">Labels</h3>
+      <h3 className="text-sm font-semibold text-foreground/80">Labels</h3>
       {error ? <p className="mt-1 text-xs text-red-600">{labelErrorMessage(error)}</p> : null}
       <div className="mt-2 flex flex-wrap gap-1.5">
         {labels.map((l) => (
           <LabelBadge key={l.id} label={l} />
         ))}
-        {labels.length === 0 ? <span className="text-xs text-slate-400">None</span> : null}
+        {labels.length === 0 ? <span className="text-xs text-muted">None</span> : null}
       </div>
       {editable ? (
         <div className="mt-2 flex flex-col gap-1">
@@ -81,19 +81,19 @@ export function LabelPicker({ boardId, cardId, labels, editable }: Props) {
               aria-label={`toggle label ${label.name || "label"}`}
               aria-pressed={selected.has(label.id)}
               onClick={() => toggle(label)}
-              className="flex items-center gap-2 rounded px-2 py-1 text-left text-sm hover:bg-slate-100"
+              className="flex items-center gap-2 rounded px-2 py-1 text-left text-sm hover:bg-surface-muted"
             >
               <span
                 style={{ backgroundColor: label.color }}
                 className="h-4 w-8 rounded"
                 aria-hidden
               />
-              <span className="flex-1 truncate text-slate-700">{label.name || "(no name)"}</span>
+              <span className="flex-1 truncate text-foreground/80">{label.name || "(no name)"}</span>
               {selected.has(label.id) ? <Check className="h-4 w-4 text-indigo-600" /> : null}
             </button>
           ))}
           {boardLabels.length === 0 ? (
-            <span className="text-xs text-slate-400">No board labels. Create some first.</span>
+            <span className="text-xs text-muted">No board labels. Create some first.</span>
           ) : null}
         </div>
       ) : null}

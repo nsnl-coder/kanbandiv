@@ -27,7 +27,7 @@ export function ProjectDetailPage() {
   if (projectQuery.error) {
     return (
       <main className="w-full p-6">
-        <p className="text-sm text-slate-600">Project not found or no access.</p>
+        <p className="text-sm text-foreground/70">Project not found or no access.</p>
       </main>
     );
   }
@@ -35,7 +35,7 @@ export function ProjectDetailPage() {
   if (!project) {
     return (
       <main className="w-full p-6">
-        <p className="text-sm text-slate-500">Loading...</p>
+        <p className="text-sm text-muted">Loading...</p>
       </main>
     );
   }
@@ -48,7 +48,7 @@ export function ProjectDetailPage() {
             <button
               type="button"
               onClick={() => setShowAccess(true)}
-              className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-medium text-slate-700 shadow-sm hover:bg-slate-100"
+              className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 font-medium text-foreground/80 shadow-sm hover:bg-surface-muted"
             >
               <Users className="h-4 w-4" />
               Manage access
@@ -60,7 +60,7 @@ export function ProjectDetailPage() {
               onClick={() => setShowEdit(true)}
               aria-label="Project settings"
               title="Project settings"
-              className="flex items-center justify-center rounded-lg border border-slate-300 bg-white p-2 text-slate-700 shadow-sm hover:bg-slate-100"
+              className="flex items-center justify-center rounded-lg border border-border bg-surface p-2 text-foreground/80 shadow-sm hover:bg-surface-muted"
             >
               <Settings className="h-4 w-4" />
             </button>
@@ -69,14 +69,14 @@ export function ProjectDetailPage() {
 
         <section>
           <div className="mb-4">
-            <h2 className="text-lg font-semibold text-slate-800">Boards</h2>
-            <p className="text-sm text-slate-500">Organize work into kanban boards.</p>
+            <h2 className="text-lg font-semibold text-foreground">Boards</h2>
+            <p className="text-sm text-muted">Organize work into kanban boards.</p>
           </div>
 
           {boardsQuery.isLoading ? (
-            <p className="text-sm text-slate-500">Loading...</p>
+            <p className="text-sm text-muted">Loading...</p>
           ) : !canEdit(project) && boards.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
+            <p className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted">
               No boards yet.
             </p>
           ) : (
@@ -87,7 +87,7 @@ export function ProjectDetailPage() {
                   onClick={() => setShowCreateBoard(true)}
                   aria-label="New board"
                   title="New board"
-                  className="flex min-h-[7.5rem] items-center justify-center rounded-lg border border-dashed border-slate-300 text-slate-400 hover:border-indigo-400 hover:text-indigo-600"
+                  className="flex min-h-[7.5rem] items-center justify-center rounded-lg border border-dashed border-border text-muted hover:border-indigo-400 hover:text-indigo-600"
                 >
                   <Plus className="h-6 w-6" />
                 </button>

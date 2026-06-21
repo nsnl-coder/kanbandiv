@@ -94,8 +94,8 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
 
   return (
     <Modal open onClose={onClose} title="Command palette" widthClassName="max-w-xl">
-      <div className="flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2">
-        <CommandIcon className="h-4 w-4 shrink-0 text-slate-400" />
+      <div className="flex items-center gap-2 rounded-lg border border-border px-3 py-2">
+        <CommandIcon className="h-4 w-4 shrink-0 text-muted" />
         <input
           ref={inputRef}
           autoFocus
@@ -105,18 +105,18 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           onKeyDown={onKeyDown}
-          className="w-full bg-transparent text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none"
+          className="w-full bg-transparent text-sm text-foreground placeholder:text-muted focus:outline-none"
         />
       </div>
 
       <div className="mt-3 max-h-[50vh] overflow-y-auto">
         {filtered.length === 0 ? (
-          <p className="px-1 py-6 text-center text-sm text-slate-400">No commands</p>
+          <p className="px-1 py-6 text-center text-sm text-muted">No commands</p>
         ) : null}
 
         {grouped.map((group) => (
           <div key={group.group} className="mb-3">
-            <p className="px-1 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <p className="px-1 pb-1 text-xs font-semibold uppercase tracking-wide text-muted">
               {group.group}
             </p>
             <ul className="flex flex-col gap-0.5">
@@ -132,13 +132,13 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
                       onMouseEnter={() => setActiveIndex(idx)}
                       onClick={() => cmd.run()}
                       className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm ${
-                        active ? "bg-indigo-50 text-indigo-900" : "text-slate-800 hover:bg-slate-100"
+                        active ? "bg-indigo-50 text-indigo-900" : "text-foreground hover:bg-surface-muted"
                       }`}
                     >
-                      {Icon ? <Icon className="h-4 w-4 shrink-0 text-slate-400" /> : null}
+                      {Icon ? <Icon className="h-4 w-4 shrink-0 text-muted" /> : null}
                       <span className="flex-1">{cmd.label}</span>
                       {cmd.shortcut ? (
-                        <kbd className="rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500">
+                        <kbd className="rounded border border-border bg-canvas px-1.5 py-0.5 text-xs text-muted">
                           {cmd.shortcut}
                         </kbd>
                       ) : null}

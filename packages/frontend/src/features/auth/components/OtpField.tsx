@@ -15,7 +15,7 @@ export const OtpField = forwardRef<HTMLInputElement, OtpFieldProps>(
 
     return (
       <div className="flex flex-col gap-1">
-        <label htmlFor={inputId} className="text-sm font-medium text-slate-700">
+        <label htmlFor={inputId} className="text-sm font-medium text-foreground/80">
           {label}
         </label>
         <input
@@ -28,7 +28,7 @@ export const OtpField = forwardRef<HTMLInputElement, OtpFieldProps>(
           maxLength={length}
           aria-invalid={error ? true : undefined}
           aria-describedby={errorId}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-center text-lg tracking-[0.4em] outline-none focus:border-indigo-500"
+          className="w-full rounded-lg border border-border px-3 py-2 text-center text-lg tracking-[0.4em] outline-none focus:border-indigo-500"
         />
         {error ? (
           <p id={errorId} className="text-xs text-red-600">

@@ -114,10 +114,10 @@ export function RoleFormPage() {
   return (
     <div className="max-w-2xl">
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           {isEdit ? (canManage ? "Edit role" : "Role") : "New role"}
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-muted">
           {canManage
             ? "Name the role and choose what its members can do."
             : "Read-only view of this role and its permissions."}
@@ -126,17 +126,17 @@ export function RoleFormPage() {
 
       <form
         onSubmit={onSubmit}
-        className="space-y-4 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/70"
+        className="space-y-4 rounded-xl bg-surface p-6 shadow-sm ring-1 ring-border/70"
       >
         <div className="flex flex-col gap-1">
-          <label htmlFor="name" className="text-sm font-medium text-slate-700">
+          <label htmlFor="name" className="text-sm font-medium text-foreground/80">
             Name
           </label>
           <input
             id="name"
             disabled={disabled}
             {...register("name")}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 disabled:bg-slate-100"
+            className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-indigo-500 disabled:bg-surface-muted"
           />
           {errors.name ? (
             <p className="text-xs text-red-600">{errors.name.message}</p>
@@ -146,7 +146,7 @@ export function RoleFormPage() {
         <div className="flex flex-col gap-1">
           <label
             htmlFor="description"
-            className="text-sm font-medium text-slate-700"
+            className="text-sm font-medium text-foreground/80"
           >
             Description
           </label>
@@ -155,7 +155,7 @@ export function RoleFormPage() {
             rows={2}
             disabled={disabled}
             {...register("description")}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 disabled:bg-slate-100"
+            className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-indigo-500 disabled:bg-surface-muted"
           />
         </div>
 
@@ -174,15 +174,15 @@ export function RoleFormPage() {
         ) : null}
       </form>
 
-      <section className="mt-6 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/70">
-        <h2 className="text-lg font-semibold tracking-tight text-slate-900">
+      <section className="mt-6 rounded-xl bg-surface p-6 shadow-sm ring-1 ring-border/70">
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">
           Permissions
         </h2>
         <div className="mt-3 space-y-2">
           {PERMISSION_CATALOG.map((p) => (
             <label
               key={p.key}
-              className="flex items-center gap-2 text-sm text-slate-700"
+              className="flex items-center gap-2 text-sm text-foreground/80"
             >
               <input
                 type="checkbox"
@@ -191,7 +191,7 @@ export function RoleFormPage() {
                 onChange={() => toggle(p.key)}
               />
               {p.label}
-              <span className="text-xs text-slate-400">({p.key})</span>
+              <span className="text-xs text-muted">({p.key})</span>
             </label>
           ))}
         </div>
@@ -207,13 +207,13 @@ export function RoleFormPage() {
             type="button"
             onClick={savePermissions}
             disabled={setPermsMutation.isPending}
-            className="mt-3 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+            className="mt-3 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground/80 hover:bg-surface-muted disabled:opacity-50"
           >
             Save permissions
           </button>
         ) : null}
         {!isEdit ? (
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-muted">
             Permissions are saved together with the new role.
           </p>
         ) : null}

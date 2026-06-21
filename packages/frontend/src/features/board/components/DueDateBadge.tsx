@@ -9,7 +9,7 @@ interface Props {
 const STYLES: Record<string, string> = {
   overdue: "bg-red-100 text-red-700",
   soon: "bg-amber-100 text-amber-700",
-  upcoming: "bg-slate-100 text-slate-600",
+  upcoming: "bg-surface-muted text-foreground/70",
 };
 
 // Pill on a card tile. Hidden when there is no due date.

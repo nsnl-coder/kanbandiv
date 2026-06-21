@@ -19,9 +19,9 @@ export function AuthForm({
   return (
     <form
       {...formProps}
-      className="mx-auto flex w-full max-w-sm flex-col gap-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
+      className="mx-auto flex w-full max-w-sm flex-col gap-4 rounded-lg border border-border bg-surface p-6 shadow-sm"
     >
-      <h1 className="text-xl font-semibold text-slate-800">{title}</h1>
+      <h1 className="text-xl font-semibold text-foreground">{title}</h1>
 
       {error ? (
         <p

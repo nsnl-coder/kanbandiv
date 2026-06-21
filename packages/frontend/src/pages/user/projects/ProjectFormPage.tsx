@@ -61,7 +61,7 @@ export function ProjectFormPage() {
 
   return (
     <main className="max-w-2xl p-6">
-      <h1 className="mb-4 text-2xl font-bold text-slate-800">New project</h1>
+      <h1 className="mb-4 text-2xl font-bold text-foreground">New project</h1>
 
       <form onSubmit={onSubmit} className="space-y-4">
         <ProjectFormFields
@@ -85,7 +85,7 @@ export function ProjectFormPage() {
           </button>
           <Link
             to="/projects"
-            className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+            className="rounded-lg px-4 py-2 text-sm font-medium text-foreground/70 hover:bg-surface-muted"
           >
             Cancel
           </Link>

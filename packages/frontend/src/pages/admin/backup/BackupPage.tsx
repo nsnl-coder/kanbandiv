@@ -59,7 +59,7 @@ function RunBadges({ run }: { run: BackupRun }) {
       <Badge
         color={
           run.trigger === "manual"
-            ? "bg-slate-100 text-slate-600"
+            ? "bg-surface-muted text-foreground/70"
             : "bg-indigo-100 text-indigo-700"
         }
       >
@@ -125,10 +125,10 @@ function toInput(f: FormState): UpdateBackupSettingsInput {
   };
 }
 
-const card = "rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/70";
-const label = "block text-sm font-medium text-slate-700";
+const card = "rounded-xl bg-surface p-6 shadow-sm ring-1 ring-border/70";
+const label = "block text-sm font-medium text-foreground/80";
 const input =
-  "mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm disabled:bg-slate-100";
+  "mt-1 w-full rounded-lg border border-border px-3 py-1.5 text-sm disabled:bg-surface-muted";
 const primaryBtn =
   "rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50";
 
@@ -237,17 +237,17 @@ export function BackupPage() {
   const status = statusQuery.data;
 
   if (settingsQuery.isLoading || !form || !settings) {
-    return <p className="text-sm text-slate-500">Loading...</p>;
+    return <p className="text-sm text-muted">Loading...</p>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-end justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Backup
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-muted">
             Schedule snapshots, manage retention, and restore data.
           </p>
         </div>
@@ -281,10 +281,10 @@ export function BackupPage() {
 
       {/* Connection */}
       <section className={card}>
-        <h2 className="text-lg font-semibold text-slate-800">Google Drive</h2>
+        <h2 className="text-lg font-semibold text-foreground">Google Drive</h2>
         {settings.drive.connected ? (
           <div className="mt-2 flex items-center justify-between">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-foreground/70">
               Connected as <strong>{settings.drive.email}</strong>
             </p>
             <div className="flex items-center gap-4">
@@ -312,7 +312,7 @@ export function BackupPage() {
           </div>
         ) : (
           <div className="mt-2 flex items-center justify-between">
-            <p className="text-sm text-slate-600">Not connected.</p>
+            <p className="text-sm text-foreground/70">Not connected.</p>
             {canManage ? (
               <button type="button" onClick={connectDrive} className={primaryBtn}>
                 Connect Google Drive
@@ -324,11 +324,11 @@ export function BackupPage() {
 
       {/* Schedule & retention */}
       <section className={card}>
-        <h2 className="mb-3 text-lg font-semibold text-slate-800">
+        <h2 className="mb-3 text-lg font-semibold text-foreground">
           Schedule &amp; retention
         </h2>
         <div className="space-y-4">
-          <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+          <label className="flex items-center gap-2 text-sm font-medium text-foreground/80">
             <input
               type="checkbox"
               checked={form.enabled}
@@ -442,14 +442,14 @@ export function BackupPage() {
               placeholder="Trello Clone Backups (env)"
               onChange={(e) => update({ gdriveFolderName: e.target.value })}
             />
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-muted">
               Backups are stored in this folder in the connected Drive. Each
               environment uses its own folder. (Editing is disabled for now.)
             </p>
           </div>
 
           <div className="flex flex-wrap gap-6">
-            <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+            <label className="flex items-center gap-2 text-sm font-medium text-foreground/80">
               <input
                 type="checkbox"
                 checked={form.includeMinio}
@@ -458,7 +458,7 @@ export function BackupPage() {
               />
               Include file storage (MinIO)
             </label>
-            <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+            <label className="flex items-center gap-2 text-sm font-medium text-foreground/80">
               <input
                 type="checkbox"
                 checked={form.encryptionEnabled}
@@ -484,7 +484,7 @@ export function BackupPage() {
 
       {/* Backups / Transactions */}
       <section className={card}>
-        <div className="mb-4 flex items-center justify-between border-b border-slate-200">
+        <div className="mb-4 flex items-center justify-between border-b border-border">
           <div className="flex gap-2">
             {(
               [
@@ -499,7 +499,7 @@ export function BackupPage() {
                 className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${
                   tab === key
                     ? "border-indigo-600 text-indigo-700"
-                    : "border-transparent text-slate-500 hover:text-slate-700"
+                    : "border-transparent text-muted hover:text-foreground/80"
                 }`}
               >
                 {label}
@@ -527,14 +527,14 @@ export function BackupPage() {
 
       {pendingDelete ? (
         <Modal title="Delete backup" onClose={() => setPendingDelete(null)}>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-foreground/70">
             Delete <strong>{pendingDelete.fileName}</strong>? This removes the file
             from Google Drive and cannot be undone.
           </p>
           <div className="mt-4 flex justify-end gap-2">
             <button
               type="button"
-              className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
+              className="rounded-lg px-3 py-1.5 text-sm font-medium text-foreground/70 hover:bg-surface-muted"
               onClick={() => setPendingDelete(null)}
             >
               Cancel
@@ -588,11 +588,11 @@ function AllBackupsTab({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="mb-2 text-sm font-semibold text-slate-700">
+        <h3 className="mb-2 text-sm font-semibold text-foreground/80">
           Upcoming (next 7 days)
         </h3>
         {upcoming.length === 0 ? (
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted">
             No upcoming backups. Enable automatic backups above.
           </p>
         ) : (
@@ -600,7 +600,7 @@ function AllBackupsTab({
             {upcoming.map((d) => (
               <li
                 key={new Date(d).toISOString()}
-                className="flex items-center gap-3 text-sm text-slate-700"
+                className="flex items-center gap-3 text-sm text-foreground/80"
               >
                 <Badge color="bg-blue-100 text-blue-700">upcoming</Badge>
                 {new Date(d).toLocaleString()}
@@ -611,21 +611,21 @@ function AllBackupsTab({
       </div>
 
       <div>
-        <h3 className="mb-2 text-sm font-semibold text-slate-700">
+        <h3 className="mb-2 text-sm font-semibold text-foreground/80">
           Successful backups
         </h3>
         {loading ? (
-          <p className="text-sm text-slate-500">Loading...</p>
+          <p className="text-sm text-muted">Loading...</p>
         ) : runs.length === 0 ? (
-          <p className="text-sm text-slate-500">No successful backups yet.</p>
+          <p className="text-sm text-muted">No successful backups yet.</p>
         ) : (
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-border">
             {runs.map((r) => (
               <li key={r.id} className="flex items-center justify-between gap-4 py-3">
                 <div className="min-w-0">
-                  <div className="truncate text-sm text-slate-700">{r.fileName}</div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                    {new Date(r.startedAt).toLocaleString()} · {formatBytes(r.sizeBytes)}
+                  <div className="truncate text-sm text-foreground/80">{r.fileName}</div>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted">
+                    {new Date(r.startedAt).toLocaleString()} Â· {formatBytes(r.sizeBytes)}
                     <RunBadges run={r} />
                   </div>
                 </div>
@@ -658,13 +658,13 @@ function AllBackupsTab({
 
 // Read-only audit log of every run (success / failed / running).
 function HistoryTable({ runs, loading }: { runs: BackupRun[]; loading: boolean }) {
-  if (loading) return <p className="text-sm text-slate-500">Loading...</p>;
+  if (loading) return <p className="text-sm text-muted">Loading...</p>;
   if (runs.length === 0)
-    return <p className="text-sm text-slate-500">No transactions yet.</p>;
+    return <p className="text-sm text-muted">No transactions yet.</p>;
 
   return (
     <table className="w-full text-sm">
-      <thead className="text-left text-slate-600">
+      <thead className="text-left text-foreground/70">
         <tr>
           <th className="py-2 font-medium">Started</th>
           <th className="py-2 font-medium">Labels</th>
@@ -675,16 +675,16 @@ function HistoryTable({ runs, loading }: { runs: BackupRun[]; loading: boolean }
       </thead>
       <tbody>
         {runs.map((r) => (
-          <tr key={r.id} className="border-t border-slate-100">
-            <td className="py-2 text-slate-700">
+          <tr key={r.id} className="border-t border-border">
+            <td className="py-2 text-foreground/80">
               {new Date(r.startedAt).toLocaleString()}
             </td>
             <td className="py-2">
               <RunBadges run={r} />
             </td>
-            <td className="py-2 text-slate-700">{formatBytes(r.sizeBytes)}</td>
-            <td className="py-2 text-slate-700">{r.fileName}</td>
-            <td className="py-2 text-slate-700">
+            <td className="py-2 text-foreground/80">{formatBytes(r.sizeBytes)}</td>
+            <td className="py-2 text-foreground/80">{r.fileName}</td>
+            <td className="py-2 text-foreground/80">
               {r.expiresAt ? new Date(r.expiresAt).toLocaleDateString() : "-"}
             </td>
           </tr>
@@ -705,8 +705,8 @@ function Modal({
 }) {
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/30 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl shadow-slate-900/10 ring-1 ring-slate-200">
-        <h2 className="text-lg font-semibold tracking-tight text-slate-900">{title}</h2>
+      <div className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-xl shadow-slate-900/10 ring-1 ring-border">
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">{title}</h2>
         <div className="mt-2">{children}</div>
         <button type="button" className="sr-only" onClick={onClose}>
           close
@@ -762,14 +762,14 @@ function RestoreModal({
     <Modal title="Restore backup" onClose={onClose}>
       {step === "confirm" ? (
         <>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-foreground/70">
             Restoring <strong>{run.fileName}</strong> overwrites all current data.
             The app will be put into maintenance mode first.
           </p>
           <div className="mt-4 flex justify-end gap-2">
             <button
               type="button"
-              className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
+              className="rounded-lg px-3 py-1.5 text-sm font-medium text-foreground/70 hover:bg-surface-muted"
               onClick={onClose}
             >
               Cancel
@@ -786,18 +786,18 @@ function RestoreModal({
       ) : null}
 
       {step === "running" ? (
-        <p className="text-sm text-slate-600">Restoring, please wait...</p>
+        <p className="text-sm text-foreground/70">Restoring, please wait...</p>
       ) : null}
 
       {step === "done" ? (
         <>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-foreground/70">
             Restore complete. The app is still in maintenance mode.
           </p>
           <div className="mt-4 flex justify-end gap-2">
             <button
               type="button"
-              className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
+              className="rounded-lg px-3 py-1.5 text-sm font-medium text-foreground/70 hover:bg-surface-muted"
               onClick={() => {
                 onDone();
                 onClose();

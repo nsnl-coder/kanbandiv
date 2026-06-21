@@ -81,7 +81,7 @@ export function AttachmentUpload({ boardId, cardId }: Props) {
 
   return (
     <div className="mt-2">
-      <label className="inline-flex cursor-pointer items-center rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
+      <label className="inline-flex cursor-pointer items-center rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground/80 hover:bg-canvas">
         Add attachment
         <input
           ref={inputRef}
@@ -94,7 +94,7 @@ export function AttachmentUpload({ boardId, cardId }: Props) {
       </label>
 
       {progress !== null ? (
-        <div className="mt-2 h-1.5 w-full overflow-hidden rounded bg-slate-200">
+        <div className="mt-2 h-1.5 w-full overflow-hidden rounded bg-surface-muted">
           <div
             role="progressbar"
             aria-valuenow={progress}

@@ -9,13 +9,13 @@ const PAGE_SIZE = 20;
 
 function TableSkeleton() {
   return (
-    <div className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200/70">
-      <div className="h-11 border-b border-slate-100 bg-slate-50/80" />
+    <div className="overflow-hidden rounded-xl bg-surface shadow-sm ring-1 ring-border/70">
+      <div className="h-11 border-b border-border bg-canvas/80" />
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 border-t border-slate-100 px-4 py-3">
-          <div className="h-3 w-48 animate-pulse rounded bg-slate-100" />
-          <div className="ml-auto h-3 w-16 animate-pulse rounded bg-slate-100" />
-          <div className="h-6 w-28 animate-pulse rounded bg-slate-100" />
+        <div key={i} className="flex items-center gap-4 border-t border-border px-4 py-3">
+          <div className="h-3 w-48 animate-pulse rounded bg-surface-muted" />
+          <div className="ml-auto h-3 w-16 animate-pulse rounded bg-surface-muted" />
+          <div className="h-6 w-28 animate-pulse rounded bg-surface-muted" />
         </div>
       ))}
     </div>
@@ -64,10 +64,10 @@ export function UsersListPage() {
   return (
     <div>
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Users
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-muted">
           Review accounts and assign roles.
         </p>
       </header>
@@ -80,7 +80,7 @@ export function UsersListPage() {
           setSearch(e.target.value);
           setOffset(0);
         }}
-        className="mb-4 w-full max-w-sm rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-indigo-500"
+        className="mb-4 w-full max-w-sm rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none transition-colors focus:border-indigo-500"
       />
 
       {assignMutation.error ? (
@@ -92,8 +92,8 @@ export function UsersListPage() {
       {usersQuery.isLoading ? (
         <TableSkeleton />
       ) : (
-        <table className="w-full overflow-hidden rounded-xl bg-white text-sm shadow-sm ring-1 ring-slate-200/70">
-          <thead className="border-b border-slate-100 bg-slate-50/80 text-left text-xs uppercase tracking-wide text-slate-500">
+        <table className="w-full overflow-hidden rounded-xl bg-surface text-sm shadow-sm ring-1 ring-border/70">
+          <thead className="border-b border-border bg-canvas/80 text-left text-xs uppercase tracking-wide text-muted">
             <tr>
               <th className="px-4 py-3 font-semibold">Email</th>
               <th className="px-4 py-3 font-semibold">Verified</th>
@@ -105,7 +105,7 @@ export function UsersListPage() {
             {users.map((u) => (
               <tr
                 key={u.id}
-                className="border-t border-slate-100 text-slate-700 transition-colors hover:bg-slate-50/60"
+                className="border-t border-border text-foreground/80 transition-colors hover:bg-canvas/60"
               >
                 <td className="px-4 py-2">{u.email}</td>
                 <td className="px-4 py-2">{u.emailVerified ? "Yes" : "No"}</td>
@@ -124,7 +124,7 @@ export function UsersListPage() {
                       value={u.role?.id ?? ""}
                       disabled={assignMutation.isPending}
                       onChange={(e) => onAssign(u, e.target.value)}
-                      className="rounded-lg border border-slate-300 px-2 py-1 text-sm"
+                      className="rounded-lg border border-border px-2 py-1 text-sm"
                     >
                       <option value="">No role</option>
                       {roles.map((r) => (
@@ -141,7 +141,7 @@ export function UsersListPage() {
             ))}
             {users.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-10 text-center text-sm text-slate-500">
+                <td colSpan={4} className="px-4 py-10 text-center text-sm text-muted">
                   No users match this search.
                 </td>
               </tr>
@@ -155,18 +155,18 @@ export function UsersListPage() {
           type="button"
           disabled={offset === 0}
           onClick={() => setOffset((o) => Math.max(0, o - PAGE_SIZE))}
-          className="rounded-lg border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+          className="rounded-lg border border-border px-3 py-1.5 font-medium text-foreground/80 hover:bg-surface-muted disabled:opacity-50"
         >
           Previous
         </button>
-        <span className="text-slate-500">
+        <span className="text-muted">
           {offset + 1}-{offset + users.length}
         </span>
         <button
           type="button"
           disabled={users.length < PAGE_SIZE}
           onClick={() => setOffset((o) => o + PAGE_SIZE)}
-          className="rounded-lg border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+          className="rounded-lg border border-border px-3 py-1.5 font-medium text-foreground/80 hover:bg-surface-muted disabled:opacity-50"
         >
           Next
         </button>

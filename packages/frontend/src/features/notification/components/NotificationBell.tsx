@@ -48,7 +48,7 @@ export function NotificationBell() {
         onClick={() => setOpen((o) => !o)}
         aria-label={`Notifications, ${count} unread`}
         aria-expanded={open}
-        className="relative text-slate-600 hover:text-slate-900"
+        className="relative text-foreground/70 hover:text-foreground"
       >
         <Bell className="h-4 w-4" />
         {count > 0 ? (
@@ -68,17 +68,17 @@ export function NotificationBell() {
           <div
             role="dialog"
             aria-label="Notifications"
-            className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg"
+            className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
           >
-            <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2">
-              <span className="text-sm font-semibold text-slate-900">
+            <div className="flex items-center justify-between border-b border-border px-3 py-2">
+              <span className="text-sm font-semibold text-foreground">
                 Notifications
               </span>
               <button
                 type="button"
                 onClick={() => markAll.mutate()}
                 disabled={count === 0 || markAll.isPending}
-                className="text-xs font-medium text-indigo-600 hover:text-indigo-800 disabled:text-slate-300"
+                className="text-xs font-medium text-indigo-600 hover:text-indigo-800 disabled:text-muted"
               >
                 Mark all read
               </button>
@@ -86,11 +86,11 @@ export function NotificationBell() {
 
             <div className="max-h-96 overflow-y-auto">
               {listQuery.isLoading ? (
-                <p className="px-3 py-6 text-center text-sm text-slate-400">
+                <p className="px-3 py-6 text-center text-sm text-muted">
                   Loading...
                 </p>
               ) : items.length === 0 ? (
-                <p className="px-3 py-6 text-center text-sm text-slate-400">
+                <p className="px-3 py-6 text-center text-sm text-muted">
                   You&apos;re all caught up.
                 </p>
               ) : (

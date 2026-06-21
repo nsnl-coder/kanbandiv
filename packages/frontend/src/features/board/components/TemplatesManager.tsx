@@ -77,11 +77,11 @@ export function TemplatesManager({ boardId, editable }: Props) {
         {templates.map((t: CardTemplate) => (
           <li
             key={t.id}
-            className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 px-3 py-2"
+            className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2"
           >
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-slate-800">{t.name}</p>
-              <p className="text-xs text-slate-500">
+              <p className="truncate text-sm font-medium text-foreground">{t.name}</p>
+              <p className="text-xs text-muted">
                 {t.payload.labelIds.length} labels, {t.payload.checklists.length} checklists
               </p>
             </div>
@@ -91,7 +91,7 @@ export function TemplatesManager({ boardId, editable }: Props) {
                   type="button"
                   aria-label={`edit template ${t.name}`}
                   onClick={() => setMode({ kind: "edit", template: t })}
-                  className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                  className="rounded p-1 text-muted hover:bg-surface-muted hover:text-foreground/80"
                 >
                   <Pencil className="h-4 w-4" />
                 </button>
@@ -99,7 +99,7 @@ export function TemplatesManager({ boardId, editable }: Props) {
                   type="button"
                   aria-label={`delete template ${t.name}`}
                   onClick={() => deleteMutation.mutate({ id: t.id })}
-                  className="rounded p-1 text-slate-300 hover:text-red-500"
+                  className="rounded p-1 text-muted hover:text-red-500"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -108,7 +108,7 @@ export function TemplatesManager({ boardId, editable }: Props) {
           </li>
         ))}
         {templates.length === 0 ? (
-          <li className="text-sm text-slate-500">No templates yet.</li>
+          <li className="text-sm text-muted">No templates yet.</li>
         ) : null}
       </ul>
 

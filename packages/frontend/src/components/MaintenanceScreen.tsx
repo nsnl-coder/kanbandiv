@@ -14,7 +14,7 @@ export function MaintenanceScreen() {
     >
       <Wrench className="h-10 w-10 text-amber-400" />
       <h1 className="text-2xl font-bold">Under maintenance</h1>
-      <p className="max-w-md text-slate-300">
+      <p className="max-w-md text-muted">
         We&apos;re performing scheduled maintenance. The app will be back shortly.
         Please check again in a few minutes.
       </p>
