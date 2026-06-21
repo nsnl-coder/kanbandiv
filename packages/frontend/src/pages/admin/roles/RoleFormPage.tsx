@@ -113,11 +113,21 @@ export function RoleFormPage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="mb-4 text-2xl font-bold text-slate-800">
-        {isEdit ? (canManage ? "Edit role" : "Role") : "New role"}
-      </h1>
+      <header className="mb-6">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          {isEdit ? (canManage ? "Edit role" : "Role") : "New role"}
+        </h1>
+        <p className="mt-1 text-sm text-slate-500">
+          {canManage
+            ? "Name the role and choose what its members can do."
+            : "Read-only view of this role and its permissions."}
+        </p>
+      </header>
 
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form
+        onSubmit={onSubmit}
+        className="space-y-4 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/70"
+      >
         <div className="flex flex-col gap-1">
           <label htmlFor="name" className="text-sm font-medium text-slate-700">
             Name
@@ -164,9 +174,11 @@ export function RoleFormPage() {
         ) : null}
       </form>
 
-      <section className="mt-8">
-        <h2 className="text-lg font-semibold text-slate-800">Permissions</h2>
-        <div className="mt-2 space-y-2">
+      <section className="mt-6 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/70">
+        <h2 className="text-lg font-semibold tracking-tight text-slate-900">
+          Permissions
+        </h2>
+        <div className="mt-3 space-y-2">
           {PERMISSION_CATALOG.map((p) => (
             <label
               key={p.key}

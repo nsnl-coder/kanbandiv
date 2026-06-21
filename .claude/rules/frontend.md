@@ -3,6 +3,8 @@ paths:
   - 'packages/frontend/**/*'
 ---
 
+# important rules:
+
 ## Required library:
 
 - vite

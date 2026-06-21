@@ -125,7 +125,7 @@ function toInput(f: FormState): UpdateBackupSettingsInput {
   };
 }
 
-const card = "rounded-xl border border-slate-200 bg-white p-5";
+const card = "rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/70";
 const label = "block text-sm font-medium text-slate-700";
 const input =
   "mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm disabled:bg-slate-100";
@@ -242,8 +242,15 @@ export function BackupPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-800">Backup</h1>
+      <div className="flex items-end justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+            Backup
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Schedule snapshots, manage retention, and restore data.
+          </p>
+        </div>
         {canManage ? (
           <button
             type="button"
@@ -697,9 +704,9 @@ function Modal({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 p-4">
-      <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-lg">
-        <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/30 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl shadow-slate-900/10 ring-1 ring-slate-200">
+        <h2 className="text-lg font-semibold tracking-tight text-slate-900">{title}</h2>
         <div className="mt-2">{children}</div>
         <button type="button" className="sr-only" onClick={onClose}>
           close

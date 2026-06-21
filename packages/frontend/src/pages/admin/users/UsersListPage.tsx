@@ -7,6 +7,21 @@ import { rbacErrorMessage } from "../../../features/rbac/errors";
 
 const PAGE_SIZE = 20;
 
+function TableSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200/70">
+      <div className="h-11 border-b border-slate-100 bg-slate-50/80" />
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-4 border-t border-slate-100 px-4 py-3">
+          <div className="h-3 w-48 animate-pulse rounded bg-slate-100" />
+          <div className="ml-auto h-3 w-16 animate-pulse rounded bg-slate-100" />
+          <div className="h-6 w-28 animate-pulse rounded bg-slate-100" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function UsersListPage() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -48,7 +63,14 @@ export function UsersListPage() {
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold text-slate-800">Users</h1>
+      <header className="mb-6">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          Users
+        </h1>
+        <p className="mt-1 text-sm text-slate-500">
+          Review accounts and assign roles.
+        </p>
+      </header>
 
       <input
         type="search"
@@ -58,7 +80,7 @@ export function UsersListPage() {
           setSearch(e.target.value);
           setOffset(0);
         }}
-        className="mb-4 w-full max-w-sm rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+        className="mb-4 w-full max-w-sm rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-indigo-500"
       />
 
       {assignMutation.error ? (
@@ -68,20 +90,23 @@ export function UsersListPage() {
       ) : null}
 
       {usersQuery.isLoading ? (
-        <p className="text-sm text-slate-500">Loading...</p>
+        <TableSkeleton />
       ) : (
-        <table className="w-full overflow-hidden rounded-lg border border-slate-200 bg-white text-sm">
-          <thead className="bg-slate-100 text-left text-slate-600">
+        <table className="w-full overflow-hidden rounded-xl bg-white text-sm shadow-sm ring-1 ring-slate-200/70">
+          <thead className="border-b border-slate-100 bg-slate-50/80 text-left text-xs uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="px-4 py-2 font-medium">Email</th>
-              <th className="px-4 py-2 font-medium">Verified</th>
-              <th className="px-4 py-2 font-medium">Superuser</th>
-              <th className="px-4 py-2 font-medium">Role</th>
+              <th className="px-4 py-3 font-semibold">Email</th>
+              <th className="px-4 py-3 font-semibold">Verified</th>
+              <th className="px-4 py-3 font-semibold">Superuser</th>
+              <th className="px-4 py-3 font-semibold">Role</th>
             </tr>
           </thead>
           <tbody>
             {users.map((u) => (
-              <tr key={u.id} className="border-t border-slate-100 text-slate-700">
+              <tr
+                key={u.id}
+                className="border-t border-slate-100 text-slate-700 transition-colors hover:bg-slate-50/60"
+              >
                 <td className="px-4 py-2">{u.email}</td>
                 <td className="px-4 py-2">{u.emailVerified ? "Yes" : "No"}</td>
                 <td className="px-4 py-2">
@@ -116,8 +141,8 @@ export function UsersListPage() {
             ))}
             {users.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-slate-500">
-                  No users found.
+                <td colSpan={4} className="px-4 py-10 text-center text-sm text-slate-500">
+                  No users match this search.
                 </td>
               </tr>
             ) : null}

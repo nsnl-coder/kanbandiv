@@ -80,12 +80,19 @@ export function RolesListPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-800">Roles</h1>
+      <div className="mb-6 flex items-end justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+            Roles
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Define permission sets and assign them to members.
+          </p>
+        </div>
         {canManage ? (
           <Link
             to="/admin/roles/new"
-            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
+            className="rounded-lg bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 active:translate-y-px"
           >
             New role
           </Link>
@@ -95,12 +102,12 @@ export function RolesListPage() {
       {rolesQuery.isLoading ? (
         <p className="text-sm text-slate-500">Loading...</p>
       ) : (
-        <table className="w-full overflow-hidden rounded-lg border border-slate-200 bg-white text-sm">
-          <thead className="bg-slate-100 text-left text-slate-600">
+        <table className="w-full overflow-hidden rounded-xl bg-white text-sm shadow-sm ring-1 ring-slate-200/70">
+          <thead className="border-b border-slate-100 bg-slate-50/80 text-left text-xs uppercase tracking-wide text-slate-500">
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
                 {hg.headers.map((h) => (
-                  <th key={h.id} className="px-4 py-2 font-medium">
+                  <th key={h.id} className="px-4 py-3 font-semibold">
                     {flexRender(h.column.columnDef.header, h.getContext())}
                   </th>
                 ))}
@@ -109,7 +116,10 @@ export function RolesListPage() {
           </thead>
           <tbody>
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="border-t border-slate-100">
+              <tr
+                key={row.id}
+                className="border-t border-slate-100 transition-colors hover:bg-slate-50/60"
+              >
                 {row.getVisibleCells().map((cell) => (
                   <td key={cell.id} className="px-4 py-2 text-slate-700">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -121,9 +131,9 @@ export function RolesListPage() {
               <tr>
                 <td
                   colSpan={columns.length}
-                  className="px-4 py-6 text-center text-slate-500"
+                  className="px-4 py-10 text-center text-sm text-slate-500"
                 >
-                  No roles yet.
+                  No roles yet. Create one to get started.
                 </td>
               </tr>
             ) : null}
@@ -132,8 +142,8 @@ export function RolesListPage() {
       )}
 
       {pendingDelete ? (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/30 p-4">
-          <div className="w-full max-w-sm rounded-lg bg-white p-5 shadow-lg">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/30 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl shadow-slate-900/10 ring-1 ring-slate-200">
             <h2 className="text-lg font-semibold text-slate-800">Delete role</h2>
             <p className="mt-2 text-sm text-slate-600">
               Delete <strong>{pendingDelete.name}</strong>? Members keep their
