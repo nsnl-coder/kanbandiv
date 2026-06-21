@@ -1,9 +1,11 @@
-import { useEffect } from "react";
 import { Link, Outlet } from "react-router-dom";
 import { LayoutDashboard, LogOut, Search } from "lucide-react";
 import { useLogout } from "../hooks/useLogout";
 import { useSearchStore } from "../hooks/useSearchStore";
 import { SearchPalette } from "../features/search/components/SearchPalette";
+import { CommandPalette } from "../features/command/components/CommandPalette";
+import { ShortcutHelp } from "../features/command/components/ShortcutHelp";
+import { useGlobalShortcuts } from "../features/command/useGlobalShortcuts";
 import { NotificationBell } from "../features/notification/components/NotificationBell";
 import { useNotificationsRealtime } from "../features/notification/hooks/useNotificationsRealtime";
 import { Sidebar } from "./Sidebar";
@@ -17,17 +19,8 @@ export function AppLayout() {
   // Single per-user SSE stream shared by the desktop + mobile bell.
   useNotificationsRealtime();
 
-  // Global Cmd/Ctrl+K opens the search palette.
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setOpen(true);
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [setOpen]);
+  // Global keyboard shortcuts (Cmd/K search, Cmd/P palette, ?, /, c, b, g p).
+  useGlobalShortcuts();
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
@@ -62,6 +55,8 @@ export function AppLayout() {
         <Outlet />
       </div>
       <SearchPalette />
+      <CommandPalette />
+      <ShortcutHelp />
     </div>
   );
 }

@@ -46,6 +46,7 @@ import {
 } from "../../../features/board/utils";
 import { boardErrorMessage } from "../../../features/board/errors";
 import { useBoardRealtime } from "../../../features/board/hooks/useBoardRealtime";
+import { useBoardActionsStore } from "../../../features/command/useBoardActionsStore";
 
 // Reorder neighbours: midpoint between the surrounding positions. Mirrors the
 // backend's double-precision strategy so the optimistic order matches the
@@ -185,6 +186,49 @@ export function BoardDetailPage() {
   const updateCardMutation = useMutation(trpc.cards.update.mutationOptions());
   const archiveCardMutation = useMutation(trpc.cards.archive.mutationOptions());
   const moveCardMutation = useMutation(trpc.cards.move.mutationOptions());
+
+  // Bridge the board's LOCAL view + panel state to the global command palette /
+  // shortcut layer. Registry gates actions via ctx (canEdit/isOwner), so the
+  // handlers stay stable. clear(boardId) is a no-op if another board registered.
+  const registerActions = useBoardActionsStore((s) => s.register);
+  const clearActions = useBoardActionsStore((s) => s.clear);
+  const editableForBridge = board ? canEdit(board) : false;
+  useEffect(() => {
+    if (!board || !id) return;
+    registerActions(
+      {
+        projectId: id,
+        boardId: board.id,
+        boardName: board.name,
+        canEdit: editableForBridge,
+        isOwner: isOwner(board),
+      },
+      {
+        setView: setViewMode,
+        openArchived: () => setShowArchived(true),
+        openHistory: () => setShowActivity(true),
+        openLabels: () => setShowLabels(true),
+        openAccess: () => setShowAccess(true),
+        clearFilters: () => {
+          setLabelFilter([]);
+          setAssigneeFilter([]);
+          setAssignedToMe(false);
+          setDueFilter(null);
+        },
+        newCard: () => {
+          const cols = sortByPosition(board.columns);
+          if (cols.length === 0) return;
+          createCardMutation.mutate(
+            { columnId: cols[0].id, title: "New card" },
+            { onSuccess: (created) => setActiveCardId(created.id) },
+          );
+        },
+      },
+    );
+    const stamped = board.id;
+    return () => clearActions(stamped);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boardId, board, editableForBridge]);
 
   if (dataQuery.error) {
     return (
