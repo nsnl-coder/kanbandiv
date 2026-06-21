@@ -1,10 +1,11 @@
 import { test, expect } from "../support/fixtures";
 import { PW, getStore } from "./helpers";
-import { freshEmail, user } from "../support/users";
+import { freshEmail, user, allowDestructive } from "../support/users";
 import { fetchOtp } from "../support/mailtrap";
 
 test.describe("sign up", () => {
   test("register -> verify email -> login (happy path)", async ({ page }) => {
+    test.skip(!allowDestructive, "creates a new user (no delete-user API); dev-only");
     const email = freshEmail("signup");
     const t0 = Date.now();
 

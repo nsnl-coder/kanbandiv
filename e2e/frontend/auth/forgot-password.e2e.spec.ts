@@ -1,9 +1,10 @@
 import { test, expect } from "../support/fixtures";
-import { resetEmail } from "../support/users";
+import { resetEmail, allowDestructive } from "../support/users";
 import { fetchOtp } from "../support/mailtrap";
 
 test.describe("forgot password", () => {
   test("request reset -> reset -> login with new password", async ({ page }) => {
+    test.skip(!allowDestructive, "changes the reset account's password; dev-only");
     const email = resetEmail();
     // New password drifts each run; that's fine - forgot only needs the email,
     // never the current password, so the dedicated reset account stays usable.

@@ -12,6 +12,8 @@ services:
     environment:
       # Which live site to hit (set per tier by run-e2e.sh).
       E2E_BASE_URL: ${E2E_BASE_URL}
+      # Destructive specs run on dev only (run-e2e.sh sets false on prod).
+      E2E_ALLOW_DESTRUCTIVE: ${E2E_ALLOW_DESTRUCTIVE:-false}
       # Pre-seeded accounts (must exist in the target env's DB).
       E2E_USER_EMAIL: ${E2E_USER_EMAIL:-}
       E2E_USER_PASSWORD: ${E2E_USER_PASSWORD:-}

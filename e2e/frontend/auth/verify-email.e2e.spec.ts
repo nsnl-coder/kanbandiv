@@ -1,6 +1,6 @@
 import { test, expect } from "../support/fixtures";
 import { PW } from "./helpers";
-import { freshEmail } from "../support/users";
+import { freshEmail, allowDestructive } from "../support/users";
 
 // Register a fresh, unverified account and return its email (on /verify-email).
 async function registerFresh(page: import("@playwright/test").Page): Promise<string> {
@@ -15,6 +15,9 @@ async function registerFresh(page: import("@playwright/test").Page): Promise<str
 }
 
 test.describe("verify email", () => {
+  // Every test here registers a fresh user -> destructive, dev-only.
+  test.skip(!allowDestructive, "registers users (no delete-user API); dev-only");
+
   test("resend then rate-limit message", async ({ page }) => {
     await registerFresh(page); // register already minted OTP #1
 

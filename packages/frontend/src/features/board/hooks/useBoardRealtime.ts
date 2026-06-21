@@ -4,6 +4,7 @@ import type { BoardEvent } from "shared";
 import { useTRPC } from "../../../lib/trpc";
 import { refreshSession } from "../../../lib/trpc";
 import { authStore } from "../../../hooks/useAuthStore";
+import { connectionStore } from "../../../hooks/useConnectionStore";
 import { config } from "../../../config/env.config";
 
 // Coalesce bursts (a board-wide drag emits several events fast) into one
@@ -74,6 +75,7 @@ export function useBoardRealtime(boardId: string | undefined): void {
 
       es.onopen = () => {
         consecutiveErrors = 0;
+        connectionStore.setOnline(true);
         // Skip the very first open; on a reconnect, catch up on anything missed
         // while disconnected.
         if (seenOpen) queueBoard();
@@ -102,6 +104,7 @@ export function useBoardRealtime(boardId: string | undefined): void {
         // auto-reconnect. Only act once the errors persist (likely an expired
         // access cookie the reconnect keeps replaying).
         if (consecutiveErrors < REFRESH_AFTER_ERRORS) return;
+        connectionStore.setOnline(false);
         consecutiveErrors = 0;
         void refreshSession().then((ok) => {
           if (closed) return;
@@ -124,6 +127,4 @@ export function useBoardRealtime(boardId: string | undefined): void {
       if (debounceTimer !== null) clearTimeout(debounceTimer);
       es.close();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [boardId]);
-}
+    // eslint-disable-next-line react
