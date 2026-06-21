@@ -74,7 +74,7 @@ E2E tests live outside this package in `e2e/frontend/<feature>/<flow>.e2e.spec.t
 
 ## Testing rule
 
-- e2e tests are real (non-mocked): hit the live API + test DB, no network/db mocking
-- run e2e in local, dev VPS, and prod VPS. Local e2e runs against a dedicated test Postgres DB and test MinIO bucket (never the dev/primary data)
-- e2e tests live in `e2e/frontend/`, not in this package
+- e2e tests are real (non-mocked): they drive the LIVE deployed site (dev/prod domain, `E2E_BASE_URL`) as a pre-seeded test user. No DB/network mocking, no separate test DB
+- OTP flows read codes from the Mailtrap sandbox (dev + prod both use it); destructive flows use throwaway sign-up emails / a dedicated reset account
+- e2e tests live in `e2e/frontend/`, not in this package; run via `packages/infra/deploy-scripts/run-e2e.sh` on the VPS
 - unit tests (vitest) stay in this package

@@ -1,35 +1,29 @@
 import { test, expect } from "../support/fixtures";
-import { login, getStore, PW } from "./helpers";
-import { resetDb, closeDb, seedUser } from "../support/db";
-
-test.beforeEach(resetDb);
-test.afterAll(closeDb);
+import { login, getStore } from "./helpers";
+import { user, admin } from "../support/users";
 
 test.describe("sign in", () => {
-  test("user lands on /projects with role user", async ({ page }) => {
-    await seedUser({ email: "user@example.com" });
+  test("user lands in the app", async ({ page }) => {
+    const u = user();
+    await login(page, u.email, u.password);
 
-    await login(page, "user@example.com");
-
-    await expect(page).toHaveURL(/\/projects$/);
-    const store = await getStore(page);
-    expect(store.user?.email).toBe("user@example.com");
-    expect(store.user?.isSuperuser).toBe(false);
+    // A regular user goes to /projects (or straight into their first project).
+    await expect(page).toHaveURL(/\/projects(\/|$)/);
+    expect((await getStore(page)).user?.email).toBe(u.email);
+    expect((await getStore(page)).user?.isSuperuser).toBe(false);
   });
 
-  test("admin lands on /admin with admin access", async ({ page }) => {
-    await seedUser({ email: "admin@example.com", superuser: true });
-
-    await login(page, "admin@example.com");
+  test("admin lands in /admin", async ({ page }) => {
+    const a = admin();
+    await login(page, a.email, a.password);
 
     await expect(page).toHaveURL(/\/admin/);
-    expect((await getStore(page)).user?.isSuperuser).toBe(true);
+    expect((await getStore(page)).user?.email).toBe(a.email);
   });
 
   test("wrong password does not authenticate", async ({ page }) => {
-    await seedUser({ email: "user@example.com" });
-
-    await login(page, "user@example.com", "wrong-password");
+    const u = user();
+    await login(page, u.email, "wrong-password-x9");
 
     await expect(page.getByRole("alert")).toContainText("Invalid credentials");
     await expect(page).toHaveURL(/\/login/);
@@ -37,11 +31,10 @@ test.describe("sign in", () => {
   });
 
   test("honors ?next after login", async ({ page }) => {
-    await seedUser({ email: "user@example.com" });
-
+    const u = user();
     await page.goto("/login?next=/projects/new");
-    await page.getByLabel("Email").fill("user@example.com");
-    await page.getByLabel("Password", { exact: true }).fill(PW);
+    await page.getByLabel("Email").fill(u.email);
+    await page.getByLabel("Password", { exact: true }).fill(u.password);
     await page.getByRole("button", { name: "Log in" }).click();
 
     await expect(page).toHaveURL(/\/projects\/new/);

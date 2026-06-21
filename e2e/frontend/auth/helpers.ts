@@ -1,8 +1,9 @@
 import { type Page, expect } from "@playwright/test";
 
-// Real-backend e2e helpers: drive the actual UI against the test backend.
-// No network mocking - state is seeded/reset via support/db.ts.
+// Real e2e helpers: drive the actual UI on the live site. No mocking; accounts
+// come from support/users.ts (pre-seeded) or fresh sign-up emails.
 
+// Default password for throwaway sign-up accounts created during a run.
 export const PW = "password123";
 
 export async function login(page: Page, email: string, password: string = PW): Promise<void> {

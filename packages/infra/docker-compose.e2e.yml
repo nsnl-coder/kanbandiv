@@ -1,92 +1,24 @@
-# Ephemeral e2e stack for the dev/prod VPS. Runs as its OWN compose project
-# (see deploy-scripts/run-e2e.sh: `-p trelloclone3-e2e`) so it is fully isolated
-# from the live stack - tearing it down with `down -v` can never touch the
-# production db/pgdata. Postgres storage is tmpfs, so nothing survives the run.
+# e2e runner for the dev/prod VPS. Drives the LIVE deployed site (E2E_BASE_URL)
+# as a pre-seeded test user - no test DB, no MinIO, no app boot. OTP-dependent
+# flows read codes from the Mailtrap sandbox (used in dev AND prod).
 #
-# Storage: rather than a second MinIO, the e2e backend reuses the LIVE MinIO with
-# a dedicated `attachments-test` bucket (emptied before each run). The e2e/init
-# services join the live stack's network to reach it. The DB must still be a
-# separate ephemeral instance (reset per run), but bucket isolation is enough for
-# object storage.
-#
-# The `e2e` container reproduces the local harness: it boots a test backend +
-# Vite dev server from source against db-test + the live MinIO, then runs Playwright.
+# Runs as its own compose project (deploy-scripts/run-e2e.sh: `-p trelloclone3-e2e`).
+# The only thing built is this small runner; teardown removes it.
 services:
-  db-test:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: trelloclone-test
-    tmpfs:
-      - /var/lib/postgresql/data
-    networks:
-      - default
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d trelloclone-test"]
-      interval: 3s
-      timeout: 3s
-      retries: 20
-
-  # One-shot: ensure the test bucket exists on the LIVE MinIO and empty it so the
-  # run starts clean. Only ever touches `attachments-test`.
-  minio-init:
-    image: minio/mc
-    networks:
-      - live
-    entrypoint: >
-      /bin/sh -c "
-      mc alias set m http://minio:9000 ${MINIO_ACCESS_KEY:-minioadmin} ${MINIO_SECRET_KEY:-minioadmin};
-      mc mb -p m/attachments-test;
-      mc rm --recursive --force m/attachments-test/ || true;
-      exit 0"
-
   e2e:
     build:
       context: ../..
       dockerfile: packages/infra/e2e.Dockerfile
-    depends_on:
-      db-test:
-        condition: service_healthy
-      minio-init:
-        condition: service_completed_successfully
-    networks:
-      - default
-      - live
     environment:
-      # Tier knob: behave like local (http cookies, Sentry off) - the harness
-      # boots its own backend from source, it is not the deployed image.
-      VPS_ENV: local
-      PORT: "4000"
-      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@db-test:5432/trelloclone-test
-      COOKIE_SECURE: "false"
-      BCRYPT_COST: "12"
-      # Test signing secrets (throwaway; min 32 chars). Override via env if wanted.
-      JWT_ACCESS_SECRET: ${E2E_JWT_ACCESS_SECRET:-e2e-access-secret-0000000000000000000000}
-      JWT_REFRESH_SECRET: ${E2E_JWT_REFRESH_SECRET:-e2e-refresh-secret-000000000000000000000}
-      # Object storage: the LIVE MinIO, but a dedicated test bucket.
-      MINIO_ENDPOINT: http://minio:9000
-      MINIO_PORT: "9000"
-      MINIO_USE_SSL: "false"
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
-      MINIO_ATTACHMENTS_BUCKET: attachments-test
-      # Mailtrap: send OTP emails + read them back via the API. Provide these in
-      # the VPS env (packages/infra/.env): MAIL_USER, MAIL_PASS, MAILTRAP_API_TOKEN.
-      MAIL_HOST: ${MAIL_HOST:-sandbox.smtp.mailtrap.io}
-      MAIL_PORT: ${MAIL_PORT:-2525}
-      MAIL_USER: ${MAIL_USER:-}
-      MAIL_PASS: ${MAIL_PASS:-}
-      MAIL_FROM: ${MAIL_FROM:-no-reply@trelloclone.dev}
+      # Which live site to hit (set per tier by run-e2e.sh).
+      E2E_BASE_URL: ${E2E_BASE_URL}
+      # Pre-seeded accounts (must exist in the target env's DB).
+      E2E_USER_EMAIL: ${E2E_USER_EMAIL:-}
+      E2E_USER_PASSWORD: ${E2E_USER_PASSWORD:-}
+      E2E_ADMIN_EMAIL: ${E2E_ADMIN_EMAIL:-}
+      E2E_ADMIN_PASSWORD: ${E2E_ADMIN_PASSWORD:-}
+      E2E_RESET_EMAIL: ${E2E_RESET_EMAIL:-}
+      # Mailtrap sandbox: read OTP emails back (dev + prod both use the sandbox).
       MAILTRAP_API_TOKEN: ${MAILTRAP_API_TOKEN:-}
       MAILTRAP_ACCOUNT_ID: ${MAILTRAP_ACCOUNT_ID:-1334917}
       MAILTRAP_INBOX_ID: ${MAILTRAP_INBOX_ID:-3716831}
-
-networks:
-  # This project's private network (db-test <-> e2e).
-  default:
-  # The live stack's network, so e2e/minio-init can reach the `minio` container.
-  # Project name on both VPS is `infra` (compose file dir) -> `infra_default`.
-  live:
-    external: true
-    name: ${LIVE_NETWORK:-infra_default}

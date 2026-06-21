@@ -1,14 +1,11 @@
 import { test, expect } from "../support/fixtures";
 import { PW, getStore } from "./helpers";
-import { resetDb, closeDb, seedUser } from "../support/db";
+import { freshEmail, user } from "../support/users";
 import { fetchOtp } from "../support/mailtrap";
-
-test.beforeEach(resetDb);
-test.afterAll(closeDb);
 
 test.describe("sign up", () => {
   test("register -> verify email -> login (happy path)", async ({ page }) => {
-    const email = `signup-${Date.now()}@example.com`;
+    const email = freshEmail("signup");
     const t0 = Date.now();
 
     await page.goto("/register");
@@ -37,15 +34,16 @@ test.describe("sign up", () => {
     await page.getByLabel("Password", { exact: true }).fill(PW);
     await page.getByRole("button", { name: "Log in" }).click();
 
-    await expect(page).toHaveURL(/\/projects$/);
+    await expect(page).toHaveURL(/\/projects(\/|$)/);
     expect((await getStore(page)).user?.email).toBe(email);
   });
 
-  test("duplicate email shows EMAIL_TAKEN", async ({ page }) => {
-    await seedUser({ email: "taken@example.com", verified: true });
-
+  test("duplicate (verified) email shows EMAIL_TAKEN", async ({ page }) => {
+    // The pre-seeded user is already verified, so registering it is a conflict.
+    // (Re-registering an UNVERIFIED email instead just re-issues an OTP.)
+    const email = user().email;
     await page.goto("/register");
-    await page.getByLabel("Email").fill("taken@example.com");
+    await page.getByLabel("Email").fill(email);
     await page.getByLabel("Password", { exact: true }).fill(PW);
     await page.getByLabel("Confirm password").fill(PW);
     await page.getByRole("button", { name: "Register" }).click();

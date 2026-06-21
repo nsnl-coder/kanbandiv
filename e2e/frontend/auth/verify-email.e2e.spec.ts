@@ -1,19 +1,27 @@
 import { test, expect } from "../support/fixtures";
-import { resetDb, closeDb, seedUser, fillOtpQuota } from "../support/db";
+import { PW } from "./helpers";
+import { freshEmail } from "../support/users";
 
-test.beforeEach(resetDb);
-test.afterAll(closeDb);
+// Register a fresh, unverified account and return its email (on /verify-email).
+async function registerFresh(page: import("@playwright/test").Page): Promise<string> {
+  const email = freshEmail("verify");
+  await page.goto("/register");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password", { exact: true }).fill(PW);
+  await page.getByLabel("Confirm password").fill(PW);
+  await page.getByRole("button", { name: "Register" }).click();
+  await expect(page).toHaveURL(/\/verify-email/);
+  return email;
+}
 
 test.describe("verify email", () => {
   test("resend then rate-limit message", async ({ page }) => {
-    const email = "pending@example.com";
-    await seedUser({ email, verified: false });
-    // RESEND_CAP is 3 per window; pre-fill 2 so the 2nd resend below trips it.
-    await fillOtpQuota(email, "verify_email", 2);
+    await registerFresh(page); // register already minted OTP #1
 
-    await page.goto(`/verify-email?email=${email}`);
+    // RESEND_CAP is 3 per window; register=1, two resends ok, the third trips it.
+    await page.getByRole("button", { name: "Resend code" }).click();
+    await expect(page.getByText("A new code has been sent.")).toBeVisible({ timeout: 20_000 });
 
-    // resend sends a real email synchronously, so allow generous time
     await page.getByRole("button", { name: "Resend code" }).click();
     await expect(page.getByText("A new code has been sent.")).toBeVisible({ timeout: 20_000 });
 
@@ -22,10 +30,8 @@ test.describe("verify email", () => {
   });
 
   test("wrong code is rejected, no redirect", async ({ page }) => {
-    const email = "pending@example.com";
-    await seedUser({ email, verified: false });
+    await registerFresh(page);
 
-    await page.goto(`/verify-email?email=${email}`);
     await page.getByLabel("Verification code").fill("999999");
     await page.getByRole("button", { name: "Verify" }).click();
 

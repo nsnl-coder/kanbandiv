@@ -1,22 +1,8 @@
 import { test, expect } from "../support/fixtures";
-import { login, getStore } from "./helpers";
-import { resetDb, closeDb, seedUser } from "../support/db";
-
-test.beforeEach(resetDb);
-test.afterAll(closeDb);
+import { login, getStore, PW } from "./helpers";
+import { user, freshEmail } from "../support/users";
 
 test.describe("access guard", () => {
-  test("must verify email before logging in", async ({ page }) => {
-    await seedUser({ email: "unverified@example.com", verified: false });
-
-    await login(page, "unverified@example.com");
-
-    await expect(page.getByRole("alert")).toContainText("not verified");
-    await expect(page.getByRole("link", { name: "Resend verification code" })).toBeVisible();
-    await expect(page).toHaveURL(/\/login/);
-    expect((await getStore(page)).user).toBeNull();
-  });
-
   test("protected route redirects to /login with next", async ({ page }) => {
     await page.goto("/projects/new");
 
@@ -31,13 +17,31 @@ test.describe("access guard", () => {
   });
 
   test("user without admin perms cannot reach /admin", async ({ page }) => {
-    await seedUser({ email: "user@example.com" });
-    await login(page, "user@example.com");
-    await expect(page).toHaveURL(/\/projects$/);
+    const u = user();
+    await login(page, u.email, u.password);
+    await expect(page).toHaveURL(/\/projects(\/|$)/);
 
     await page.goto("/admin");
 
-    await expect(page).toHaveURL(/\/projects$/);
-    await expect(page.getByText("No projects yet.")).toBeVisible();
+    // bounced back into the app (no admin permissions)
+    await expect(page).toHaveURL(/\/projects(\/|$)/);
+  });
+
+  test("must verify email before logging in", async ({ page }) => {
+    // Register a fresh account but never verify it, then try to log in.
+    const email = freshEmail("unverified");
+    await page.goto("/register");
+    await page.getByLabel("Email").fill(email);
+    await page.getByLabel("Password", { exact: true }).fill(PW);
+    await page.getByLabel("Confirm password").fill(PW);
+    await page.getByRole("button", { name: "Register" }).click();
+    await expect(page).toHaveURL(/\/verify-email/);
+
+    await login(page, email, PW);
+
+    await expect(page.getByRole("alert")).toContainText("not verified");
+    await expect(page.getByRole("link", { name: "Resend verification code" })).toBeVisible();
+    await expect(page).toHaveURL(/\/login/);
+    expect((await getStore(page)).user).toBeNull();
   });
 });
