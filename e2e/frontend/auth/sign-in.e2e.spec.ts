@@ -22,7 +22,11 @@ test.describe("sign in", () => {
     const u = user();
     await login(page, u.email, "wrong-password-x9");
 
-    await expect(page.getByRole("alert")).toContainText("Invalid credentials");
+    // Either the credential error or (under heavy login traffic) the per-IP
+    // rate-limit message - both confirm the user was NOT authenticated.
+    await expect(page.getByRole("alert")).toContainText(
+      /Invalid credentials|Too many requests/,
+    );
     await expect(page).toHaveURL(/\/login/);
   });
 

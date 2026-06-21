@@ -4,8 +4,9 @@ import { defineConfig, devices } from "@playwright/test";
 // a pre-seeded test user. No test DB / MinIO / app boot - E2E_BASE_URL points at
 // the running site (e.g. https://dev-app.trello-clone.shop). OTP-dependent flows
 // read codes from the Mailtrap sandbox (used in dev AND prod). Per-test
-// X-Forwarded-For (support/fixtures.ts) keeps the backend's per-IP rate limiter
-// from pooling the whole run into one bucket.
+// X-Forwarded-For (support/fixtures.ts) tries to spread the backend's per-IP rate
+// limiter; behind Cloudflare it can't fully isolate, so login-heavy assertions
+// tolerate the rate-limit message.
 const baseURL = process.env.E2E_BASE_URL;
 if (!baseURL) {
   throw new Error(
