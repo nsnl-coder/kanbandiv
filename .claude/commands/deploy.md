@@ -2,9 +2,17 @@
 
 > "Code that doesn't run on Dev doesn't go to Prod."
 
-Two separate environments: **Dev VPS** for smoke testing → confirm OK → **Prod VPS** goes live. For multi-app port rules, see [`multi-app-infra.md`](multi-app-infra.md).
+Two separate environments: **Dev VPS** for smoke testing → confirm OK → **Prod VPS** goes live.
 
----
+## Must-follow rules:
+
+- use scp to transfer the file into vps, do not read .env file unless user permitted
+- use scp to transfer the certs in packages/infra/certs
+- all tests must pass before release prod tag
+
+# Deploy note
+
+- Build order: packages/shared -> packages/backend -> packages/frontend -> packages/landing
 
 ## Flow Overview
 
