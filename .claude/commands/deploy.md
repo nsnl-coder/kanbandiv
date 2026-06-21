@@ -69,14 +69,17 @@ git checkout v1.3.0-rc.1
 
 make dev       # docker compose up
 make health    # smoke test
+
+# e2e against an EPHEMERAL test PG (started for the run, torn down after) + the
+# live MinIO via a dedicated test bucket. The live stack stays up. Exit = pass/fail.
+bash packages/infra/deploy-scripts/run-e2e.sh
 ```
 
 **Verification checklist:**
 
 - [ ] DB migrations ran without error
 - [ ] `GET /health` → `{"status":"ok"}`
-- [ ] check if login logout work using mcp
-- [ ] all tests are passed including: frontend tests, backend tests, landing tests & e2e tests
+- [ ] all tests are passed including: frontend tests, backend tests, landing tests & e2e tests (login/logout and other flows are covered by e2e, not a manual mcp check). e2e runs via `run-e2e.sh` against an ephemeral test PG (stopped after the run) + the live MinIO via a dedicated test bucket.
 - [ ] New feature behaves per spec
 - [ ] No regression on existing features
 
@@ -91,8 +94,8 @@ make health    # smoke test
 Before creating the stable tag you **MUST** post the full deploy checklist back
 to the user, with every item marked and backed by evidence:
 
-- `[x]` = done + verified (show the proof: command output, status code, test
-  summary, or the MCP step that confirmed it)
+- `[x]` = done + verified (show the proof: command output, status code, or test
+  summary that confirmed it)
 - `[ ]` = not done, skipped, or failed (say which, and why)
 
 Use this exact report format:
@@ -101,8 +104,7 @@ Use this exact report format:
 ## Deploy checklist — <env> @ <commit/tag>
 - [x] DB migrations ran without error        — <evidence, e.g. "009..021 applied">
 - [x] GET /health -> {"status":"ok"}         — <evidence>
-- [x] login/logout work (mcp)                — <evidence>
-- [x] frontend + backend + landing + e2e tests pass — <counts, e.g. "be 708, fe 350">
+- [x] frontend + backend + landing + e2e tests pass — <counts, e.g. "be 708, fe 350, e2e 22"> (e2e covers login/logout)
 - [x] new feature behaves per spec           — <which features, how verified>
 - [x] no regression on existing features     — <evidence>
 - [x] all services stayed up during deploy   — <evidence>

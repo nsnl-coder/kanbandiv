@@ -6,6 +6,10 @@ dist/
 *.log
 .DS_Store
 
+# Playwright e2e artifacts
+**/test-results/
+**/playwright-report/
+
 # Local MCP server config holds API tokens; commit .mcp.json.example instead.
 .mcp.json
 vps-info.md

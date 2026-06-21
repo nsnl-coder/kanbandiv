@@ -1,72 +1,75 @@
-import { test, expect } from "@playwright/test";
-import { TrpcMock, makeUser, getStore } from "./helpers";
+import { test, expect } from "../support/fixtures";
+import { login, getStore } from "./helpers";
+import { resetDb, closeDb, seedUser } from "../support/db";
+
+test.beforeEach(resetDb);
+test.afterAll(closeDb);
 
 test.describe("session", () => {
   test("silent refresh re-hydrates the session on reload", async ({ page }) => {
-    const user = makeUser();
-    await new TrpcMock(page).loggedIn(user).install();
-
-    await page.goto("/");
-    await expect(page.getByRole("heading", { name: "Your boards" })).toBeVisible();
-    expect((await getStore(page)).user?.email).toBe(user.email);
+    await seedUser({ email: "user@example.com" });
+    await login(page, "user@example.com");
+    await expect(page).toHaveURL(/\/projects$/);
+    expect((await getStore(page)).user?.email).toBe("user@example.com");
 
     await page.reload();
-    await expect(page.getByRole("heading", { name: "Your boards" })).toBeVisible();
-    expect((await getStore(page)).user?.email).toBe(user.email);
+    await expect(page).toHaveURL(/\/projects$/);
+    expect((await getStore(page)).user?.email).toBe("user@example.com");
   });
 
   test("reloading on a protected route keeps the user there, not /login", async ({ page }) => {
-    const user = makeUser();
-    await new TrpcMock(page).loggedIn(user).install();
+    await seedUser({ email: "user@example.com" });
+    await login(page, "user@example.com");
+    await expect(page).toHaveURL(/\/projects$/);
 
-    await page.goto("/settings/password");
-    await expect(page).toHaveURL("/settings/password");
+    await page.goto("/projects/new");
+    await expect(page).toHaveURL(/\/projects\/new/);
 
     await page.reload();
-    await expect(page).toHaveURL("/settings/password");
-    expect((await getStore(page)).user?.email).toBe(user.email);
+    await expect(page).toHaveURL(/\/projects\/new/);
+    expect((await getStore(page)).user?.email).toBe("user@example.com");
   });
 
-  test("a signed-in user landing on /login is sent to their user page", async ({ page }) => {
-    const user = makeUser({ role: "user" });
-    await new TrpcMock(page).loggedIn(user).install();
+  test("a signed-in user landing on /login is sent to their home", async ({ page }) => {
+    await seedUser({ email: "user@example.com" });
+    await login(page, "user@example.com");
+    await expect(page).toHaveURL(/\/projects$/);
 
     await page.goto("/login");
-    await expect(page).toHaveURL("/");
-    expect((await getStore(page)).user?.email).toBe(user.email);
+    await expect(page).toHaveURL(/\/projects$/);
+    expect((await getStore(page)).user?.email).toBe("user@example.com");
   });
 
   test("a signed-in admin landing on /login is sent to /admin", async ({ page }) => {
-    const admin = makeUser({ role: "admin" });
-    await new TrpcMock(page).loggedIn(admin).install();
+    await seedUser({ email: "admin@example.com", superuser: true });
+    await login(page, "admin@example.com");
+    await expect(page).toHaveURL(/\/admin/);
 
     await page.goto("/login");
-    await expect(page).toHaveURL("/admin");
+    await expect(page).toHaveURL(/\/admin/);
   });
 
   test("a signed-in user on /login?next= is sent to next", async ({ page }) => {
-    const user = makeUser();
-    await new TrpcMock(page).loggedIn(user).install();
+    await seedUser({ email: "user@example.com" });
+    await login(page, "user@example.com");
+    await expect(page).toHaveURL(/\/projects$/);
 
-    await page.goto("/login?next=%2Fsettings%2Fpassword");
-    await expect(page).toHaveURL("/settings/password");
+    await page.goto("/login?next=%2Fprojects%2Fnew");
+    await expect(page).toHaveURL(/\/projects\/new/);
   });
 
   test("logout clears the session and blocks protected routes", async ({ page }) => {
-    const user = makeUser();
-    const mock = new TrpcMock(page).loggedIn(user).ok("auth.logout", { ok: true });
-    await mock.install();
-
-    await page.goto("/");
-    await expect(page.getByRole("heading", { name: "Your boards" })).toBeVisible();
+    await seedUser({ email: "user@example.com" });
+    await login(page, "user@example.com");
+    await expect(page).toHaveURL(/\/projects$/);
 
     await page.getByRole("button", { name: "Log out" }).click();
-    await expect(page).toHaveURL(/\/login/);
+    // logout returns to the public marketing home
+    await expect(page).toHaveURL(/\/$/);
     expect((await getStore(page)).user).toBeNull();
 
     // session is gone: a fresh load of a protected route bounces to /login
-    mock.loggedOut();
-    await page.goto("/");
+    await page.goto("/projects");
     await expect(page).toHaveURL(/\/login/);
   });
 });

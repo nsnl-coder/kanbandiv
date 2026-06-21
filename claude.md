@@ -33,4 +33,4 @@ Always follow token discipline (short replies, scoped file reads, no rambling). 
 
 # Testing rules
 
-- Only run e2e test in the dev & prod
+- Run e2e tests in local, dev & prod. Local e2e runs against a dedicated test Postgres DB + test MinIO bucket (never the primary/dev data)

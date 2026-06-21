@@ -12,7 +12,8 @@ paths:
 | --------------- | ------------------------------------------------------- | ----------------------- | --------------- | ------------------ |
 | Nginx           | Reverse proxy / entry point; propagates trace context   | -                       | yes             | yes                |
 | Postgres        | Primary database                                        | yes (native, no docker) | yes (docker)    | yes (docker)       |
-| Postgres (test) | Isolated DB for real (non-mocked) e2e tests             | -                       | yes (docker)    | yes (docker)       |
+| Postgres (test) | Isolated DB for real (non-mocked) e2e tests             | yes (native)            | yes (ephemeral) | yes (ephemeral)    |
+| MinIO (test)    | Test bucket for e2e file storage (reuses live MinIO)    | yes (test bucket)       | yes (test bucket) | yes (test bucket) |
 | Minio           | Object storage for files + Loki/Tempo chunks            | yes                     | yes             | yes                |
 | Redis           | Cache / sessions                                        | -                       | yes             | yes                |
 | OTel SDK        | Instruments BE + FE; produces `traceId`, exports traces | yes (console exporter)  | yes (-> Tempo)  | yes (-> Tempo)     |
@@ -26,8 +27,10 @@ paths:
 Notes:
 
 - Local: no docker. Postgres runs natively; observability stack (Vector/Loki/Tempo/Prometheus/Grafana) and Sentry are off. OTel SDK still loads but uses a console exporter.
-- E2E tests: real (non-mocked) against a live API. Run only in prod environment (dev + prod VPS), never local. All e2e tests live in `e2e/` (moved out of `packages/frontend`).
-- Test DB: separate Postgres instance/database from the primary, reset between e2e runs so tests never touch production data.
+- E2E tests: real (non-mocked) against a live API. Run in local, dev VPS, and prod VPS. All e2e tests live in `e2e/` (moved out of `packages/frontend`).
+- Test DB: separate Postgres instance/database from the primary, reset between e2e runs so tests never touch production data. Local uses a dedicated native test Postgres DB (`trelloclone-test`) + a test MinIO bucket (`attachments-test`).
+- On dev/prod VPS the test Postgres is **ephemeral**: a separate compose project (`trelloclone3-e2e`, `packages/infra/docker-compose.e2e.yml`, tmpfs storage) that `deploy-scripts/run-e2e.sh` starts for the run and tears down (`down -v`) afterward, so it consumes no standing CPU/RAM. The live stack keeps serving users throughout; teardown can never touch the production db/pgdata.
+- Object storage for VPS e2e reuses the **live MinIO** with a dedicated `attachments-test` bucket (emptied before each run), not a second MinIO container - bucket isolation is enough for attachments. The e2e project joins the live stack network (`infra_default`) to reach it.
 - Dev + Prod VPS: full stack via docker compose. Same config; Dev uses shorter log/trace retention (7d vs 30d).
 - Three pillars: Loki (logs) + Tempo (traces) + Prometheus (metrics).
 - `traceId` is the OpenTelemetry trace id, shared across logs, traces, and Sentry.
