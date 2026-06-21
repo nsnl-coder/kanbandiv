@@ -23,6 +23,9 @@ set +a
 cleanup() {
   echo "=== e2e teardown: removing ephemeral test PG (live MinIO untouched) ==="
   $COMPOSE down -v --remove-orphans || true
+  # Reclaim the (large) e2e image + build cache so runs don't fill a small VPS.
+  docker image rm -f "${PROJECT}-e2e" 2>/dev/null || true
+  docker builder prune -f >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 

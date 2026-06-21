@@ -11,7 +11,11 @@ RUN corepack enable
 WORKDIR /app
 COPY . .
 
-RUN pnpm install --frozen-lockfile
+# Install deps only for what the harness runs: backend + frontend webServers and
+# the e2e package (shared is pulled in transitively). Skips `landing` (Next.js),
+# which is large and unused here - keeps the image small on a disk-tight VPS.
+RUN pnpm install --frozen-lockfile \
+  --filter "backend..." --filter "frontend..." --filter "e2e-frontend..."
 # Install only Chromium (+ OS deps) for the e2e package's Playwright version.
 RUN pnpm --filter e2e-frontend exec playwright install --with-deps chromium
 
