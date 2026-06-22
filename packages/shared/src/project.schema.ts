@@ -70,6 +70,13 @@ export const revokeAccessInput = z.object({
 });
 export type RevokeAccessInput = z.infer<typeof revokeAccessInput>;
 
+// Reorder a project relative to its sidebar neighbours (fractional position).
+export const moveProjectInput = z.object({
+  beforeId: z.string().optional(),
+  afterId: z.string().optional(),
+});
+export type MoveProjectInput = z.infer<typeof moveProjectInput>;
+
 export const projectSchema = z.object({
   id: z.string(),
   ownerId: z.string(),
@@ -78,6 +85,7 @@ export const projectSchema = z.object({
   color: z.string(),
   visibility: projectVisibilitySchema,
   myPermission: z.enum(["owner", ProjectPermission.Edit, ProjectPermission.View]),
+  position: z.number(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });

@@ -36,6 +36,15 @@ export const listBoardsInput = z.object({
 });
 export type ListBoardsInput = z.infer<typeof listBoardsInput>;
 
+// Reorder a board within its project, or move it to another project.
+// Omit toProjectId (or pass the current project) for a same-project reorder.
+export const moveBoardInput = z.object({
+  toProjectId: z.string().optional(),
+  beforeId: z.string().optional(),
+  afterId: z.string().optional(),
+});
+export type MoveBoardInput = z.infer<typeof moveBoardInput>;
+
 export const grantBoardAccessInput = z.object({
   email: emailSchema,
   permission: projectPermissionSchema,
@@ -60,6 +69,7 @@ export const boardSchema = z.object({
   description: z.string().nullable(),
   color: z.string(),
   myPermission: z.enum(["owner", ProjectPermission.Edit, ProjectPermission.View]),
+  position: z.number(),
   archivedAt: z.date().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),

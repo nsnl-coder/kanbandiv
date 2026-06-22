@@ -1,16 +1,18 @@
-import "dotenv/config";
-import { z } from "zod";
+import 'dotenv/config';
+import { z } from 'zod';
 
 // Single deployment-tier knob (root .env.{local,dev,prod}). Drives log format,
 // docs, Sentry env, trace sampling, and cookie security. NODE_ENV is left to
 // libraries only.
-const VPS_ENVS = ["local", "dev", "prod"] as const;
+const VPS_ENVS = ['local', 'dev', 'prod'] as const;
 type VpsEnv = (typeof VPS_ENVS)[number];
-const vpsEnv = (process.env.VPS_ENV ?? "local") as VpsEnv;
+const vpsEnv = (process.env.VPS_ENV ?? 'local') as VpsEnv;
 if (!VPS_ENVS.includes(vpsEnv)) {
-  throw new Error(`Invalid VPS_ENV: ${process.env.VPS_ENV} (expected local|dev|prod)`);
+  throw new Error(
+    `Invalid VPS_ENV: ${process.env.VPS_ENV} (expected local|dev|prod)`,
+  );
 }
-const isLocal = vpsEnv === "local";
+const isLocal = vpsEnv === 'local';
 const tier = vpsEnv.toUpperCase(); // LOCAL | DEV | PROD
 
 // Resolve per-tier inputs from a single .env: KEY_<TIER> wins, else the shared
@@ -29,21 +31,20 @@ const constants = {
   PORT: 4000,
   // Single source of truth for access-token lifetime. The cookie maxAge is
   // derived from this (see ACCESS_TTL_MS below) so the two can never drift.
-  JWT_ACCESS_TTL: "15m",
-  JWT_ISS: "trelloclone",
-  JWT_AUD: "trelloclone-web",
+  JWT_ACCESS_TTL: '15m',
+  JWT_ISS: 'trelloclone',
+  JWT_AUD: 'trelloclone-web',
   REFRESH_TTL_MS: 7 * 24 * 60 * 60 * 1000,
   BCRYPT_COST: 12,
-  MAIL_HOST: "sandbox.smtp.mailtrap.io",
   MAIL_PORT: 2525,
-  MAIL_FROM: "no-reply@trelloclone.dev",
+  MAIL_FROM: 'admin@trello-clone.shop',
   // MinIO sits behind the proxy (internal HTTP), same bucket/port everywhere.
   MINIO_PORT: 9000,
   MINIO_USE_SSL: false,
-  MINIO_ATTACHMENTS_BUCKET: "attachments",
+  MINIO_ATTACHMENTS_BUCKET: 'attachments',
   ATTACHMENT_MAX_BYTES: 10_485_760,
   // SSO session cookie lifetime (bounds role-revocation lag).
-  SSO_SESSION_TTL: "1h",
+  SSO_SESSION_TTL: '1h',
   SENTRY_TRACES_SAMPLE_RATE: 0.1,
 };
 
@@ -55,7 +56,7 @@ const url = (def: string) =>
 // Everything below is a secret or varies by deployment, so it cannot be
 // determined in code and must be supplied via the environment.
 const schema = z.object({
-  DATABASE_URL: url("postgres://postgres:postgres@localhost:5432/trelloclone"),
+  DATABASE_URL: url('postgres://postgres:postgres@localhost:5432/trelloclone'),
 
   // Secrets are ALWAYS required (no env-gated default) so a misconfigured
   // tier can never fall back to a committed signing key. Set them in
@@ -67,68 +68,84 @@ const schema = z.object({
   // subdomain than the API). Comma-separated; empty -> no CORS (same-origin).
   CORS_ORIGINS: z
     .string()
-    .default("")
-    .transform((v) => v.split(",").map((s) => s.trim()).filter(Boolean)),
+    .default('')
+    .transform((v) =>
+      v
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+    ),
 
   // Optional bootstrap super admin, seeded on startup. Both must be set to seed;
   // empty -> seeding skipped. Idempotent (see scripts/seedSuperAdmin.ts).
-  SUPER_ADMIN_EMAIL: z.string().email().or(z.literal("")).default(""),
-  SUPER_ADMIN_PASSWORD: z.string().min(8).or(z.literal("")).default(""),
+  SUPER_ADMIN_EMAIL: z.string().email().or(z.literal('')).default(''),
+  SUPER_ADMIN_PASSWORD: z.string().min(8).or(z.literal('')).default(''),
 
-  MAIL_USER: z.string().default(""),
-  MAIL_PASS: z.string().default(""),
+  // Mail transport varies by tier: shared sandbox for local+dev (plain KEY),
+  // real provider for prod (KEY_PROD). Resolved by tiered() above.
+  MAIL_HOST: z.string().default('sandbox.smtp.mailtrap.io'),
+  MAIL_USER: z.string().default(''),
+  MAIL_PASS: z.string().default(''),
 
   // --- Observability (all optional; absence = local/off behaviour) ---
   // Override Pino level; empty -> derived from VPS_ENV (debug local/dev, info prod).
-  LOG_LEVEL: z.string().default(""),
+  LOG_LEVEL: z.string().default(''),
   // OTLP traces endpoint (Tempo). Empty -> ConsoleSpanExporter, no Tempo (local).
-  OTEL_EXPORTER_OTLP_ENDPOINT: z.string().default(""),
+  OTEL_EXPORTER_OTLP_ENDPOINT: z.string().default(''),
   // Sentry DSN. Empty -> Sentry disabled (local).
-  SENTRY_DSN: z.string().default(""),
+  SENTRY_DSN: z.string().default(''),
   // Release id (git sha), set at deploy; ties errors to uploaded source maps.
-  SENTRY_RELEASE: z.string().default(""),
+  SENTRY_RELEASE: z.string().default(''),
   // Readiness deps. Only checked in /health/ready when the URL is set.
-  REDIS_URL: z.string().default(""),
-  MINIO_ENDPOINT: z.string().default(""),
-  MINIO_ACCESS_KEY: z.string().default(""),
-  MINIO_SECRET_KEY: z.string().default(""),
+  REDIS_URL: z.string().default(''),
+  MINIO_ENDPOINT: z.string().default(''),
+  MINIO_ACCESS_KEY: z.string().default(''),
+  MINIO_SECRET_KEY: z.string().default(''),
 
   // --- Backup (Google Drive OAuth + job pipeline) ---
   // OAuth client (Google Cloud console). Empty -> Drive features disabled.
-  GDRIVE_CLIENT_ID: z.string().default(""),
-  GDRIVE_CLIENT_SECRET: z.string().default(""),
+  GDRIVE_CLIENT_ID: z.string().default(''),
+  GDRIVE_CLIENT_SECRET: z.string().default(''),
   // Public callback URL the proxy routes to /api/admin/backup/gdrive/callback.
   // Must match the URI registered in Google console, so it stays an env input.
-  GDRIVE_REDIRECT_URI: z.string().default(""),
+  GDRIVE_REDIRECT_URI: z.string().default(''),
   // Frontend base URL the OAuth callback redirects back to after connecting.
-  APP_BASE_URL: z.string().default(""),
+  APP_BASE_URL: z.string().default(''),
   // Optional default Drive folder for uploads (overridable per settings row).
-  GDRIVE_FOLDER_ID: z.string().default(""),
+  GDRIVE_FOLDER_ID: z.string().default(''),
   // Working dir for dump/tar staging. Defaults to the OS temp dir.
-  BACKUP_WORK_DIR: z.string().default(""),
+  BACKUP_WORK_DIR: z.string().default(''),
   // Symmetric passphrase for optional at-rest backup encryption (gpg).
-  BACKUP_ENCRYPTION_PASSPHRASE: z.string().default(""),
+  BACKUP_ENCRYPTION_PASSPHRASE: z.string().default(''),
   // Encrypts the Drive refresh token at rest. Falls back to JWT_REFRESH_SECRET.
-  BACKUP_TOKEN_SECRET: z.string().default(""),
+  BACKUP_TOKEN_SECRET: z.string().default(''),
   // MinIO bucket(s) to mirror, comma-separated. Empty -> mirror skipped.
-  MINIO_BACKUP_BUCKETS: z.string().default(""),
+  MINIO_BACKUP_BUCKETS: z.string().default(''),
 
   // --- Admin SSO (forward-auth gate for Grafana/MinIO behind the proxy) ---
   // HMAC secret for SSO transfer/session tokens. Empty -> falls back to JWT_ACCESS_SECRET.
-  SSO_SECRET: z.string().default(""),
+  SSO_SECRET: z.string().default(''),
   // Hosts the admin SSO gate may mint tokens for (comma-separated allowlist).
   SSO_ALLOWED_HOSTS: z
     .string()
-    .default("")
-    .transform((v) => v.split(",").map((s) => s.trim()).filter(Boolean)),
+    .default('')
+    .transform((v) =>
+      v
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+    ),
   // App origin used to bounce unauthenticated admins to the login page.
-  SSO_APP_ORIGIN: z.string().default(""),
+  SSO_APP_ORIGIN: z.string().default(''),
 });
 
 const parsed = schema.safeParse(tiered(schema.shape));
 if (!parsed.success) {
-  console.error("Invalid environment configuration:", parsed.error.flatten().fieldErrors);
-  throw new Error("Invalid environment configuration");
+  console.error(
+    'Invalid environment configuration:',
+    parsed.error.flatten().fieldErrors,
+  );
+  throw new Error('Invalid environment configuration');
 }
 
 /** Parse a jsonwebtoken-style duration ("15m", "1h", "7d", "30s", or bare ms). */
@@ -136,7 +153,7 @@ function parseDurationMs(s: string): number {
   const m = /^(\d+)\s*(ms|s|m|h|d)?$/.exec(s.trim());
   if (!m) throw new Error(`Invalid duration: ${s}`);
   const mult = { ms: 1, s: 1000, m: 60_000, h: 3_600_000, d: 86_400_000 };
-  return Number(m[1]) * mult[(m[2] ?? "ms") as keyof typeof mult];
+  return Number(m[1]) * mult[(m[2] ?? 'ms') as keyof typeof mult];
 }
 
 export const env = {
@@ -152,7 +169,7 @@ export const env = {
   isLocal,
   // Secure cookies everywhere except local HTTP dev.
   COOKIE_SECURE: !isLocal,
-  LOG_LEVEL: parsed.data.LOG_LEVEL || (vpsEnv === "prod" ? "info" : "debug"),
+  LOG_LEVEL: parsed.data.LOG_LEVEL || (vpsEnv === 'prod' ? 'info' : 'debug'),
   SENTRY_ENV: vpsEnv,
-  OTEL_SAMPLE_RATIO: vpsEnv === "prod" ? 0.1 : 1,
+  OTEL_SAMPLE_RATIO: vpsEnv === 'prod' ? 0.1 : 1,
 };

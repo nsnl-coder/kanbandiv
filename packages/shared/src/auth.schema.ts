@@ -94,8 +94,17 @@ export const publicUserSchema = z.object({
   roleId: z.string().nullable().optional(),
   emailVerified: z.boolean(),
   permissions: z.array(permissionSchema),
+  // Set only while a superuser is impersonating this account. Identifies the
+  // original admin so the UI can show a banner and offer "stop impersonating".
+  impersonator: z
+    .object({ id: z.string(), email: z.string() })
+    .nullable()
+    .optional(),
 });
 export type PublicUser = z.infer<typeof publicUserSchema>;
+
+export const impersonateInput = z.object({ userId: z.string() });
+export type ImpersonateInput = z.infer<typeof impersonateInput>;
 
 export const authTokensSchema = z.object({
   accessToken: z.string(),

@@ -24,6 +24,7 @@ import { ChangePasswordModal } from "../../features/auth/components/ChangePasswo
 import { NotificationBell } from "../../features/notification/components/NotificationBell";
 import { ReportBugButton } from "../../features/bug-report/components/ReportBugButton";
 import { SearchPalette } from "../../features/search/components/SearchPalette";
+import { ImpersonationBanner } from "../../components/ImpersonationBanner";
 
 interface AdminNavItem {
   to: string;
@@ -258,6 +259,7 @@ export function AdminLayout() {
     <div className="flex h-screen overflow-hidden bg-canvas">
       <AdminSidebar />
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <ImpersonationBanner />
         <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-4 md:hidden">
           <Link to="/" className="flex items-center gap-1.5 font-semibold text-foreground">
             <LayoutDashboard className="h-5 w-5 text-indigo-600" />

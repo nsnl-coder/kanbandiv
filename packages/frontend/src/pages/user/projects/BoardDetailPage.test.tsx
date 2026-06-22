@@ -309,7 +309,8 @@ describe("BoardDetailPage (column + card mutations)", () => {
   it("adds a card via the column affordance", async () => {
     const u = userEvent.setup();
     renderPage();
-    const todo = screen.getByText("Todo").closest("div")!.parentElement as HTMLElement;
+    const todo = screen.getByText("Todo").closest("div")!.parentElement!
+      .parentElement as HTMLElement;
     await u.click(within(todo).getByRole("button", { name: "Add card" }));
     await u.type(within(todo).getByLabelText("card title"), "Card X{Enter}");
     expect(h.mutateCalls.create).toContainEqual({ columnId: "c1", title: "Card X" });
@@ -505,7 +506,8 @@ describe("BoardDetailPage (card templates)", () => {
     const u = userEvent.setup();
     h.queryData = { getData: makeData(), accessList: [], get: defaultBoardView, list: templates };
     renderPage();
-    const todo = screen.getByText("Todo").closest("div")!.parentElement as HTMLElement;
+    const todo = screen.getByText("Todo").closest("div")!.parentElement!
+      .parentElement as HTMLElement;
     await u.click(within(todo).getByLabelText("add card from template to Todo"));
     await u.click(within(todo).getByLabelText("use template Bug"));
     expect(h.mutateCalls.instantiate).toContainEqual({ id: "t1", columnId: "c1" });

@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check } from "lucide-react";
+import { Check, Users } from "lucide-react";
 import type { Assignee, BoardData } from "shared";
 import { useTRPC } from "../../../lib/trpc";
 import { assigneeErrorMessage } from "../assigneeErrors";
 import { assigneeDisplayName } from "../utils";
 import { AssigneeAvatar } from "./AssigneeAvatar";
+import { SectionHeading } from "./SectionHeading";
 
 interface Props {
   boardId: string;
@@ -65,7 +66,7 @@ export function AssigneePicker({ boardId, cardId, assignees = [], editable }: Pr
 
   return (
     <div className="mt-4">
-      <h3 className="text-sm font-semibold text-foreground/80">Assignees</h3>
+      <SectionHeading icon={Users}>Assignees</SectionHeading>
       {error ? <p className="mt-1 text-xs text-red-600">{assigneeErrorMessage(error)}</p> : null}
       <div className="mt-2 flex flex-wrap items-center gap-1">
         {assignees.map((a) => (

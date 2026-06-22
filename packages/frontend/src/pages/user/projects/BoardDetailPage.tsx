@@ -157,9 +157,9 @@ export function BoardDetailPage() {
     }
   };
 
-  const accessQuery = useQuery(trpc.boards.accessList.queryOptions({ id: boardId! }));
-  const members: MentionMember[] = (accessQuery.data ?? []).map((a) => ({
-    name: a.email.split("@")[0],
+  const membersQuery = useQuery(trpc.assignees.boardMembers.queryOptions({ boardId: boardId! }));
+  const members: MentionMember[] = (membersQuery.data ?? []).map((m) => ({
+    name: m.email.split("@")[0],
   }));
 
   // Saved view: hydrate ONCE on first resolve (behind a ref so a later refetch
@@ -605,6 +605,18 @@ export function BoardDetailPage() {
                     Add list
                   </button>
                 </div>
+              ) : columns.length === 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setAddingColumn(true)}
+                  className="flex w-72 shrink-0 flex-col items-center gap-1.5 self-start rounded-2xl border border-dashed border-indigo-300 bg-indigo-50/60 px-5 py-6 text-center text-indigo-600 transition-all duration-200 hover:border-indigo-400 hover:bg-indigo-100/70 active:scale-[0.99]"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="text-sm font-semibold">Add your first list</span>
+                  <span className="text-xs font-medium text-indigo-500/80">
+                    Lists hold cards. Start with To do, Doing, Done.
+                  </span>
+                </button>
               ) : (
                 <button
                   type="button"

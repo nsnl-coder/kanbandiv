@@ -86,6 +86,7 @@ export interface ProjectsTable {
   description: string | null;
   color: string;
   visibility: Generated<ProjectVisibility>;
+  position: Generated<number>;
   created_at: GeneratedTimestamp;
   updated_at: GeneratedTimestamp;
 }
@@ -96,6 +97,14 @@ export interface ProjectAccessTable {
   permission: ProjectPermission;
 }
 
+export interface ProjectUserOrderTable {
+  user_id: string;
+  project_id: string;
+  position: number;
+  created_at: GeneratedTimestamp;
+  updated_at: GeneratedTimestamp;
+}
+
 export interface BoardsTable {
   id: Generated<string>;
   project_id: string;
@@ -103,6 +112,7 @@ export interface BoardsTable {
   name: string;
   description: string | null;
   color: string;
+  position: Generated<number>;
   archived_at: Timestamp | null;
   created_at: GeneratedTimestamp;
   updated_at: GeneratedTimestamp;
@@ -344,6 +354,7 @@ export interface Database {
   auth_events: AuthEventsTable;
   projects: ProjectsTable;
   project_access: ProjectAccessTable;
+  project_user_order: ProjectUserOrderTable;
   boards: BoardsTable;
   board_access: BoardAccessTable;
   columns: ColumnsTable;

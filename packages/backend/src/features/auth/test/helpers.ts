@@ -33,6 +33,9 @@ import { up as up023 } from "../../../migrations/023.invite.js";
 import { up as up024 } from "../../../migrations/024.user-is-test.js";
 import { up as up025 } from "../../../migrations/025.bug-report.js";
 import { up as up026 } from "../../../migrations/026.bug-report-attachment.js";
+import { up as up027 } from "../../../migrations/027.project-position.js";
+import { up as up028 } from "../../../migrations/028.board-position.js";
+import { up as up029 } from "../../../migrations/029.project-user-order.js";
 import type { EmailPort } from "../../email/email.service.js";
 
 export type TestDb = Kysely<Database>;
@@ -76,6 +79,9 @@ export async function newTestDb(): Promise<TestDb> {
   await up024(db);
   await up025(db);
   await up026(db);
+  await up027(db);
+  await up028(db);
+  await up029(db);
   // pg-mem DEFECT: a partial index `(user_id) WHERE read_at IS NULL` is wrongly
   // applied to plain `WHERE user_id = ?` queries, hiding rows once read_at is set
   // (real Postgres only uses it when the query implies the partial predicate).
@@ -172,6 +178,7 @@ export function makeContext(opts: {
   email?: EmailPort;
   userId?: string | null;
   refreshCookie?: string | null;
+  impersonator?: Context["impersonator"];
   ip?: string | null;
   userAgent?: string | null;
   res?: Context["res"];
@@ -181,6 +188,7 @@ export function makeContext(opts: {
     email: opts.email ?? fakeEmail(),
     userId: opts.userId ?? null,
     refreshCookie: opts.refreshCookie ?? null,
+    impersonator: opts.impersonator ?? null,
     ip: opts.ip ?? null,
     userAgent: opts.userAgent ?? null,
     res: opts.res ?? null,

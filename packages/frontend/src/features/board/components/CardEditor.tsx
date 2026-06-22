@@ -6,7 +6,9 @@ import {
   type Card,
   type CardTemplatePayload,
 } from "shared";
+import { AlignLeft, Type } from "lucide-react";
 import { Modal } from "../../../components/Modal";
+import { SectionHeading } from "./SectionHeading";
 import { useTRPC } from "../../../lib/trpc";
 import { cardToTemplatePayload } from "../cardTemplateUtils";
 import { TemplateForm } from "./TemplateForm";
@@ -89,11 +91,16 @@ export function CardEditor({
   };
 
   return (
-    <Modal open onClose={onClose} title={editable ? "Edit card" : "Card"} widthClassName="max-w-lg">
+    <Modal open onClose={onClose} title={editable ? "Edit card" : "Card"} widthClassName="max-w-3xl">
       <div>
         <CardCoverBanner cover={card.cover} />
+
         <div className="flex flex-col gap-1">
-          <label htmlFor="card-title" className="text-sm font-medium text-foreground/80">
+          <label
+            htmlFor="card-title"
+            className="flex items-center gap-2 text-sm font-medium text-foreground/80"
+          >
+            <Type className="h-4 w-4 text-muted" aria-hidden />
             Title
           </label>
           <input
@@ -109,8 +116,12 @@ export function CardEditor({
           ) : null}
         </div>
 
-        <div className="mt-3 flex flex-col gap-1">
-          <label htmlFor="card-description" className="text-sm font-medium text-foreground/80">
+        <div className="mt-4 flex flex-col gap-1">
+          <label
+            htmlFor="card-description"
+            className="flex items-center gap-2 text-sm font-medium text-foreground/80"
+          >
+            <AlignLeft className="h-4 w-4 text-muted" aria-hidden />
             Description
           </label>
           <DescriptionEditor
@@ -124,52 +135,58 @@ export function CardEditor({
           <p className="mt-2 text-sm text-red-600">{errorMessage(error)}</p>
         ) : null}
 
-        <LabelPicker
-          boardId={boardId}
-          cardId={card.id}
-          labels={card.labels}
-          editable={editable}
-        />
+        <div className="mt-5 grid gap-x-8 sm:grid-cols-[1fr_240px]">
+          <aside className="flex flex-col sm:order-2">
+            <LabelPicker
+              boardId={boardId}
+              cardId={card.id}
+              labels={card.labels}
+              editable={editable}
+            />
 
-        <AssigneePicker
-          boardId={boardId}
-          cardId={card.id}
-          assignees={card.assignees}
-          editable={editable}
-        />
+            <AssigneePicker
+              boardId={boardId}
+              cardId={card.id}
+              assignees={card.assignees}
+              editable={editable}
+            />
 
-        <DueDatePicker boardId={boardId} card={card} editable={editable} />
+            <DueDatePicker boardId={boardId} card={card} editable={editable} />
 
-        <ChecklistSection cardId={card.id} editable={editable} />
+            <CardCoverPicker
+              boardId={boardId}
+              cardId={card.id}
+              cover={card.cover}
+              attachments={imageAttachments}
+              editable={editable}
+            />
 
-        <AttachmentList
-          boardId={boardId}
-          cardId={card.id}
-          canEdit={editable}
-          currentUserId={currentUserId}
-          isOwner={isOwner}
-        />
+            <AttachmentList
+              boardId={boardId}
+              cardId={card.id}
+              canEdit={editable}
+              currentUserId={currentUserId}
+              isOwner={isOwner}
+            />
+          </aside>
 
-        <CardCoverPicker
-          boardId={boardId}
-          cardId={card.id}
-          cover={card.cover}
-          attachments={imageAttachments}
-          editable={editable}
-        />
+          <div className="flex min-w-0 flex-col sm:order-1">
+            <ChecklistSection cardId={card.id} editable={editable} />
 
-        <CommentList
-          boardId={boardId}
-          cardId={card.id}
-          editable={editable}
-          members={members}
-          currentUserId={currentUserId}
-          isOwner={isOwner}
-        />
+            <CommentList
+              boardId={boardId}
+              cardId={card.id}
+              editable={editable}
+              members={members}
+              currentUserId={currentUserId}
+              isOwner={isOwner}
+            />
 
-        <CardActivity cardId={card.id} />
+            <CardActivity cardId={card.id} />
+          </div>
+        </div>
 
-        <div className="mt-4 flex items-center justify-between gap-2">
+        <div className="sticky -bottom-5 -mx-5 mt-6 flex items-center justify-between gap-2 border-t border-border bg-surface px-5 py-3 pb-5">
           {editable ? (
             <div className="flex gap-2">
               <button

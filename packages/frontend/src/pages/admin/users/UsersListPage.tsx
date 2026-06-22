@@ -1,9 +1,13 @@
 import { useState } from "react";
+import { flushSync } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { Permission, type AdminUser } from "shared";
 import { useTRPC } from "../../../lib/trpc";
+import { useAuthStore } from "../../../hooks/useAuthStore";
 import { useCan } from "../../../features/rbac/hooks/useCan";
 import { rbacErrorMessage } from "../../../features/rbac/errors";
+import { useToastStore } from "../../../hooks/useToastStore";
 
 const PAGE_SIZE = 20;
 
@@ -25,7 +29,12 @@ function TableSkeleton() {
 export function UsersListPage() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const canManage = useCan(Permission.AdminUsersManage);
+  const currentUser = useAuthStore((s) => s.user);
+  const setAuth = useAuthStore((s) => s.setAuth);
+  const addToast = useToastStore((s) => s.add);
+  const canImpersonate = currentUser?.isSuperuser ?? false;
 
   const [search, setSearch] = useState("");
   const [offset, setOffset] = useState(0);
@@ -47,10 +56,22 @@ export function UsersListPage() {
 
   const assignMutation = useMutation(
     trpc.admin.usersAssignRole.mutationOptions({
-      onSuccess: () =>
+      onSuccess: () => {
+        addToast("Role updated");
         queryClient.invalidateQueries({
           queryKey: trpc.admin.usersList.queryKey(),
-        }),
+        });
+      },
+    }),
+  );
+
+  const impersonateMutation = useMutation(
+    trpc.auth.impersonate.mutationOptions({
+      onSuccess: (target) => {
+        flushSync(() => setAuth(target));
+        queryClient.clear();
+        navigate("/", { replace: true });
+      },
     }),
   );
 
@@ -89,6 +110,12 @@ export function UsersListPage() {
         </p>
       ) : null}
 
+      {impersonateMutation.error ? (
+        <p className="mb-2 text-sm text-red-600">
+          {rbacErrorMessage(impersonateMutation.error)}
+        </p>
+      ) : null}
+
       {usersQuery.isLoading ? (
         <TableSkeleton />
       ) : (
@@ -99,6 +126,9 @@ export function UsersListPage() {
               <th className="px-4 py-3 font-semibold">Verified</th>
               <th className="px-4 py-3 font-semibold">Superuser</th>
               <th className="px-4 py-3 font-semibold">Role</th>
+              {canImpersonate ? (
+                <th className="px-4 py-3 font-semibold">Actions</th>
+              ) : null}
             </tr>
           </thead>
           <tbody>
@@ -108,7 +138,17 @@ export function UsersListPage() {
                 className="border-t border-border text-foreground/80 transition-colors hover:bg-canvas/60"
               >
                 <td className="px-4 py-2">{u.email}</td>
-                <td className="px-4 py-2">{u.emailVerified ? "Yes" : "No"}</td>
+                <td className="px-4 py-2">
+                  {u.emailVerified ? (
+                    <span className="rounded-lg bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                      Verified
+                    </span>
+                  ) : (
+                    <span className="rounded-lg bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-800">
+                      Unverified
+                    </span>
+                  )}
+                </td>
                 <td className="px-4 py-2">
                   {u.isSuperuser ? (
                     <span className="rounded-lg bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
@@ -137,11 +177,30 @@ export function UsersListPage() {
                     (u.role?.name ?? "-")
                   )}
                 </td>
+                {canImpersonate ? (
+                  <td className="px-4 py-2">
+                    {u.id !== currentUser?.id && u.emailVerified ? (
+                      <button
+                        type="button"
+                        disabled={impersonateMutation.isPending}
+                        onClick={() => impersonateMutation.mutate({ userId: u.id })}
+                        className="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-foreground/80 hover:bg-surface-muted disabled:opacity-50"
+                      >
+                        Impersonate
+                      </button>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
+                ) : null}
               </tr>
             ))}
             {users.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-10 text-center text-sm text-muted">
+                <td
+                  colSpan={canImpersonate ? 5 : 4}
+                  className="px-4 py-10 text-center text-sm text-muted"
+                >
                   No users match this search.
                 </td>
               </tr>
