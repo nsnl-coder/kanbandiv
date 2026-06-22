@@ -9,7 +9,7 @@ export function CommentCountBadge({ count }: Props) {
   if (count <= 0) return null;
   return (
     <span
-      aria-label={`${count} comments`}
+      aria-label={`${count} ${count === 1 ? "comment" : "comments"}`}
       className="mt-2 inline-flex items-center gap-1 text-xs text-muted"
     >
       <MessageSquare className="h-3.5 w-3.5" />

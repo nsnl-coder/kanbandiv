@@ -179,7 +179,7 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
                       {r.title}
                     </span>
                     <span className="text-xs text-muted">
-                      {`${r.boardName} â€º ${r.columnName}`}
+                      {`${r.boardName} › ${r.columnName}`}
                     </span>
                     {r.snippet ? (
                       <span className="text-xs text-muted">{r.snippet}</span>

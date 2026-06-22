@@ -31,7 +31,11 @@ export const PROJECT_NAME_MAX = 100;
 export const PROJECT_DESCRIPTION_MAX = 2000;
 export const DEFAULT_PROJECT_COLOR = "#4f46e5";
 
-const nameSchema = z.string().trim().min(PROJECT_NAME_MIN).max(PROJECT_NAME_MAX);
+const nameSchema = z
+  .string()
+  .trim()
+  .min(PROJECT_NAME_MIN, "Name is required")
+  .max(PROJECT_NAME_MAX, `Name must be at most ${PROJECT_NAME_MAX} characters`);
 const descriptionSchema = z.string().trim().max(PROJECT_DESCRIPTION_MAX);
 const colorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/, "INVALID_COLOR");
 

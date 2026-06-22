@@ -12,7 +12,11 @@ export const BOARD_NAME_MAX = 100;
 export const BOARD_DESCRIPTION_MAX = 2000;
 export const DEFAULT_BOARD_COLOR = "#2563eb";
 
-const nameSchema = z.string().trim().min(BOARD_NAME_MIN).max(BOARD_NAME_MAX);
+const nameSchema = z
+  .string()
+  .trim()
+  .min(BOARD_NAME_MIN, "Name is required")
+  .max(BOARD_NAME_MAX, `Name must be at most ${BOARD_NAME_MAX} characters`);
 const descriptionSchema = z.string().trim().max(BOARD_DESCRIPTION_MAX);
 const colorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/, "INVALID_COLOR");
 
