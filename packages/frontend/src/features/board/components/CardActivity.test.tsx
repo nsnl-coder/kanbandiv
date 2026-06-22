@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { ActivityType, type Activity } from "shared";
 
 const h = vi.hoisted(() => ({
@@ -44,23 +44,34 @@ beforeEach(() => {
   h.isLoading = false;
 });
 
+const expand = () => fireEvent.click(screen.getByRole("button", { name: /activity/i }));
+
 describe("CardActivity", () => {
-  it("renders a line per returned activity", () => {
+  it("renders a line per returned activity once expanded", () => {
     h.queryData = { listForCard: [act(), act({ id: "a2", meta: { from: "X", to: "Y" } })] };
     render(<CardActivity cardId="k1" />);
+    expand();
     expect(screen.getByText(/renamed from "Old" to "New"/)).toBeInTheDocument();
     expect(screen.getByText(/renamed from "X" to "Y"/)).toBeInTheDocument();
+  });
+
+  it("is collapsed by default", () => {
+    h.queryData = { listForCard: [act()] };
+    render(<CardActivity cardId="k1" />);
+    expect(screen.queryByText(/renamed from "Old" to "New"/)).not.toBeInTheDocument();
   });
 
   it("shows the empty state when there is no activity", () => {
     h.queryData = { listForCard: [] };
     render(<CardActivity cardId="k1" />);
+    expand();
     expect(screen.getByText("No activity yet.")).toBeInTheDocument();
   });
 
   it("shows the loading state", () => {
     h.isLoading = true;
     render(<CardActivity cardId="k1" />);
+    expand();
     expect(screen.getByText("Loading...")).toBeInTheDocument();
   });
 });

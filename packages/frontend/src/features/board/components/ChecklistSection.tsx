@@ -8,13 +8,14 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { Plus, Trash2 } from "lucide-react";
+import { CheckSquare, Plus, Trash2 } from "lucide-react";
 import { CHECKLIST_TITLE_MAX, type Checklist } from "shared";
 import { useTRPC } from "../../../lib/trpc";
 import { checklistErrorMessage } from "../checklistErrors";
 import { progressPercent, sortByPosition } from "../utils";
 import { AddChecklistItem } from "./AddChecklistItem";
 import { ChecklistItemRow } from "./ChecklistItemRow";
+import { SectionHeading } from "./SectionHeading";
 
 interface Props {
   cardId: string;
@@ -120,7 +121,7 @@ export function ChecklistSection({ cardId, editable }: Props) {
 
   return (
     <section className="mt-5">
-      <h3 className="text-sm font-semibold text-foreground/80">Checklists</h3>
+      <SectionHeading icon={CheckSquare}>Checklists</SectionHeading>
 
       {listQuery.error ? (
         <p className="mt-1 text-xs text-red-600">{checklistErrorMessage(listQuery.error)}</p>

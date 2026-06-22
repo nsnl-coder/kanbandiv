@@ -8,6 +8,7 @@ import {
   type ListProjectsInput,
   type MoveProjectInput,
   type MyPermission,
+  NotificationType,
   type Project,
   type ProjectAccessEntry,
   type RevokeAccessInput,
@@ -16,6 +17,8 @@ import {
 import type { EmailPort } from "../email/email.service.js";
 import * as invite from "../invite/invite.service.js";
 import { computePosition } from "../column/column.service.js";
+import { bus } from "../realtime/realtime.bus.js";
+import * as notification from "../notification/notification.recorder.js";
 import * as repo from "./project.repo.js";
 import type { Db } from "./project.repo.js";
 
@@ -261,6 +264,15 @@ export async function grantAccess(
     });
   }
   await repo.upsertAccess(db, id, target.id, input.permission);
+  const actor = await repo.findUserById(db, user.id);
+  await notification.create(db, bus, {
+    userId: target.id,
+    type: NotificationType.PROJECT_SHARED,
+    payload: {
+      title: row.name,
+      actorHandle: actor ? notification.handleFromEmail(actor.email) : null,
+    },
+  });
   return listAccess(db, user, id);
 }
 

@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check } from "lucide-react";
+import { Check, Tag } from "lucide-react";
 import type { BoardData, Label } from "shared";
 import { useTRPC } from "../../../lib/trpc";
 import { labelErrorMessage } from "../labelErrors";
 import { LabelBadge } from "./LabelBadge";
+import { SectionHeading } from "./SectionHeading";
 
 interface Props {
   boardId: string;
@@ -64,7 +65,7 @@ export function LabelPicker({ boardId, cardId, labels, editable }: Props) {
 
   return (
     <div className="mt-4">
-      <h3 className="text-sm font-semibold text-foreground/80">Labels</h3>
+      <SectionHeading icon={Tag}>Labels</SectionHeading>
       {error ? <p className="mt-1 text-xs text-red-600">{labelErrorMessage(error)}</p> : null}
       <div className="mt-2 flex flex-wrap gap-1.5">
         {labels.map((l) => (

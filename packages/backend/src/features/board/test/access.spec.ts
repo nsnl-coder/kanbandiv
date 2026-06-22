@@ -98,6 +98,30 @@ describe("boards access grant/revoke", () => {
     });
   });
 
+  it("surfaces the parent project in the recipient's shared list + notifies them", async () => {
+    const { user, caller } = await seedUserCaller(db, "owner@example.com");
+    const member = await seedUser(db, { email: "m@example.com", verified: true });
+    const project = await seedProject(db, { ownerId: user.id });
+    const board = await seedBoard(db, { projectId: project.id, ownerId: user.id });
+
+    await caller.boards.accessGrant({
+      id: board.id,
+      email: "m@example.com",
+      permission: ProjectPermission.Edit,
+    });
+
+    const memberCaller = authedCaller(db, member.id);
+    const shared = await memberCaller.projects.list({ filter: "shared", limit: 100, offset: 0 });
+    expect(shared.map((p) => p.id)).toContain(project.id);
+
+    // The member sees only the shared board inside that project, not all boards.
+    const boards = await memberCaller.boards.list({ projectId: project.id });
+    expect(boards.map((b) => b.id)).toEqual([board.id]);
+
+    const notes = await memberCaller.notifications.list({ limit: 20, offset: 0 });
+    expect(notes.items.some((n) => n.type === "BOARD_SHARED")).toBe(true);
+  });
+
   it("forbids a non-owner from granting", async () => {
     const owner = await seedUser(db, { email: "owner@example.com", verified: true });
     const editor = await seedUser(db, { email: "e@example.com", verified: true });

@@ -470,6 +470,11 @@ export async function impersonate(
   }
   const target = await repo.findPublicUserById(deps.db, targetUserId);
   if (!target) throw new TRPCError({ code: "NOT_FOUND" });
+  // Unverified accounts are rejected by authedProcedure, so an impersonation
+  // session for one is dead on arrival (every later call -> SESSION_EXPIRED).
+  if (!target.email_verified) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: AuthError.EMAIL_NOT_VERIFIED });
+  }
   const tokens = await issueTokens(deps.db, await toPublicUser(deps.db, target));
   await logEvent(deps, {
     userId: targetUserId,

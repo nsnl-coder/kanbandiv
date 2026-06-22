@@ -21,6 +21,7 @@ import {
   publicProcedure,
   rateLimitedProcedure,
   router,
+  sessionProcedure,
   superuserProcedure,
 } from "../../trpc/trpc.js";
 import type { Context } from "../../trpc/context.js";
@@ -185,7 +186,7 @@ export const authRouter = router({
       return { ...tokens.user, impersonator: actor };
     }),
 
-  stopImpersonation: protectedProcedure
+  stopImpersonation: sessionProcedure
     .meta({ openapi: { method: "POST", path: "/auth/stop-impersonation", tags: ["auth"], protect: true, summary: "Stop impersonating and return to the admin account" } })
     .input(z.object({}))
     .output(publicUserSchema)

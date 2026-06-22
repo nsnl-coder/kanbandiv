@@ -6,12 +6,14 @@
 export interface TestUserDef {
   email: string;
   // "user"  = plain verified account.
+  // "user2" = second plain account, for multi-user flows (sharing, permissions).
   // "reset" = used by the forgot-password flow (its password drifts each run).
-  kind: "user" | "reset";
+  kind: "user" | "user2" | "reset";
 }
 
 export const TEST_USERS: readonly TestUserDef[] = [
   { email: "e2e@thatnails.com", kind: "user" },
+  { email: "e2e-2@thatnails.com", kind: "user2" },
   { email: "e2eresetemail@thatnails.com", kind: "reset" },
 ];
 

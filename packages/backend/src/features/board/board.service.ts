@@ -12,6 +12,7 @@ import {
   InviteScope,
   type MoveBoardInput,
   type MyPermission,
+  NotificationType,
   ProjectVisibility,
   type RevokeBoardAccessInput,
   type UpdateBoardInput,
@@ -23,6 +24,7 @@ import * as cardRepo from "../card/card.repo.js";
 import * as columnRepo from "../column/column.repo.js";
 import { record } from "../activity/activity.recorder.js";
 import { bus } from "../realtime/realtime.bus.js";
+import * as notification from "../notification/notification.recorder.js";
 import type { EmailPort } from "../email/email.service.js";
 import * as invite from "../invite/invite.service.js";
 import * as repo from "./board.repo.js";
@@ -442,6 +444,16 @@ export async function grantBoardAccess(
       targetEmail: target.email,
       targetHandle: nameFromEmail(target.email),
       permission: input.permission,
+    },
+  });
+  const actor = await repo.findUserById(db, user.id);
+  await notification.create(db, bus, {
+    userId: target.id,
+    type: NotificationType.BOARD_SHARED,
+    payload: {
+      boardId: id,
+      title: row.name,
+      actorHandle: actor ? nameFromEmail(actor.email) : null,
     },
   });
   return listBoardAccess(db, user, id);

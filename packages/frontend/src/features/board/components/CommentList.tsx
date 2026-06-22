@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { MessageSquare } from "lucide-react";
 import type { BoardData, CommentThread } from "shared";
 import { useTRPC } from "../../../lib/trpc";
 import { commentErrorMessage } from "../commentErrors";
 import type { MentionMember } from "../utils";
 import { CommentComposer } from "./CommentComposer";
 import { CommentItem } from "./CommentItem";
+import { SectionHeading } from "./SectionHeading";
 
 interface Props {
   boardId: string;
@@ -119,7 +121,7 @@ export function CommentList({
 
   return (
     <section className="mt-5">
-      <h3 className="text-sm font-semibold text-foreground/80">Comments</h3>
+      <SectionHeading icon={MessageSquare}>Comments</SectionHeading>
 
       {editable ? (
         <div className="mt-2">

@@ -88,6 +88,19 @@ const authedProcedure = t.procedure.use(async ({ ctx, next }) => {
 });
 
 /**
+ * Authenticates the session WITHOUT the email_verified gate or maintenance
+ * check. Only used to exit impersonation: an admin must always be able to
+ * return to their own account even when impersonating an unverified user
+ * (whose session authedProcedure would reject with SESSION_EXPIRED).
+ */
+export const sessionProcedure = t.procedure.use(({ ctx, next }) => {
+  if (!ctx.userId) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: AuthError.SESSION_EXPIRED });
+  }
+  return next();
+});
+
+/**
  * While maintenance mode is on, only superusers and backup admins (who can turn
  * it off / run the restore) may proceed; everyone else gets SERVICE_UNAVAILABLE.
  */

@@ -209,6 +209,14 @@ export function findUserByEmail(db: Db, email: string) {
     .executeTakeFirst();
 }
 
+export function findUserById(db: Db, id: string) {
+  return db
+    .selectFrom("users")
+    .select(["id", "email"])
+    .where("id", "=", id)
+    .executeTakeFirst();
+}
+
 // --- project (for inheritance) ---
 
 export function findProjectById(db: Db, id: string) {

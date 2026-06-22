@@ -61,8 +61,10 @@ export function NotificationBell() {
 
       <Popover.Portal>
         <Popover.Content
-          align="end"
+          align="start"
+          alignOffset={-12}
           sideOffset={8}
+          collisionPadding={8}
           aria-label="Notifications"
           className="z-50 w-80 overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
         >

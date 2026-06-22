@@ -33,6 +33,16 @@ describe("auth.impersonate / stopImpersonation", () => {
     });
   });
 
+  it("rejects impersonating an unverified user", async () => {
+    const su = await seedUser(db, { email: "root@example.com", isSuperuser: true, verified: true });
+    const target = await seedUser(db, { email: "unverified@example.com", verified: false });
+    const caller = createCaller(makeContext({ db, userId: su.id }));
+
+    await expect(caller.auth.impersonate({ userId: target.id })).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+    });
+  });
+
   it("rejects impersonating yourself", async () => {
     const su = await seedUser(db, { email: "root@example.com", isSuperuser: true, verified: true });
     const caller = createCaller(makeContext({ db, userId: su.id }));
@@ -46,6 +56,18 @@ describe("auth.impersonate / stopImpersonation", () => {
     const su = await seedUser(db, { email: "root@example.com", isSuperuser: true, verified: true });
     const target = await seedUser(db, { email: "target@example.com", verified: true });
     // Acting as the target, with the imp cookie identifying the admin.
+    const caller = createCaller(
+      makeContext({ db, userId: target.id, impersonator: { id: su.id, email: su.email } }),
+    );
+
+    const res = await caller.auth.stopImpersonation({});
+    expect(res.id).toBe(su.id);
+    expect(res.impersonator).toBeNull();
+  });
+
+  it("stops impersonation even when the impersonated user is unverified", async () => {
+    const su = await seedUser(db, { email: "root@example.com", isSuperuser: true, verified: true });
+    const target = await seedUser(db, { email: "unverified@example.com", verified: false });
     const caller = createCaller(
       makeContext({ db, userId: target.id, impersonator: { id: su.id, email: su.email } }),
     );

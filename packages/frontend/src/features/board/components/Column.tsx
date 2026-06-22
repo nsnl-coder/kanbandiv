@@ -87,18 +87,24 @@ export function Column({
             className="w-full rounded-lg border border-border px-2 py-1 text-sm"
           />
         ) : (
-          <h3
+          <div
             {...(editable ? { ...attributes, ...listeners } : {})}
-            className={`truncate font-semibold tracking-tight text-foreground ${editable ? "cursor-grab" : ""}`}
+            className={`flex min-w-0 items-center gap-2 ${editable ? "cursor-grab" : ""}`}
           >
-            {column.name}
-          </h3>
+            <h3 className="truncate font-semibold tracking-tight text-foreground">
+              {column.name}
+            </h3>
+            <span className="shrink-0 rounded-full bg-surface-muted px-1.5 py-0.5 text-xs font-medium tabular-nums text-muted">
+              {cards.length}
+            </span>
+          </div>
         )}
         {editable && !renaming ? (
           <div className="flex shrink-0 items-center gap-1 text-xs">
             <button
               type="button"
               aria-label={`rename ${column.name}`}
+              title="Rename list"
               onClick={() => {
                 setName(column.name);
                 setRenaming(true);
@@ -110,6 +116,7 @@ export function Column({
             <button
               type="button"
               aria-label={`archive ${column.name}`}
+              title="Archive list"
               onClick={onArchive}
               className="rounded-lg p-1 text-muted hover:bg-surface-muted hover:text-foreground/80"
             >
@@ -120,10 +127,16 @@ export function Column({
       </div>
 
       <SortableContext items={cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
-        <div className="flex flex-col gap-2">
-          {cards.map((card) => (
-            <CardTile key={card.id} card={card} editable={editable} onOpen={onOpenCard} />
-          ))}
+        <div className="flex min-h-10 flex-col gap-2">
+          {cards.length === 0 ? (
+            <div className="flex min-h-10 items-center justify-center rounded-xl border border-dashed border-border/70 px-2 py-3 text-xs text-muted">
+              Drop cards here
+            </div>
+          ) : (
+            cards.map((card) => (
+              <CardTile key={card.id} card={card} editable={editable} onOpen={onOpenCard} />
+            ))
+          )}
         </div>
       </SortableContext>
 
@@ -160,6 +173,7 @@ export function Column({
           <div className="flex items-center gap-1">
             <button
               type="button"
+              title="Add a card"
               onClick={() => setAdding(true)}
               className="flex flex-1 items-center gap-1 rounded-lg px-2 py-1 text-left text-sm font-medium text-muted hover:bg-surface-muted"
             >

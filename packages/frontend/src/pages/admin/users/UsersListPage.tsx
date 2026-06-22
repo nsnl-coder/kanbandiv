@@ -7,6 +7,7 @@ import { useTRPC } from "../../../lib/trpc";
 import { useAuthStore } from "../../../hooks/useAuthStore";
 import { useCan } from "../../../features/rbac/hooks/useCan";
 import { rbacErrorMessage } from "../../../features/rbac/errors";
+import { useToastStore } from "../../../hooks/useToastStore";
 
 const PAGE_SIZE = 20;
 
@@ -32,6 +33,7 @@ export function UsersListPage() {
   const canManage = useCan(Permission.AdminUsersManage);
   const currentUser = useAuthStore((s) => s.user);
   const setAuth = useAuthStore((s) => s.setAuth);
+  const addToast = useToastStore((s) => s.add);
   const canImpersonate = currentUser?.isSuperuser ?? false;
 
   const [search, setSearch] = useState("");
@@ -54,10 +56,12 @@ export function UsersListPage() {
 
   const assignMutation = useMutation(
     trpc.admin.usersAssignRole.mutationOptions({
-      onSuccess: () =>
+      onSuccess: () => {
+        addToast("Role updated");
         queryClient.invalidateQueries({
           queryKey: trpc.admin.usersList.queryKey(),
-        }),
+        });
+      },
     }),
   );
 
@@ -134,7 +138,17 @@ export function UsersListPage() {
                 className="border-t border-border text-foreground/80 transition-colors hover:bg-canvas/60"
               >
                 <td className="px-4 py-2">{u.email}</td>
-                <td className="px-4 py-2">{u.emailVerified ? "Yes" : "No"}</td>
+                <td className="px-4 py-2">
+                  {u.emailVerified ? (
+                    <span className="rounded-lg bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                      Verified
+                    </span>
+                  ) : (
+                    <span className="rounded-lg bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-800">
+                      Unverified
+                    </span>
+                  )}
+                </td>
                 <td className="px-4 py-2">
                   {u.isSuperuser ? (
                     <span className="rounded-lg bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
@@ -165,7 +179,7 @@ export function UsersListPage() {
                 </td>
                 {canImpersonate ? (
                   <td className="px-4 py-2">
-                    {u.id !== currentUser?.id ? (
+                    {u.id !== currentUser?.id && u.emailVerified ? (
                       <button
                         type="button"
                         disabled={impersonateMutation.isPending}

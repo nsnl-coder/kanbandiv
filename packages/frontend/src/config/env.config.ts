@@ -1,11 +1,16 @@
 const env = import.meta.env;
 
 // Deployment tier = the Vite mode (no env var needed):
-//   `vite --mode local`     -> local (dev server)
+//   `vite` (dev server)      -> local (Vite's default "development" mode;
+//                               "local" can't be a mode name in Vite 6)
 //   `vite build --mode dev`  -> dev
 //   `vite build --mode prod` -> prod
 const appEnv: "local" | "dev" | "prod" =
-  env.MODE === "prod" ? "prod" : env.MODE === "dev" ? "dev" : "local";
+  env.MODE === "prod"
+    ? "prod"
+    : env.MODE === "dev"
+      ? "dev"
+      : "local"; // "development" (Vite default) and anything else -> local
 const isLocal = appEnv === "local";
 
 // Per-tier API origin: the only value that differs per tier (dev is

@@ -53,6 +53,18 @@ export function listProjectsForUser(
         .onRef("project_access.project_id", "=", "projects.id")
         .on("project_access.user_id", "=", userId),
     )
+    // Projects holding a board the user has a direct grant on (1 row per project).
+    .leftJoin(
+      (eb) =>
+        eb
+          .selectFrom("board_access")
+          .innerJoin("boards", "boards.id", "board_access.board_id")
+          .where("board_access.user_id", "=", userId)
+          .select("boards.project_id as project_id")
+          .distinct()
+          .as("board_shared"),
+      (j) => j.onRef("board_shared.project_id", "=", "projects.id"),
+    )
     .select([
       "projects.id as id",
       "projects.owner_id as owner_id",
@@ -72,9 +84,16 @@ export function listProjectsForUser(
   if (opts.filter === "owned") {
     q = q.where("projects.owner_id", "=", userId);
   } else if (opts.filter === "shared") {
+    // Shared = a direct project grant OR a grant on any board inside it (so a
+    // board shared with the user surfaces its parent project in the sidebar).
     q = q
       .where("projects.owner_id", "!=", userId)
-      .where("project_access.permission", "is not", null);
+      .where((eb) =>
+        eb.or([
+          eb("project_access.permission", "is not", null),
+          eb("board_shared.project_id", "is not", null),
+        ]),
+      );
   } else {
     q = q.where((eb) =>
       eb.or([
@@ -221,5 +240,13 @@ export function findUserByEmail(db: Db, email: string) {
     .selectFrom("users")
     .select(["id", "email"])
     .where("email", "=", email)
+    .executeTakeFirst();
+}
+
+export function findUserById(db: Db, id: string) {
+  return db
+    .selectFrom("users")
+    .select(["id", "email"])
+    .where("id", "=", id)
     .executeTakeFirst();
 }

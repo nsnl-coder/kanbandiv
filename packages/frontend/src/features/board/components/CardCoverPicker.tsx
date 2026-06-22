@@ -1,9 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { X } from "lucide-react";
+import { Image, X } from "lucide-react";
 import type { Attachment, BoardData, Card, CardCover, CoverColor } from "shared";
 import { useTRPC } from "../../../lib/trpc";
 import { cardCoverErrorMessage } from "../cardCoverErrors";
 import { COVER_COLOR_CLASS, coverColorList } from "../coverColors";
+import { SectionHeading } from "./SectionHeading";
 
 interface Props {
   boardId: string;
@@ -69,7 +70,7 @@ export function CardCoverPicker({ boardId, cardId, cover, attachments, editable 
 
   return (
     <section className="mt-4">
-      <h3 className="text-sm font-semibold text-foreground/80">Cover</h3>
+      <SectionHeading icon={Image}>Cover</SectionHeading>
       {updateMutation.error ? (
         <p className="mt-1 text-xs text-red-600">{cardCoverErrorMessage(updateMutation.error)}</p>
       ) : null}

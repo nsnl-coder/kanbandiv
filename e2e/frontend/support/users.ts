@@ -17,7 +17,7 @@ function need(name: string): string {
 }
 
 const sharedPassword = () => need("E2E_PASSWORD");
-const emailOfKind = (kind: "user" | "reset") => {
+const emailOfKind = (kind: "user" | "user2" | "reset") => {
   const u = TEST_USERS.find((t) => t.kind === kind);
   if (!u) throw new Error(`no test user of kind "${kind}" in shared TEST_USERS`);
   return u.email;
@@ -25,6 +25,9 @@ const emailOfKind = (kind: "user" | "reset") => {
 
 /** Primary regular (non-admin) test user. */
 export const user = () => ({ email: emailOfKind("user"), password: sharedPassword() });
+
+/** Second regular test user, for multi-user flows (sharing, permissions). */
+export const secondUser = () => ({ email: emailOfKind("user2"), password: sharedPassword() });
 
 /** Dedicated forgot-password account; password drifts, so only the email matters. */
 export const resetEmail = () => emailOfKind("reset");
