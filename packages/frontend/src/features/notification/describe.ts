@@ -3,7 +3,7 @@ import {
   type Notification,
   type NotificationTypeValue,
 } from "shared";
-import { AtSign, UserPlus, Clock, Bell, type LucideIcon } from "lucide-react";
+import { AtSign, UserPlus, Clock, Bug, Bell, type LucideIcon } from "lucide-react";
 
 // One human-readable line per NotificationType, built entirely from payload (no
 // extra query). A default keeps an unknown future type from crashing the UI.
@@ -22,6 +22,8 @@ export function describeNotification(n: Notification): {
       return { icon: UserPlus, text: `${actor} assigned you to "${title}"` };
     case NotificationType.CARD_DUE_SOON:
       return { icon: Clock, text: `"${title}" is due soon` };
+    case NotificationType.BUG_REPORT_NEW:
+      return { icon: Bug, text: `${actor} reported a bug: "${title}"` };
     default:
       return { icon: Bell, text: `Update on "${title}"` };
   }

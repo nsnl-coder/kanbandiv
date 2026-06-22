@@ -6,6 +6,7 @@ export const NotificationType = {
   MENTION: "MENTION",
   CARD_ASSIGNED: "CARD_ASSIGNED",
   CARD_DUE_SOON: "CARD_DUE_SOON",
+  BUG_REPORT_NEW: "BUG_REPORT_NEW",
 } as const;
 export type NotificationTypeValue =
   (typeof NotificationType)[keyof typeof NotificationType];
@@ -15,9 +16,11 @@ export type NotificationTypeValue =
 //   MENTION:       { boardId, cardId, actorHandle, title, snippet }
 //   CARD_ASSIGNED: { boardId, cardId, actorHandle, title }
 //   CARD_DUE_SOON: { boardId, cardId, actorHandle: null, title }   (null = system)
+//   BUG_REPORT_NEW: { bugReportId, actorHandle, title, snippet? }   (no board)
 export const notificationPayloadSchema = z.object({
-  boardId: z.string(),
+  boardId: z.string().optional(),
   cardId: z.string().optional(),
+  bugReportId: z.string().optional(),
   actorHandle: z.string().nullable(),
   title: z.string(),
   snippet: z.string().optional(),

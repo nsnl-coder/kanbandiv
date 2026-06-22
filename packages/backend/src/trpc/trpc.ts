@@ -33,7 +33,7 @@ function sweep(windowMs: number, now: number): void {
   }
 }
 
-function rateLimit(opts: { limit: number; windowMs: number }) {
+export function rateLimit(opts: { limit: number; windowMs: number }) {
   return t.middleware(async ({ ctx, path, getRawInput, next }) => {
     const now = Date.now();
     sweep(opts.windowMs, now);

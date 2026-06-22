@@ -17,6 +17,7 @@ import { searchRouter } from "../features/search/search.router.js";
 import { boardViewsRouter } from "../features/board-view/board-view.router.js";
 import { notificationsRouter } from "../features/notification/notification.router.js";
 import { invitesRouter } from "../features/invite/invite.router.js";
+import { bugReportsRouter } from "../features/bug-report/bug-report.router.js";
 import { cardTemplatesRouter } from "../features/card-template/card-template.router.js";
 
 export const appRouter = router({
@@ -39,6 +40,7 @@ export const appRouter = router({
   boardViews: boardViewsRouter,
   notifications: notificationsRouter,
   invites: invitesRouter,
+  bugReports: bugReportsRouter,
   cardTemplates: cardTemplatesRouter,
 });
 

@@ -279,6 +279,9 @@ services:
     restart: unless-stopped
     # Point at our config explicitly; otherwise the image runs its demo config.
     command: ["--config", "/etc/vector/vector.toml"]
+    environment:
+      # Tier fallback for the env label on unlabeled infra containers.
+      - VPS_ENV=${VPS_ENV:-prod}
     volumes:
       - ./vector/vector.toml:/etc/vector/vector.toml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro

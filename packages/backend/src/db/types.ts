@@ -290,6 +290,32 @@ export interface InvitesTable {
   created_at: GeneratedTimestamp;
 }
 
+export interface BugReportsTable {
+  id: Generated<string>;
+  reporter_id: string | null;
+  title: string;
+  description: string;
+  severity: string;
+  status: Generated<string>;
+  page_url: string | null;
+  user_agent: string | null;
+  resolution: string | null;
+  created_at: GeneratedTimestamp;
+  updated_at: GeneratedTimestamp;
+}
+
+export interface BugReportAttachmentsTable {
+  id: Generated<string>;
+  bug_report_id: string;
+  uploader_id: string | null;
+  filename: string;
+  mime_type: string;
+  // bigint: node-pg returns it as string; parse with Number in the service.
+  size_bytes: ColumnType<string, string | number, string | number>;
+  storage_key: string;
+  created_at: GeneratedTimestamp;
+}
+
 export interface NotificationPrefsTable {
   user_id: string;
   type: string;
@@ -337,5 +363,7 @@ export interface Database {
   notifications: NotificationsTable;
   notification_prefs: NotificationPrefsTable;
   invites: InvitesTable;
+  bug_reports: BugReportsTable;
+  bug_report_attachments: BugReportAttachmentsTable;
   card_templates: CardTemplatesTable;
 }

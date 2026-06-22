@@ -29,16 +29,20 @@ export function NotificationItem({ notification, onNavigate }: Props) {
   );
 
   const { icon: Icon, text } = describeNotification(notification);
-  const { boardId, cardId, snippet } = notification.payload;
+  const { boardId, cardId, bugReportId, snippet } = notification.payload;
   const unread = notification.readAt === null;
 
   const handleClick = () => {
     // Fire-and-forget: marking does not block navigation.
     markRead.mutate({ id: notification.id });
-    const href = cardId
-      ? `/boards/${boardId}?card=${cardId}`
-      : `/boards/${boardId}`;
-    navigate(href);
+    const href = bugReportId
+      ? `/admin/bugs?focus=${bugReportId}`
+      : boardId
+        ? cardId
+          ? `/boards/${boardId}?card=${cardId}`
+          : `/boards/${boardId}`
+        : null;
+    if (href) navigate(href);
     onNavigate();
   };
 

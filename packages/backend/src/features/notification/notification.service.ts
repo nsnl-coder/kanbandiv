@@ -8,7 +8,7 @@ import {
   type NotificationPage,
   type NotificationPayload,
   type NotificationPref,
-  NotificationType,
+  notificationChannelSchema,
   type UpdateNotificationPrefInput,
   type UnreadCount,
 } from "shared";
@@ -68,7 +68,7 @@ export async function markAllRead(db: Db, user: CtxUser): Promise<MarkAllResult>
 export async function listPrefs(db: Db, user: CtxUser): Promise<NotificationPref[]> {
   const rows = await repo.listPrefs(db, user.id);
   const byType = new Map(rows.map((r) => [r.type, r]));
-  return Object.values(NotificationType).map((type) => {
+  return notificationChannelSchema.options.map((type) => {
     const row = byType.get(type);
     return {
       type,
