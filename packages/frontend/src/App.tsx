@@ -10,8 +10,6 @@ import { AppLayout } from "./components/AppLayout";
 import { AuthLayout } from "./components/AuthLayout";
 import { Toaster } from "./components/Toaster";
 import { HomePage } from "./pages/HomePage";
-import { PrivacyPolicyPage } from "./pages/legal/PrivacyPolicyPage";
-import { TermsOfServicePage } from "./pages/legal/TermsOfServicePage";
 import { RegisterPage } from "./pages/auth/RegisterPage";
 import { LoginPage } from "./pages/auth/LoginPage";
 import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
@@ -86,8 +84,6 @@ export function App() {
     <>
       <Routes>
       <Route path="/" element={<HomeIndex />} />
-      <Route path="/privacy" element={<PrivacyPolicyPage />} />
-      <Route path="/terms" element={<TermsOfServicePage />} />
 
       <Route element={<GuestRoute />}>
         <Route element={<AuthLayout />}>

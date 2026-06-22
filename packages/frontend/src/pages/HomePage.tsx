@@ -220,12 +220,6 @@ export function HomePage() {
             Trello Clone
           </span>
           <div className="flex items-center gap-5">
-            <Link to="/privacy" className="hover:text-foreground">
-              Privacy
-            </Link>
-            <Link to="/terms" className="hover:text-foreground">
-              Terms
-            </Link>
             <Link to="/login" className="hover:text-foreground">
               Log in
             </Link>
