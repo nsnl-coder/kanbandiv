@@ -10,12 +10,14 @@ import {
   type CreateBoardInput,
   type GrantBoardAccessInput,
   InviteScope,
+  type MoveBoardInput,
   type MyPermission,
   ProjectVisibility,
   type RevokeBoardAccessInput,
   type UpdateBoardInput,
 } from "shared";
 import { type CardRow, enrichCards } from "../card/card.enrich.js";
+import { computePosition } from "../column/column.service.js";
 import * as assigneeRepo from "../assignee/assignee.repo.js";
 import * as cardRepo from "../card/card.repo.js";
 import * as columnRepo from "../column/column.repo.js";
@@ -38,6 +40,7 @@ export type BoardRow = {
   name: string;
   description: string | null;
   color: string;
+  position: number;
   archived_at: Date | null;
   created_at: Date;
   updated_at: Date;
@@ -101,6 +104,7 @@ function toBoard(row: BoardRow, myPermission: MyPermission): Board {
     description: row.description,
     color: row.color,
     myPermission,
+    position: row.position,
     archivedAt: row.archived_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -236,6 +240,50 @@ export async function updateBoard(
   if (!updated) throw boardNotFound();
   bus.publish({ boardId: id, actorId: user.id, ts: Date.now(), type: BoardEventType.BOARD_CHANGED });
   return toBoard(updated as BoardRow, perm);
+}
+
+// Reorder a board within its project, or move it to another project.
+// Same-project reorder needs board edit; cross-project move is owner-only on
+// BOTH the board and the target project.
+export async function moveBoard(
+  db: Db,
+  user: CtxUser,
+  id: string,
+  input: MoveBoardInput,
+): Promise<Board> {
+  const { row, perm } = await loadBoardFor(db, user, id, "view");
+  const toProjectId = input.toProjectId ?? row.project_id;
+  const crossProject = toProjectId !== row.project_id;
+
+  if (crossProject) {
+    if (perm !== "owner") throw forbidden();
+    const project = (await repo.findProjectById(db, toProjectId)) as
+      | ProjectRow
+      | undefined;
+    if (!project) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: BoardError.PROJECT_NOT_FOUND,
+      });
+    }
+    const projectPerm = await resolveProjectPermission(db, project, user);
+    if (projectPerm !== "owner") throw forbidden();
+  } else if (RANK[perm] < RANK.edit) {
+    throw forbidden();
+  }
+
+  const siblings = await repo.listBoardPositions(db, toProjectId);
+  const position = computePosition(
+    siblings.filter((s) => s.id !== id),
+    input.beforeId,
+    input.afterId,
+  );
+  const updated = (await repo.setBoardPosition(db, id, toProjectId, position)) as
+    | BoardRow
+    | undefined;
+  if (!updated) throw boardNotFound();
+  bus.publish({ boardId: id, actorId: user.id, ts: Date.now(), type: BoardEventType.BOARD_CHANGED });
+  return toBoard(updated, perm);
 }
 
 export async function deleteBoard(

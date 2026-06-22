@@ -97,6 +97,34 @@ export function verifyAccessToken(token: string): AccessPayload {
   }) as AccessPayload;
 }
 
+// --- impersonation token ---
+// Signed proof, held in the `imp` cookie, that a superuser started an
+// impersonation session. Lets "stop impersonating" mint a fresh admin session
+// without a password and survives access/refresh rotation of the target.
+interface ImpPayload {
+  act: string;
+  email: string;
+}
+
+export function signImpToken(actor: { id: string; email: string }): string {
+  const payload: ImpPayload = { act: actor.id, email: actor.email };
+  return jwt.sign(payload, env.JWT_ACCESS_SECRET, {
+    algorithm: "HS256",
+    expiresIn: "12h",
+    issuer: env.JWT_ISS,
+    audience: env.JWT_AUD,
+  } as jwt.SignOptions);
+}
+
+export function verifyImpToken(token: string): { id: string; email: string } {
+  const p = jwt.verify(token, env.JWT_ACCESS_SECRET, {
+    algorithms: ["HS256"],
+    issuer: env.JWT_ISS,
+    audience: env.JWT_AUD,
+  }) as ImpPayload;
+  return { id: p.act, email: p.email };
+}
+
 function generateRefreshRaw(): string {
   return crypto.randomBytes(32).toString("base64url");
 }
@@ -417,10 +445,54 @@ export async function cleanupExpired(
   };
 }
 
-export async function getMe(deps: AuthDeps, userId: string): Promise<PublicUser> {
+export async function getMe(
+  deps: AuthDeps,
+  userId: string,
+  impersonator?: { id: string; email: string } | null,
+): Promise<PublicUser> {
   const user = await repo.findPublicUserById(deps.db, userId);
   if (!user) throw new TRPCError({ code: "UNAUTHORIZED" });
-  return toPublicUser(deps.db, user);
+  const publicUser = await toPublicUser(deps.db, user);
+  return { ...publicUser, impersonator: impersonator ?? null };
+}
+
+// --- impersonation ---
+
+// Issue a session for `targetUserId` on behalf of a superuser. The caller
+// (router) verifies superuser status and sets the cookies + `imp` proof.
+export async function impersonate(
+  deps: AuthDeps,
+  actorId: string,
+  targetUserId: string,
+): Promise<AuthTokens> {
+  if (actorId === targetUserId) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: AuthError.INVALID_CREDENTIALS });
+  }
+  const target = await repo.findPublicUserById(deps.db, targetUserId);
+  if (!target) throw new TRPCError({ code: "NOT_FOUND" });
+  const tokens = await issueTokens(deps.db, await toPublicUser(deps.db, target));
+  await logEvent(deps, {
+    userId: targetUserId,
+    event: "impersonate_start",
+    outcome: actorId,
+  });
+  return tokens;
+}
+
+// End an impersonation session by re-issuing a session for the original admin.
+export async function stopImpersonation(
+  deps: AuthDeps,
+  actorId: string,
+): Promise<AuthTokens> {
+  const actor = await repo.findPublicUserById(deps.db, actorId);
+  if (!actor) throw invalidCredentials();
+  const tokens = await issueTokens(deps.db, await toPublicUser(deps.db, actor));
+  await logEvent(deps, {
+    userId: actorId,
+    event: "impersonate_stop",
+    outcome: "success",
+  });
+  return tokens;
 }
 
 function invalidCredentials() {

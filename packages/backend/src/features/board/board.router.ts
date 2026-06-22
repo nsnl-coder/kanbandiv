@@ -8,6 +8,7 @@ import {
   grantBoardAccessInput,
   listArchivedBoardsInput,
   listBoardsInput,
+  moveBoardInput,
   okSchema,
   updateBoardInput,
 } from "shared";
@@ -60,6 +61,15 @@ export const boardsRouter = router({
     .input(idInput)
     .output(okSchema)
     .mutation(({ ctx, input }) => board.deleteBoard(ctx.db, user(ctx), input.id)),
+
+  move: protectedProcedure
+    .meta({ openapi: { method: "POST", path: "/boards/{id}/move", tags: ["boards"], protect: true, summary: "Reorder a board or move it to another project" } })
+    .input(idInput.merge(moveBoardInput))
+    .output(boardSchema)
+    .mutation(({ ctx, input }) => {
+      const { id, ...move } = input;
+      return board.moveBoard(ctx.db, user(ctx), id, move);
+    }),
 
   archive: protectedProcedure
     .meta({ openapi: { method: "POST", path: "/boards/{id}/archive", tags: ["boards"], protect: true, summary: "Archive a board" } })

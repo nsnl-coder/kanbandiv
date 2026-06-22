@@ -6,6 +6,7 @@ import {
   type GrantAccessInput,
   InviteScope,
   type ListProjectsInput,
+  type MoveProjectInput,
   type MyPermission,
   type Project,
   type ProjectAccessEntry,
@@ -14,6 +15,7 @@ import {
 } from "shared";
 import type { EmailPort } from "../email/email.service.js";
 import * as invite from "../invite/invite.service.js";
+import { computePosition } from "../column/column.service.js";
 import * as repo from "./project.repo.js";
 import type { Db } from "./project.repo.js";
 
@@ -29,6 +31,7 @@ type ProjectRow = {
   description: string | null;
   color: string;
   visibility: ProjectVisibility;
+  position: number;
   created_at: Date;
   updated_at: Date;
 };
@@ -68,6 +71,7 @@ function toProject(row: ProjectRow, myPermission: MyPermission): Project {
     color: row.color,
     visibility: row.visibility,
     myPermission,
+    position: row.position,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -108,13 +112,23 @@ export async function listProjects(
   input: ListProjectsInput,
 ): Promise<Project[]> {
   const rows = await repo.listProjectsForUser(db, user.id, input);
-  return rows.map((r) => {
+  const projects = rows.map((r) => {
     const perm: MyPermission =
       user.isSuperuser || r.owner_id === user.id
         ? "owner"
         : (r.access_permission ?? "view");
     return toProject(r as ProjectRow, perm);
   });
+  // The "shared" list uses each viewer's personal order (the global position
+  // belongs to the owner). Apply the per-user position then sort by it.
+  if (input.filter === "shared") {
+    const order = new Map(
+      (await repo.listUserOrder(db, user.id)).map((o) => [o.project_id, o.position]),
+    );
+    for (const p of projects) p.position = order.get(p.id) ?? p.position;
+    projects.sort((a, b) => a.position - b.position);
+  }
+  return projects;
 }
 
 export async function createProject(
@@ -154,6 +168,49 @@ export async function deleteProject(
   await loadFor(db, user, id, "owner");
   await repo.deleteProject(db, id);
   return { ok: true };
+}
+
+// Reorder one of the user's owned projects in the sidebar via a fractional
+// position relative to its neighbours.
+export async function moveProject(
+  db: Db,
+  user: CtxUser,
+  id: string,
+  input: MoveProjectInput,
+): Promise<Project> {
+  const { row, perm } = await loadFor(db, user, id, "owner");
+  const siblings = await repo.listProjectPositions(db, row.owner_id);
+  const position = computePosition(
+    siblings.filter((s) => s.id !== id),
+    input.beforeId,
+    input.afterId,
+  );
+  const updated = await repo.setProjectPosition(db, id, position);
+  if (!updated) throw notFound();
+  return toProject(updated as ProjectRow, perm);
+}
+
+// Reorder a project in the caller's "Shared with me" list. The order is stored
+// per-user (the caller is not the owner), so it never affects anyone else.
+export async function moveSharedProject(
+  db: Db,
+  user: CtxUser,
+  id: string,
+  input: MoveProjectInput,
+): Promise<Project> {
+  const { row, perm } = await loadFor(db, user, id, "view");
+  const siblings = (await listProjects(db, user, {
+    filter: "shared",
+    limit: 100,
+    offset: 0,
+  })).map((p) => ({ id: p.id, position: p.position }));
+  const position = computePosition(
+    siblings.filter((s) => s.id !== id),
+    input.beforeId,
+    input.afterId,
+  );
+  await repo.setUserProjectPosition(db, user.id, id, position);
+  return { ...toProject(row, perm), position };
 }
 
 export async function listAccess(

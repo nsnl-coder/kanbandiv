@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { flushSync } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { Permission, type AdminUser } from "shared";
 import { useTRPC } from "../../../lib/trpc";
+import { useAuthStore } from "../../../hooks/useAuthStore";
 import { useCan } from "../../../features/rbac/hooks/useCan";
 import { rbacErrorMessage } from "../../../features/rbac/errors";
 
@@ -25,7 +28,11 @@ function TableSkeleton() {
 export function UsersListPage() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const canManage = useCan(Permission.AdminUsersManage);
+  const currentUser = useAuthStore((s) => s.user);
+  const setAuth = useAuthStore((s) => s.setAuth);
+  const canImpersonate = currentUser?.isSuperuser ?? false;
 
   const [search, setSearch] = useState("");
   const [offset, setOffset] = useState(0);
@@ -51,6 +58,16 @@ export function UsersListPage() {
         queryClient.invalidateQueries({
           queryKey: trpc.admin.usersList.queryKey(),
         }),
+    }),
+  );
+
+  const impersonateMutation = useMutation(
+    trpc.auth.impersonate.mutationOptions({
+      onSuccess: (target) => {
+        flushSync(() => setAuth(target));
+        queryClient.clear();
+        navigate("/", { replace: true });
+      },
     }),
   );
 
@@ -89,6 +106,12 @@ export function UsersListPage() {
         </p>
       ) : null}
 
+      {impersonateMutation.error ? (
+        <p className="mb-2 text-sm text-red-600">
+          {rbacErrorMessage(impersonateMutation.error)}
+        </p>
+      ) : null}
+
       {usersQuery.isLoading ? (
         <TableSkeleton />
       ) : (
@@ -99,6 +122,9 @@ export function UsersListPage() {
               <th className="px-4 py-3 font-semibold">Verified</th>
               <th className="px-4 py-3 font-semibold">Superuser</th>
               <th className="px-4 py-3 font-semibold">Role</th>
+              {canImpersonate ? (
+                <th className="px-4 py-3 font-semibold">Actions</th>
+              ) : null}
             </tr>
           </thead>
           <tbody>
@@ -137,11 +163,30 @@ export function UsersListPage() {
                     (u.role?.name ?? "-")
                   )}
                 </td>
+                {canImpersonate ? (
+                  <td className="px-4 py-2">
+                    {u.id !== currentUser?.id ? (
+                      <button
+                        type="button"
+                        disabled={impersonateMutation.isPending}
+                        onClick={() => impersonateMutation.mutate({ userId: u.id })}
+                        className="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-foreground/80 hover:bg-surface-muted disabled:opacity-50"
+                      >
+                        Impersonate
+                      </button>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
+                ) : null}
               </tr>
             ))}
             {users.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-10 text-center text-sm text-muted">
+                <td
+                  colSpan={canImpersonate ? 5 : 4}
+                  className="px-4 py-10 text-center text-sm text-muted"
+                >
                   No users match this search.
                 </td>
               </tr>

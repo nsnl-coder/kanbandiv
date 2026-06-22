@@ -114,3 +114,11 @@ export const globalProcedure = (permission: Permission) =>
     }
     return next();
   });
+
+/** Protected procedure restricted to superusers (e.g. impersonation). */
+export const superuserProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (!ctx.user.isSuperuser) {
+    throw new TRPCError({ code: "FORBIDDEN", message: RbacError.FORBIDDEN });
+  }
+  return next();
+});

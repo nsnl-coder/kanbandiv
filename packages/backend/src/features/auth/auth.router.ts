@@ -4,6 +4,7 @@ import {
   AuthError,
   changePasswordInput,
   forgotPasswordInput,
+  impersonateInput,
   loginInput,
   logoutInput,
   okSchema,
@@ -20,6 +21,7 @@ import {
   publicProcedure,
   rateLimitedProcedure,
   router,
+  superuserProcedure,
 } from "../../trpc/trpc.js";
 import type { Context } from "../../trpc/context.js";
 import * as auth from "./auth.service.js";
@@ -68,6 +70,21 @@ function setSessionCookies(
 function clearSessionCookies(ctx: Context): void {
   ctx.res?.clearCookie("access_token", { path: "/" });
   ctx.res?.clearCookie("refresh_token", { path: "/" });
+  ctx.res?.clearCookie("imp", { path: "/" });
+}
+
+function setImpCookie(ctx: Context, token: string): void {
+  ctx.res?.cookie("imp", token, {
+    httpOnly: true,
+    secure: env.COOKIE_SECURE,
+    sameSite: "strict",
+    maxAge: 12 * 60 * 60 * 1000,
+    path: "/",
+  });
+}
+
+function clearImpCookie(ctx: Context): void {
+  ctx.res?.clearCookie("imp", { path: "/" });
 }
 
 function refreshTokenFrom(ctx: Context): string {
@@ -117,7 +134,9 @@ export const authRouter = router({
     .mutation(async ({ ctx }) => {
       const tokens = await auth.refresh(deps(ctx), refreshTokenFrom(ctx));
       setSessionCookies(ctx, tokens);
-      return tokens.user;
+      // Carry the impersonation flag so a reload (which bootstraps via refresh)
+      // keeps showing the banner. The `imp` cookie persists across rotation.
+      return { ...tokens.user, impersonator: ctx.impersonator };
     }),
 
   logout: publicProcedure
@@ -152,5 +171,31 @@ export const authRouter = router({
     .meta({ openapi: { method: "GET", path: "/auth/me", tags: ["auth"], protect: true, summary: "Get the current authenticated user" } })
     .input(z.object({}))
     .output(publicUserSchema)
-    .query(({ ctx }) => auth.getMe(deps(ctx), ctx.user.id)),
+    .query(({ ctx }) => auth.getMe(deps(ctx), ctx.user.id, ctx.impersonator)),
+
+  impersonate: superuserProcedure
+    .meta({ openapi: { method: "POST", path: "/auth/impersonate", tags: ["auth"], protect: true, summary: "Start impersonating a user (superuser only)" } })
+    .input(impersonateInput)
+    .output(publicUserSchema)
+    .mutation(async ({ ctx, input }) => {
+      const actor = { id: ctx.user.id, email: ctx.user.email };
+      const tokens = await auth.impersonate(deps(ctx), actor.id, input.userId);
+      setSessionCookies(ctx, tokens);
+      setImpCookie(ctx, auth.signImpToken(actor));
+      return { ...tokens.user, impersonator: actor };
+    }),
+
+  stopImpersonation: protectedProcedure
+    .meta({ openapi: { method: "POST", path: "/auth/stop-impersonation", tags: ["auth"], protect: true, summary: "Stop impersonating and return to the admin account" } })
+    .input(z.object({}))
+    .output(publicUserSchema)
+    .mutation(async ({ ctx }) => {
+      if (!ctx.impersonator) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: AuthError.INVALID_REFRESH_TOKEN });
+      }
+      const tokens = await auth.stopImpersonation(deps(ctx), ctx.impersonator.id);
+      setSessionCookies(ctx, tokens);
+      clearImpCookie(ctx);
+      return { ...tokens.user, impersonator: null };
+    }),
 });

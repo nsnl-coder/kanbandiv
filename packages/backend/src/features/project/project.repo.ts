@@ -60,11 +60,12 @@ export function listProjectsForUser(
       "projects.description as description",
       "projects.color as color",
       "projects.visibility as visibility",
+      "projects.position as position",
       "projects.created_at as created_at",
       "projects.updated_at as updated_at",
       "project_access.permission as access_permission",
     ])
-    .orderBy("projects.updated_at", "desc")
+    .orderBy("projects.position", "asc")
     .limit(opts.limit)
     .offset(opts.offset);
 
@@ -109,6 +110,53 @@ export function updateProject(
 
 export function deleteProject(db: Db, id: string) {
   return db.deleteFrom("projects").where("id", "=", id).execute();
+}
+
+// Sibling positions for a user's owned projects, in sidebar order. Used to
+// compute a fractional position for a drag-reorder.
+export function listProjectPositions(db: Db, ownerId: string) {
+  return db
+    .selectFrom("projects")
+    .select(["id", "position"])
+    .where("owner_id", "=", ownerId)
+    .orderBy("position", "asc")
+    .execute();
+}
+
+export function setProjectPosition(db: Db, id: string, position: number) {
+  return db
+    .updateTable("projects")
+    .set({ position })
+    .where("id", "=", id)
+    .returningAll()
+    .executeTakeFirst();
+}
+
+// --- per-user ordering (shared-with-me list) ---
+
+export function listUserOrder(db: Db, userId: string) {
+  return db
+    .selectFrom("project_user_order")
+    .select(["project_id", "position"])
+    .where("user_id", "=", userId)
+    .execute();
+}
+
+export async function setUserProjectPosition(
+  db: Db,
+  userId: string,
+  projectId: string,
+  position: number,
+): Promise<void> {
+  await db
+    .insertInto("project_user_order")
+    .values({ user_id: userId, project_id: projectId, position })
+    .onConflict((oc) =>
+      oc
+        .columns(["user_id", "project_id"])
+        .doUpdateSet({ position, updated_at: new Date() }),
+    )
+    .execute();
 }
 
 // --- access ---

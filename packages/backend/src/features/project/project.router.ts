@@ -3,6 +3,7 @@ import {
   createProjectInput,
   grantAccessInput,
   listProjectsInput,
+  moveProjectInput,
   okSchema,
   projectAccessEntrySchema,
   projectSchema,
@@ -51,6 +52,24 @@ export const projectsRouter = router({
     .input(idInput)
     .output(okSchema)
     .mutation(({ ctx, input }) => project.deleteProject(ctx.db, user(ctx), input.id)),
+
+  move: protectedProcedure
+    .meta({ openapi: { method: "POST", path: "/projects/{id}/move", tags: ["projects"], protect: true, summary: "Reorder a project in the sidebar" } })
+    .input(idInput.merge(moveProjectInput))
+    .output(projectSchema)
+    .mutation(({ ctx, input }) => {
+      const { id, ...move } = input;
+      return project.moveProject(ctx.db, user(ctx), id, move);
+    }),
+
+  moveShared: protectedProcedure
+    .meta({ openapi: { method: "POST", path: "/projects/{id}/move-shared", tags: ["projects"], protect: true, summary: "Reorder a project in the caller's shared list (per-user order)" } })
+    .input(idInput.merge(moveProjectInput))
+    .output(projectSchema)
+    .mutation(({ ctx, input }) => {
+      const { id, ...move } = input;
+      return project.moveSharedProject(ctx.db, user(ctx), id, move);
+    }),
 
   accessList: protectedProcedure
     .meta({ openapi: { method: "GET", path: "/projects/{id}/access", tags: ["projects"], protect: true, summary: "List a project's access grants" } })

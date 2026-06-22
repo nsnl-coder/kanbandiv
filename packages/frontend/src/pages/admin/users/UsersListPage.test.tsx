@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
 import type { AdminUser, PublicUser } from "shared";
 import { useAuthStore } from "../../../hooks/useAuthStore";
@@ -19,7 +20,9 @@ vi.mock("../../../lib/trpc", () => {
     }),
   });
   const ns = new Proxy({}, { get: (_t, ep: string) => leaf(ep) });
-  return { useTRPC: () => ({ admin: ns }) };
+  // Any namespace (admin, auth, ...) resolves to the same endpoint proxy.
+  const root = new Proxy({}, { get: () => ns });
+  return { useTRPC: () => root };
 });
 
 vi.mock("@tanstack/react-query", async (orig) => {
@@ -74,7 +77,11 @@ beforeEach(() => {
 describe("UsersListPage", () => {
   it("assigns a role with the selected roleId", async () => {
     const user = userEvent.setup();
-    render(<UsersListPage />);
+    render(
+      <MemoryRouter>
+        <UsersListPage />
+      </MemoryRouter>,
+    );
     const selects = screen.getAllByRole("combobox");
     await user.selectOptions(selects[0], "r1");
     expect(h.mutateCalls).toContainEqual({ userId: "u1", roleId: "r1" });
@@ -82,7 +89,11 @@ describe("UsersListPage", () => {
 
   it("clears a role by assigning null when 'No role' is chosen", async () => {
     const user = userEvent.setup();
-    render(<UsersListPage />);
+    render(
+      <MemoryRouter>
+        <UsersListPage />
+      </MemoryRouter>,
+    );
     const selects = screen.getAllByRole("combobox");
     await user.selectOptions(selects[1], "");
     expect(h.mutateCalls).toContainEqual({ userId: "u2", roleId: null });
@@ -90,7 +101,11 @@ describe("UsersListPage", () => {
 
   it("wires the search input value", async () => {
     const user = userEvent.setup();
-    render(<UsersListPage />);
+    render(
+      <MemoryRouter>
+        <UsersListPage />
+      </MemoryRouter>,
+    );
     const input = screen.getByPlaceholderText("Search by email...");
     await user.type(input, "alice");
     expect(input).toHaveValue("alice");

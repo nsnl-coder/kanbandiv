@@ -41,8 +41,34 @@ export function listBoardsForProject(db: Db, projectId: string) {
     .selectAll()
     .where("project_id", "=", projectId)
     .where("archived_at", "is", null)
-    .orderBy("updated_at", "desc")
+    .orderBy("position", "asc")
     .execute();
+}
+
+// Sibling positions for a project's active boards, in sidebar order. Used to
+// compute a fractional position for a drag-reorder/move.
+export function listBoardPositions(db: Db, projectId: string) {
+  return db
+    .selectFrom("boards")
+    .select(["id", "position"])
+    .where("project_id", "=", projectId)
+    .where("archived_at", "is", null)
+    .orderBy("position", "asc")
+    .execute();
+}
+
+export function setBoardPosition(
+  db: Db,
+  id: string,
+  projectId: string,
+  position: number,
+) {
+  return db
+    .updateTable("boards")
+    .set({ project_id: projectId, position })
+    .where("id", "=", id)
+    .returningAll()
+    .executeTakeFirst();
 }
 
 export function listArchivedBoardsForProject(db: Db, projectId: string) {
