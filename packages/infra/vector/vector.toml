@@ -8,7 +8,10 @@ inputs = ["docker_logs"]
 source = '''
 # Explicit Compose labels, not a brittle container-name regex.
 .service = .label."com.project.service" || "unknown"
-.env = .label."com.project.env" || "production"
+# Labeled app containers carry the tier; unlabeled infra containers (loki,
+# grafana, vector...) fall back to vector's own VPS_ENV so they match the tier
+# instead of a hardcoded value (avoids a duplicate prod/production env label).
+.env = .label."com.project.env" || get_env_var("VPS_ENV") || "prod"
 
 # App logs arrive as a JSON string in .message; parse before scrubbing so
 # del() on top-level fields actually hits. Skip non-JSON lines.

@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { Bug } from "lucide-react";
 import { NotificationType, type Notification } from "shared";
 import { describeNotification } from "./describe";
 
@@ -37,6 +38,14 @@ describe("describeNotification", () => {
     expect(
       describeNotification(make(NotificationType.CARD_DUE_SOON, { actorHandle: null })).text,
     ).toBe('"Task" is due soon');
+  });
+
+  it("BUG_REPORT_NEW names the actor and title with a bug icon", () => {
+    const { icon, text } = describeNotification(
+      make(NotificationType.BUG_REPORT_NEW, { boardId: undefined, cardId: undefined }),
+    );
+    expect(text).toBe('alice reported a bug: "Task"');
+    expect(icon).toBe(Bug);
   });
 
   it("an unknown type hits the default without throwing", () => {

@@ -27,6 +27,7 @@ import { RolesListPage } from "./pages/admin/roles/RolesListPage";
 import { RoleFormPage } from "./pages/admin/roles/RoleFormPage";
 import { UsersListPage } from "./pages/admin/users/UsersListPage";
 import { BackupPage } from "./pages/admin/backup/BackupPage";
+import { BugReportsPage } from "./pages/admin/bugs/BugReportsPage";
 import { MaintenanceScreen } from "./components/MaintenanceScreen";
 import { useCan } from "./features/rbac/hooks/useCan";
 import { ADMIN_READ_PERMS } from "./features/rbac/constants";
@@ -41,7 +42,14 @@ function HomeIndex() {
 function AdminIndex() {
   const canRoles = useCan(Permission.AdminRolesRead);
   const canUsers = useCan(Permission.AdminUsersRead);
-  const to = canRoles ? "/admin/roles" : canUsers ? "/admin/users" : "/admin/backup";
+  const canBugs = useCan(Permission.AdminBugsRead);
+  const to = canRoles
+    ? "/admin/roles"
+    : canUsers
+      ? "/admin/users"
+      : canBugs
+        ? "/admin/bugs"
+        : "/admin/backup";
   return <Navigate to={to} replace />;
 }
 
@@ -118,6 +126,9 @@ export function App() {
           </Route>
           <Route element={<PermissionRoute perm={Permission.AdminBackupRead} />}>
             <Route path="backup" element={<BackupPage />} />
+          </Route>
+          <Route element={<PermissionRoute perm={Permission.AdminBugsRead} />}>
+            <Route path="bugs" element={<BugReportsPage />} />
           </Route>
         </Route>
       </Route>

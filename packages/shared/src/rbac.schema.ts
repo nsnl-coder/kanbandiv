@@ -7,6 +7,8 @@ export const Permission = {
   AdminRolesManage: "admin:roles:manage",
   AdminBackupRead: "admin:backup:read",
   AdminBackupManage: "admin:backup:manage",
+  AdminBugsRead: "admin:bugs:read",
+  AdminBugsManage: "admin:bugs:manage",
 } as const;
 export type Permission = (typeof Permission)[keyof typeof Permission];
 
@@ -24,6 +26,8 @@ export const PERMISSION_CATALOG: PermissionMeta[] = [
   { key: Permission.AdminRolesManage, label: "Manage roles", scope: "global" },
   { key: Permission.AdminBackupRead, label: "Read backups", scope: "global" },
   { key: Permission.AdminBackupManage, label: "Manage backups", scope: "global" },
+  { key: Permission.AdminBugsRead, label: "Read bug reports", scope: "global" },
+  { key: Permission.AdminBugsManage, label: "Manage bug reports", scope: "global" },
 ];
 
 const PERMISSION_KEYS = PERMISSION_CATALOG.map((p) => p.key) as [

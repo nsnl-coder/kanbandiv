@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   ShieldCheck,
   Users,
+  Bug,
   DatabaseBackup,
   ArrowLeft,
   Settings,
@@ -21,6 +22,7 @@ import { useSidebarStore } from "../../hooks/useSidebarStore";
 import { useLogout } from "../../hooks/useLogout";
 import { ChangePasswordModal } from "../../features/auth/components/ChangePasswordModal";
 import { NotificationBell } from "../../features/notification/components/NotificationBell";
+import { ReportBugButton } from "../../features/bug-report/components/ReportBugButton";
 import { SearchPalette } from "../../features/search/components/SearchPalette";
 
 interface AdminNavItem {
@@ -45,6 +47,13 @@ const NAV_ITEMS: AdminNavItem[] = [
     hint: "Accounts & assignments",
     icon: Users,
     perm: Permission.AdminUsersRead,
+  },
+  {
+    to: "/admin/bugs",
+    label: "Bugs",
+    hint: "Reports & triage",
+    icon: Bug,
+    perm: Permission.AdminBugsRead,
   },
   {
     to: "/admin/backup",
@@ -175,6 +184,7 @@ function AdminSidebar() {
             <Search className="h-4 w-4" />
             Search
           </button>
+          <ReportBugButton />
           <NotificationBell />
         </div>
       </div>

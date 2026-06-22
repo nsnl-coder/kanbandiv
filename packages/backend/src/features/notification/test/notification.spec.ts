@@ -270,8 +270,8 @@ describe("notifications - recorder is best-effort", () => {
       create(db, bus, {
         userId: a.id,
         type: NotificationType.MENTION,
-        // missing boardId
-        payload: { actorHandle: "x", title: "T" } as never,
+        // missing required title
+        payload: { boardId: "b1", actorHandle: "x" } as never,
       }),
     ).resolves.toBeUndefined();
     expect(errSpy).toHaveBeenCalled();

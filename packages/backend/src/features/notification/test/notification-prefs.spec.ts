@@ -51,7 +51,11 @@ describe("notification prefs - list/set", () => {
       expect(p.email).toBe(true);
     }
     expect(prefs.map((p) => p.type).sort()).toEqual(
-      Object.values(NotificationType).sort(),
+      [
+        NotificationType.MENTION,
+        NotificationType.CARD_ASSIGNED,
+        NotificationType.CARD_DUE_SOON,
+      ].sort(),
     );
   });
 

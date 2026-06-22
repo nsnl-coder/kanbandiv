@@ -20,6 +20,10 @@ Two separate environments: **Dev VPS** for smoke testing → confirm OK → **Pr
 
 - Build order: packages/shared -> packages/backend -> packages/frontend -> packages/landing
 
+## Before everything: Ask user intention
+
+1. Ask if user only want deploy to prod, if they want to deploy to prod, follow all the steps below. If user does not want to deploy to production, skip all the steps below, only pull new code & rerun docker containers.
+
 ## Flow Overview
 
 ```
@@ -165,13 +169,13 @@ make health    # verify {"status":"ok"}
 
 ## Step Summary
 
-| Step           | Where    | Command                       | Purpose                 |
-| -------------- | -------- | ----------------------------- | ----------------------- |
-| 1. Commit      | Local    | `git commit`                  | Save changes            |
-| 2. Tag rc      | Local    | `git tag v1.3.0-rc.1`         | Mark release candidate  |
-| 3. Push        | Local    | `git push origin main --tags` | Upload to GitHub        |
-| 4. Deploy Dev  | Dev VPS  | `make dev`                    | Start test environment  |
-| 5. QA          | Dev VPS  | Manual + `make health`        | Verify correctness      |
-| 6. Report+Approve | Local | report checklist → wait → `git tag v1.3.0` | Show checklist status, get approval, then gate for prod |
-| 7. Deploy Prod | Prod VPS | `make prod`                   | Ship to users           |
-| 8. Verify      | Prod VPS | `make health`                 | Confirm healthy         |
+| Step              | Where    | Command                                    | Purpose                                                 |
+| ----------------- | -------- | ------------------------------------------ | ------------------------------------------------------- |
+| 1. Commit         | Local    | `git commit`                               | Save changes                                            |
+| 2. Tag rc         | Local    | `git tag v1.3.0-rc.1`                      | Mark release candidate                                  |
+| 3. Push           | Local    | `git push origin main --tags`              | Upload to GitHub                                        |
+| 4. Deploy Dev     | Dev VPS  | `make dev`                                 | Start test environment                                  |
+| 5. QA             | Dev VPS  | Manual + `make health`                     | Verify correctness                                      |
+| 6. Report+Approve | Local    | report checklist → wait → `git tag v1.3.0` | Show checklist status, get approval, then gate for prod |
+| 7. Deploy Prod    | Prod VPS | `make prod`                                | Ship to users                                           |
+| 8. Verify         | Prod VPS | `make health`                              | Confirm healthy                                         |

@@ -34,3 +34,4 @@ Always follow token discipline (short replies, scoped file reads, no rambling). 
 # Testing rules
 
 - e2e tests run against a live deployed site (dev + prod domains) driving a pre-seeded test user via the real UI. No separate test DB/MinIO; OTP flows read codes from the Mailtrap sandbox (used in dev AND prod). Destructive flows use throwaway sign-up emails / a dedicated reset account so they never disturb real users.
+- in local environment, only run added test suites, do not run all test suites.

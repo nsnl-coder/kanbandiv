@@ -23,6 +23,7 @@ import { useLogout } from "../hooks/useLogout";
 import { useCanAny } from "../features/rbac/hooks/useCan";
 import { ADMIN_READ_PERMS } from "../features/rbac/constants";
 import { NotificationBell } from "../features/notification/components/NotificationBell";
+import { ReportBugButton } from "../features/bug-report/components/ReportBugButton";
 import { ThemeToggle } from "./ThemeToggle";
 import { SidebarProject } from "./SidebarProject";
 import { CreateProjectModal } from "../features/project/components/CreateProjectModal";
@@ -71,6 +72,7 @@ function SidebarContent({ headerAction }: { headerAction?: ReactNode }) {
             <Search className="h-4 w-4" />
             Search
           </button>
+          <ReportBugButton />
           <NotificationBell />
         </div>
       </div>
