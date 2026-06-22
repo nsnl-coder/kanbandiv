@@ -43,10 +43,20 @@ export function esc(v: string): string {
     .replace(/"/g, "&quot;");
 }
 
+// Email clients require an absolute https image; relative/app-local paths never
+// load. Served by the landing site at the apex domain.
+const LOGO_URL = "https://trello-clone.shop/logo.png";
+const logoSection = `
+        <mj-section padding-bottom="8px">
+          <mj-column>
+            <mj-image width="48px" src="${LOGO_URL}" alt="Trello Clone" align="center" />
+          </mj-column>
+        </mj-section>`;
+
 export function otpTemplate(title: string, intro: string, code: string): string {
   return render(`
     <mjml>
-      <mj-body>
+      <mj-body>${logoSection}
         <mj-section>
           <mj-column>
             <mj-text font-size="20px" font-weight="bold">${esc(title)}</mj-text>
@@ -63,7 +73,7 @@ export function otpTemplate(title: string, intro: string, code: string): string 
 function noticeTemplate(title: string, body: string, link: string): string {
   return render(`
     <mjml>
-      <mj-body>
+      <mj-body>${logoSection}
         <mj-section>
           <mj-column>
             <mj-text font-size="20px" font-weight="bold">${esc(title)}</mj-text>
@@ -79,7 +89,7 @@ function noticeTemplate(title: string, body: string, link: string): string {
 function inviteTemplate(inviterHandle: string, scopeLabel: string, link: string): string {
   return render(`
     <mjml>
-      <mj-body>
+      <mj-body>${logoSection}
         <mj-section>
           <mj-column>
             <mj-text font-size="20px" font-weight="bold">You've been invited</mj-text>
@@ -95,7 +105,7 @@ function inviteTemplate(inviterHandle: string, scopeLabel: string, link: string)
 function lockedTemplate(): string {
   return render(`
     <mjml>
-      <mj-body>
+      <mj-body>${logoSection}
         <mj-section>
           <mj-column>
             <mj-text font-size="20px" font-weight="bold">Account temporarily locked</mj-text>
