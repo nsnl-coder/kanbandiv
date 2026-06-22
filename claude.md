@@ -20,11 +20,30 @@ e2e/landing: store all e2e tests from packages/landing
 
 # env rules for deploy to vps
 
-.env for client and server:
+## Backend: one thin `.env`
 
-- env.local: for local development
-- env.prod: for both dev vps and prod vps
-- env.dev: overwrite some of env.prod for dev vps
+`packages/backend/.env` is the ONLY backend env file (local, dev, and prod).
+
+- Constants identical across tiers live in code (`src/config/env.config.ts`),
+  not in `.env`. Anything derivable from `VPS_ENV` is derived in code too.
+- `.env` holds only secrets + per-deployment values that cannot be figured in code.
+- Tier knob is `VPS_ENV` (local|dev|prod), guarded in `env.config.ts`. Locally it
+  comes from `.env`; on the VPS the container env injects it (overrides `.env`).
+- A value that differs per tier uses a `_LOCAL` / `_DEV` / `_PROD` suffix.
+  `env.config.ts` resolves `KEY_<TIER>` first, then falls back to plain `KEY`
+  (the shared value). Keys injected by docker `environment:` (MinIO creds, CORS,
+  SSO, REDIS, OTEL) stay plain in `infra/.env` and get no backend suffix.
+
+## Frontend: one `.env`
+
+`packages/frontend/.env` is the ONLY frontend env file (all tiers). Only `VITE_*`
+vars; no secrets.
+
+- Tier is derived from the Vite build mode in `src/config/env.config.ts`
+  (`--mode local` -> local; `--mode dev` -> dev; `--mode prod` -> prod), not from an env var.
+- Constants identical across tiers (Sentry DSN, OTLP path) live in code.
+- Only `VITE_API_URL` differs per tier, so the file carries
+  `VITE_API_URL_LOCAL` / `_DEV` / `_PROD` (referenced literally so Vite inlines them).
 
 ## Always-on conventions
 
