@@ -12,6 +12,8 @@ COPY . .
 
 # Only the e2e package's deps (no backend/frontend/landing install).
 RUN pnpm install --frozen-lockfile --filter "e2e-frontend..."
+# e2e imports the shared TEST_USERS list, so build shared's dist.
+RUN pnpm --filter shared build
 RUN pnpm --filter e2e-frontend exec playwright install --with-deps chromium
 
 CMD ["pnpm", "--filter", "e2e-frontend", "exec", "playwright", "test"]

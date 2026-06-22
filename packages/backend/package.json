@@ -9,6 +9,7 @@
     "start": "node dist/index.js",
     "migrate": "tsx --env-file=.env.local src/scripts/migrate.script.ts",
     "seed:super-admin": "tsx --env-file=.env.local src/scripts/seedSuperAdmin.script.ts",
+    "seed:test-users": "tsx --env-file=.env.local src/scripts/seedTestUsers.script.ts",
     "cleanup": "tsx --env-file=.env.local src/scripts/cleanup.script.ts",
     "test": "vitest run",
     "test:watch": "vitest"

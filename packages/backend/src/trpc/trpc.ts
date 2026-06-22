@@ -2,7 +2,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import type { OpenApiMeta } from "trpc-to-openapi";
 import { AuthError, BackupError, Permission, RbacError, hasPermission } from "shared";
-import { findPublicUserById } from "../features/auth/auth.repo.js";
+import { findPublicUserById, isTestEmail } from "../features/auth/auth.repo.js";
 import { findUserGlobalPerms } from "../features/rbac/rbac.repo.js";
 import { isMaintenance } from "../features/backup/backup.maintenance.js";
 import type { Context } from "./context.js";
@@ -34,9 +34,18 @@ function sweep(windowMs: number, now: number): void {
 }
 
 function rateLimit(opts: { limit: number; windowMs: number }) {
-  return t.middleware(({ ctx, path, next }) => {
+  return t.middleware(async ({ ctx, path, getRawInput, next }) => {
     const now = Date.now();
     sweep(opts.windowMs, now);
+    // Exempt dedicated e2e test accounts (users.is_test): the suite hammers
+    // login from one IP behind Cloudflare, which collapses the per-test
+    // X-Forwarded-For into a single bucket. Only auth inputs carry an email.
+    const raw = (await getRawInput().catch(() => undefined)) as
+      | { email?: unknown }
+      | undefined;
+    if (typeof raw?.email === "string" && (await isTestEmail(ctx.db, raw.email))) {
+      return next();
+    }
     // Missing IP shares one restrictive bucket; never bypass the limiter.
     const key = `${path}:${ctx.ip ?? "unknown"}`;
     const hits = (buckets.get(key) ?? []).filter((ts) => ts > now - opts.windowMs);

@@ -25,6 +25,7 @@ export interface UsersTable {
   password_hash: string;
   email_verified: Generated<boolean>;
   is_superuser: Generated<boolean>;
+  is_test: Generated<boolean>;
   role_id: string | null;
   failed_login_count: Generated<number>;
   locked_until: Timestamp | null;

@@ -19,6 +19,7 @@ export * from "./realtime.schema.js";
 export * from "./notification.schema.js";
 export * from "./invite.schema.js";
 export * from "./card-template.schema.js";
+export * from "./test-user.js";
 export * from "./errors/auth.error.js";
 export * from "./errors/rbac.error.js";
 export * from "./errors/project.error.js";

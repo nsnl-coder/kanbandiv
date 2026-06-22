@@ -9,6 +9,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.61.0",
+    "shared": "workspace:*",
     "typescript": "^5.7.3"
   }
 }

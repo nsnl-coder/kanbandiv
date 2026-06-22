@@ -14,6 +14,16 @@ export function findUserByEmail(db: Db, email: string) {
     .executeTakeFirst();
 }
 
+// True if the email belongs to a dedicated e2e test account (rate-limit exempt).
+export async function isTestEmail(db: Db, email: string): Promise<boolean> {
+  const row = await db
+    .selectFrom("users")
+    .select("is_test")
+    .where("email", "=", email.toLowerCase())
+    .executeTakeFirst();
+  return !!row?.is_test;
+}
+
 export function findUserById(db: Db, id: string) {
   return db
     .selectFrom("users")

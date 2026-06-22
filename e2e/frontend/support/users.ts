@@ -1,35 +1,41 @@
-// Pre-seeded test accounts for live-domain e2e. Credentials come from env
-// (set per tier on the VPS, see run-e2e.sh). The accounts must already exist in
-// the target environment's DB; tests never seed or reset the DB.
+import { TEST_USERS } from "shared";
+
+// Test accounts for live-domain e2e. The account list is the shared single
+// source of truth (packages/shared/test-user.ts), seeded by the backend
+// seedTestUsers script. Only the shared password is secret (E2E_PASSWORD); the
+// admin (super admin) creds come from env. The Mailtrap sandbox catches their
+// mail regardless of address.
 
 // Destructive tests (register new users / change a password) leave persistent
-// state the API can't undo, so they run on dev only. Prod sets this false (or
-// leaves it unset) and the suite runs the non-destructive subset.
+// state the API can't undo, so they run on dev only. Prod sets this false.
 export const allowDestructive = process.env.E2E_ALLOW_DESTRUCTIVE === "true";
 
 function need(name: string): string {
   const v = process.env[name];
-  if (!v) throw new Error(`${name} not set (e2e test account env)`);
+  if (!v) throw new Error(`${name} not set (e2e env)`);
   return v;
 }
 
-/** Regular (non-admin) test user. */
-export const user = () => ({
-  email: need("E2E_USER_EMAIL"),
-  password: need("E2E_USER_PASSWORD"),
-});
+const sharedPassword = () => need("E2E_PASSWORD");
+const emailOfKind = (kind: "user" | "reset") => {
+  const u = TEST_USERS.find((t) => t.kind === kind);
+  if (!u) throw new Error(`no test user of kind "${kind}" in shared TEST_USERS`);
+  return u.email;
+};
 
-/** Admin/superuser test user (lands in /admin). */
+/** Primary regular (non-admin) test user. */
+export const user = () => ({ email: emailOfKind("user"), password: sharedPassword() });
+
+/** Dedicated forgot-password account; password drifts, so only the email matters. */
+export const resetEmail = () => emailOfKind("reset");
+
+/** Admin = the singleton super admin (DB allows only one superuser), so its
+ *  credentials come from env, not the code list above. */
 export const admin = () => ({
   email: need("E2E_ADMIN_EMAIL"),
   password: need("E2E_ADMIN_PASSWORD"),
 });
 
-/** Dedicated account for the forgot-password flow (its password drifts each run;
- *  fine, since forgot only needs the email). */
-export const resetEmail = () => need("E2E_RESET_EMAIL");
-
-/** A fresh, unique email for sign-up/verify flows. Mailtrap sandbox catches all
- *  outgoing mail regardless of recipient, so any address works. */
+/** A fresh, unique email for sign-up/verify flows. */
 export const freshEmail = (tag = "signup") =>
   `e2e-${tag}-${Date.now()}-${Math.floor(Math.random() * 1e4)}@example.com`;

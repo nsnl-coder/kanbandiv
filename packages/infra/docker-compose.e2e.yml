@@ -14,12 +14,11 @@ services:
       E2E_BASE_URL: ${E2E_BASE_URL}
       # Destructive specs run on dev only (run-e2e.sh sets false on prod).
       E2E_ALLOW_DESTRUCTIVE: ${E2E_ALLOW_DESTRUCTIVE:-false}
-      # Pre-seeded accounts (must exist in the target env's DB).
-      E2E_USER_EMAIL: ${E2E_USER_EMAIL:-}
-      E2E_USER_PASSWORD: ${E2E_USER_PASSWORD:-}
+      # Test-user emails are defined in code (support/users.ts); only the shared
+      # password + the admin (super admin) creds come from env.
+      E2E_PASSWORD: ${E2E_PASSWORD:-}
       E2E_ADMIN_EMAIL: ${E2E_ADMIN_EMAIL:-}
       E2E_ADMIN_PASSWORD: ${E2E_ADMIN_PASSWORD:-}
-      E2E_RESET_EMAIL: ${E2E_RESET_EMAIL:-}
       # Mailtrap sandbox: read OTP emails back (dev + prod both use the sandbox).
       MAILTRAP_API_TOKEN: ${MAILTRAP_API_TOKEN:-}
       MAILTRAP_ACCOUNT_ID: ${MAILTRAP_ACCOUNT_ID:-1334917}
