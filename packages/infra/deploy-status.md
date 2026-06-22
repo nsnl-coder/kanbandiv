@@ -4,10 +4,10 @@ _Last updated: 2026-06-21_
 
 ## Current deployed versions
 
-| Tier | Tag / commit         | State                                  |
-| ---- | -------------------- | -------------------------------------- |
-| Dev  | `v1.1.0-rc.6` (`6f8dada`) | Deployed, healthy. e2e green (20/20, 1 skipped). |
-| Prod | `v1.0.0`             | Last stable. **Not yet promoted to v1.1.0.** |
+| Tier | Tag / commit       | State                                  |
+| ---- | ------------------ | -------------------------------------- |
+| Dev  | `v1.1.0-rc.6` (`6f8dada`) | Deployed, healthy. e2e green (20 passed, 1 skipped). |
+| Prod | `v1.1.0` (`fffa19c`) | Deployed, healthy. e2e non-destructive subset green (15 passed, 6 skipped). |
 
 ## v1.1.0 highlights (vs v1.0.0)
 
@@ -42,7 +42,9 @@ _Last updated: 2026-06-21_
 
 ## Pending
 
-- [ ] Present the Phase-3 checklist and get approval to tag `v1.1.0` (prod).
-- [ ] Prod: provision test accounts (`seedTestUsers`) + `E2E_*` env, set
-      `MAIL_USER/PASS` in `backend/.env.prod`, then `run-e2e.sh` (non-destructive).
+- [x] Promote to prod: `v1.1.0` tagged + deployed (migrations 022–024), healthy.
+- [x] Prod e2e (non-destructive subset) green via `run-e2e.sh`; test accounts
+      seeded with `is_test=true`, `E2E_*` env set.
 - [ ] Convert the skipped admin-backup e2e to the live-user model.
+- [ ] Optional: set `MAIL_USER/PASS` in prod `backend/.env.prod` if prod should
+      send invite/verify emails (currently unset → those app emails won't send).
