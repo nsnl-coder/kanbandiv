@@ -94,10 +94,6 @@ export function useGlobalShortcuts() {
         if (ctx?.canEdit && handlers) handlers.newCard();
         return;
       }
-      if (e.key === "b") {
-        if (ctx) navigate(`/projects/${ctx.projectId}`);
-        return;
-      }
     };
 
     window.addEventListener("keydown", onKeyDown);

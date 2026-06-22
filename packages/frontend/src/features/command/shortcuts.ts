@@ -12,7 +12,6 @@ export const SHORTCUTS: ShortcutRow[] = [
   { keys: ["Cmd/Ctrl", "P"], description: "Open command palette", contextNote: "Overrides browser Print" },
   { keys: ["?"], description: "Open this shortcuts help" },
   { keys: ["c"], description: "New card on current board", contextNote: "Board + edit access + a column" },
-  { keys: ["b"], description: "Go to current project", contextNote: "On a board" },
   { keys: ["g", "p"], description: "Go to Projects" },
   { keys: ["Esc"], description: "Close open overlay" },
 ];

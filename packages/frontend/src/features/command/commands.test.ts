@@ -32,7 +32,6 @@ function build(over: Partial<BuildCommandsArgs> = {}) {
     ctx: null,
     handlers: null,
     logout: vi.fn(),
-    projects: [],
     openSearch: vi.fn(),
     openHelp: vi.fn(),
     setOpen: vi.fn(),
@@ -80,18 +79,6 @@ describe("buildCommands", () => {
   it("board ctx isOwner:false excludes board access", () => {
     const l = labels(build({ ctx: ctx({ isOwner: false }), handlers: handlers() }));
     expect(l).not.toContain("Board members / access");
-  });
-
-  it("New board present only with ctx and navigates to /projects/<id>", () => {
-    expect(labels(build())).not.toContain("New board");
-    const navigate = vi.fn();
-    const setOpen = vi.fn();
-    const cmds = build({ ctx: ctx(), handlers: handlers(), navigate, setOpen });
-    const newBoard = cmds.find((c) => c.label === "New board")!;
-    expect(newBoard).toBeDefined();
-    newBoard.run();
-    expect(setOpen).toHaveBeenCalledWith(false);
-    expect(navigate).toHaveBeenCalledWith("/projects/p1");
   });
 
   it("Admin present only when canAdmin", () => {

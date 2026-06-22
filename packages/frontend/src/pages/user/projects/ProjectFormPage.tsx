@@ -42,9 +42,9 @@ export function ProjectFormPage() {
 
   const createMutation = useMutation(
     trpc.projects.create.mutationOptions({
-      onSuccess: (created) => {
+      onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: trpc.projects.list.queryKey() });
-        navigate(`/projects/${created.id}`);
+        navigate("/projects");
       },
     }),
   );

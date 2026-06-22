@@ -81,10 +81,9 @@ describe("CommandPalette", () => {
   });
 
   it("filters with fuzzy query; 'zzzz' -> No commands", () => {
-    h.projects = [{ id: "p9", name: "Marketing" }];
     renderPalette();
-    fireEvent.change(screen.getByLabelText("command input"), { target: { value: "marketing" } });
-    expect(screen.getByText("Go to project: Marketing")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("command input"), { target: { value: "new project" } });
+    expect(screen.getByText("New project")).toBeInTheDocument();
     expect(screen.queryByText("Log out")).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("command input"), { target: { value: "zzzz" } });

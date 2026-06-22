@@ -76,7 +76,7 @@ function renderAt(path: string) {
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path="/projects/new" element={<ProjectFormPage />} />
-        <Route path="/projects/:id" element={<div>detail-page</div>} />
+        <Route path="/projects" element={<div>projects-page</div>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -109,13 +109,13 @@ describe("ProjectFormPage (create)", () => {
     ]);
   });
 
-  it("navigates to the created project", async () => {
+  it("navigates to projects after create", async () => {
     const u = userEvent.setup();
     h.mutationResult.create = { id: "p9" };
     renderAt("/projects/new");
     await u.type(screen.getByLabelText("Name"), "New board");
     await u.click(screen.getByRole("button", { name: "Create project" }));
-    expect(screen.getByText("detail-page")).toBeInTheDocument();
+    expect(screen.getByText("projects-page")).toBeInTheDocument();
   });
 
   it("does not submit when the name is empty", async () => {

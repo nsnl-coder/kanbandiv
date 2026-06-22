@@ -1,9 +1,6 @@
 import { useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Command as CommandIcon } from "lucide-react";
-import type { Project } from "shared";
-import { useTRPC } from "../../../lib/trpc";
 import { useLogout } from "../../../hooks/useLogout";
 import { useSearchStore } from "../../../hooks/useSearchStore";
 import { useCanAny } from "../../rbac/hooks/useCan";
@@ -26,7 +23,6 @@ export function CommandPalette() {
 }
 
 function PaletteBody({ onClose }: { onClose: () => void }) {
-  const trpc = useTRPC();
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
@@ -40,11 +36,6 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
   const logout = useLogout();
   const canAdmin = useCanAny(ADMIN_READ_PERMS);
 
-  const projectsQuery = useQuery(
-    trpc.projects.list.queryOptions({ filter: "owned", limit: 100, offset: 0 }),
-  );
-  const projects: Project[] = projectsQuery.data ?? [];
-
   const commands = useMemo(
     () =>
       buildCommands({
@@ -52,13 +43,12 @@ function PaletteBody({ onClose }: { onClose: () => void }) {
         ctx,
         handlers,
         logout: logout.run,
-        projects,
         openSearch,
         openHelp,
         setOpen,
         canAdmin,
       }),
-    [navigate, ctx, handlers, logout.run, projects, openSearch, openHelp, setOpen, canAdmin],
+    [navigate, ctx, handlers, logout.run, openSearch, openHelp, setOpen, canAdmin],
   );
 
   const filtered = useMemo(() => filterCommands(commands, query), [commands, query]);

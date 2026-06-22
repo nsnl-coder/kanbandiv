@@ -115,19 +115,6 @@ describe("useGlobalShortcuts", () => {
     expect(newCard).not.toHaveBeenCalled();
   });
 
-  it("b navigates to the current project when ctx set", () => {
-    useBoardActionsStore.getState().register(
-      { projectId: "p7", boardId: "b1", boardName: "B", canEdit: true, isOwner: true },
-      {
-        setView: vi.fn(), openArchived: vi.fn(), openHistory: vi.fn(),
-        openLabels: vi.fn(), openTemplates: vi.fn(), openAccess: vi.fn(), clearFilters: vi.fn(), newCard: vi.fn(),
-      },
-    );
-    mount();
-    key({ key: "b" });
-    expect(h.navigate).toHaveBeenCalledWith("/projects/p7");
-  });
-
   it("g then p navigates to /projects", () => {
     mount();
     key({ key: "g" });

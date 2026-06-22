@@ -54,11 +54,11 @@ export function CreateProjectModal({ open, onClose }: Props) {
 
   const createMutation = useMutation(
     trpc.projects.create.mutationOptions({
-      onSuccess: (created: { id: string }) => {
+      onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: trpc.projects.list.queryKey() });
         addToast("Project created");
         onClose();
-        navigate(`/projects/${created.id}`);
+        navigate("/projects");
       },
     }),
   );

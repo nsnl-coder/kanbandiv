@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   DndContext,
@@ -209,12 +209,12 @@ export function BoardDetailPage() {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   // Archive (not getData-invalidate): the board 404s once archived, so navigate
-  // to the project immediately to avoid flashing the not-found state.
+  // home immediately to avoid flashing the not-found state.
   const archiveBoardMutation = useMutation(
     trpc.boards.archive.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: trpc.boards.list.queryKey({ projectId: id }) });
-        navigate(`/projects/${id}`);
+        navigate("/projects");
       },
     }),
   );
@@ -334,12 +334,6 @@ export function BoardDetailPage() {
       <div className="board-surface min-h-screen">
         <main className="max-w-3xl p-6">
           <p className="text-sm text-foreground/70">Board not found or no access.</p>
-          <Link
-            to={`/projects/${id}`}
-            className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
-          >
-            Back to project
-          </Link>
         </main>
       </div>
     );

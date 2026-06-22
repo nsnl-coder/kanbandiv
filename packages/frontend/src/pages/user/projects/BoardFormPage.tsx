@@ -76,12 +76,6 @@ export function BoardFormPage() {
     return (
       <main className="max-w-2xl p-6">
         <p className="text-sm text-foreground/70">Board not found or no access.</p>
-        <Link
-          to={`/projects/${id}`}
-          className="text-sm font-medium text-foreground/80 hover:text-foreground"
-        >
-          Back to project
-        </Link>
       </main>
     );
   }

@@ -16,9 +16,8 @@ import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
 import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 import { SettingsPage } from "./pages/user/SettingsPage";
-import { ProjectsLanding } from "./pages/user/projects/ProjectsLanding";
+import { ProjectsHome } from "./pages/user/projects/ProjectsHome";
 import { ProjectFormPage } from "./pages/user/projects/ProjectFormPage";
-import { ProjectDetailPage } from "./pages/user/projects/ProjectDetailPage";
 import { BoardFormPage } from "./pages/user/projects/BoardFormPage";
 import { BoardDetailPage } from "./pages/user/projects/BoardDetailPage";
 import { BoardRedirect } from "./pages/user/projects/BoardRedirect";
@@ -99,9 +98,8 @@ export function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/projects" element={<ProjectsLanding />} />
+          <Route path="/projects" element={<ProjectsHome />} />
           <Route path="/projects/new" element={<ProjectFormPage />} />
-          <Route path="/projects/:id" element={<ProjectDetailPage />} />
           <Route path="/boards/:boardId" element={<BoardRedirect />} />
           <Route path="/projects/:id/boards/:boardId" element={<BoardDetailPage />} />
           <Route path="/projects/:id/boards/:boardId/edit" element={<BoardFormPage />} />

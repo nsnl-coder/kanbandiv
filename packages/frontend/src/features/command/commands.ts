@@ -1,8 +1,6 @@
 import {
-  ArrowRight,
   FolderKanban,
   FolderPlus,
-  Layers,
   LogOut,
   Plus,
   Shield,
@@ -21,7 +19,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { BoardViewMode } from "shared";
-import type { Project } from "shared";
 import type {
   BoardActionsCtx,
   BoardActionsHandlers,
@@ -44,7 +41,6 @@ export interface BuildCommandsArgs {
   ctx: BoardActionsCtx | null;
   handlers: BoardActionsHandlers | null;
   logout: () => void;
-  projects: Project[];
   openSearch: (v: boolean) => void;
   openHelp: (v: boolean) => void;
   setOpen: (v: boolean) => void;
@@ -54,7 +50,7 @@ export interface BuildCommandsArgs {
 // Pure registry builder. Context-excluded commands are omitted (not greyed).
 // Every `run` closes the palette first, then performs the action.
 export function buildCommands(args: BuildCommandsArgs): Command[] {
-  const { navigate, ctx, handlers, logout, projects, openSearch, openHelp, setOpen, canAdmin } = args;
+  const { navigate, ctx, handlers, logout, openSearch, openHelp, setOpen, canAdmin } = args;
   const close = () => setOpen(false);
   const commands: Command[] = [];
 
@@ -84,20 +80,6 @@ export function buildCommands(args: BuildCommandsArgs): Command[] {
       },
     });
   }
-  for (const p of projects) {
-    commands.push({
-      id: `nav-project-${p.id}`,
-      label: `Go to project: ${p.name}`,
-      group: "Navigate",
-      keywords: ["project", p.name],
-      icon: ArrowRight,
-      run: () => {
-        close();
-        navigate(`/projects/${p.id}`);
-      },
-    });
-  }
-
   // Create
   commands.push({
     id: "create-project",
@@ -110,20 +92,6 @@ export function buildCommands(args: BuildCommandsArgs): Command[] {
       navigate("/projects/new");
     },
   });
-  if (ctx) {
-    // No board-create route: the create UI is a modal on the project page.
-    commands.push({
-      id: "create-board",
-      label: "New board",
-      group: "Create",
-      keywords: ["new", "board", "create"],
-      icon: Layers,
-      run: () => {
-        close();
-        navigate(`/projects/${ctx.projectId}`);
-      },
-    });
-  }
   if (ctx && ctx.canEdit && handlers) {
     commands.push({
       id: "create-card",
