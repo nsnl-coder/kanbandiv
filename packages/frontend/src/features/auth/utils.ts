@@ -12,8 +12,17 @@ const MESSAGES: Record<AuthError, string> = {
   [AuthError.INVALID_REFRESH_TOKEN]: "Your session expired. Please log in again.",
   [AuthError.RATE_LIMITED]: "Too many requests. Please wait and try again.",
   [AuthError.EMAIL_SEND_FAILED]: "Couldn't send the email. Please try again.",
+  [AuthError.OAUTH_FAILED]: "Google sign-in failed. Please try again.",
   [AuthError.SESSION_EXPIRED]: "Your session expired. Please log in again.",
 };
+
+// Maps an `?error=` code (set by the Google OAuth callback redirect) to a message.
+export function oauthErrorMessage(code: string): string {
+  if (code === AuthError.EMAIL_NOT_VERIFIED) {
+    return "An account with this email already exists. Log in with your password first.";
+  }
+  return MESSAGES[AuthError.OAUTH_FAILED];
+}
 
 export function authErrorKey(err: unknown): AuthError | null {
   if (err instanceof TRPCClientError) {

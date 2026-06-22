@@ -27,6 +27,8 @@ export interface UsersTable {
   is_superuser: Generated<boolean>;
   is_test: Generated<boolean>;
   role_id: string | null;
+  oauth_provider: string | null;
+  oauth_sub: string | null;
   failed_login_count: Generated<number>;
   locked_until: Timestamp | null;
   created_at: GeneratedTimestamp;

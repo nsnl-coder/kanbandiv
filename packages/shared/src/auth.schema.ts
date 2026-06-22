@@ -93,6 +93,8 @@ export const publicUserSchema = z.object({
   isSuperuser: z.boolean(),
   roleId: z.string().nullable().optional(),
   emailVerified: z.boolean(),
+  // Set when the account is linked to an external identity provider (e.g. "google").
+  oauthProvider: z.string().nullable().optional(),
   permissions: z.array(permissionSchema),
   // Set only while a superuser is impersonating this account. Identifies the
   // original admin so the UI can show a banner and offer "stop impersonating".

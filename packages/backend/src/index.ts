@@ -17,6 +17,7 @@ import { healthHttpRouter } from "./features/health/health.http.js";
 import { clientLogRouter } from "./features/health/client-log.http.js";
 import { backupHttpRouter } from "./features/backup/backup.http.js";
 import { ssoHttpRouter } from "./features/sso/sso.http.js";
+import { authOauthHttpRouter } from "./features/auth/auth.oauth.http.js";
 import { attachmentHttpRouter } from "./features/attachment/attachment.http.js";
 import { bugReportHttpRouter } from "./features/bug-report/bug-report.http.js";
 import { realtimeHttpRouter } from "./features/realtime/realtime.http.js";
@@ -110,6 +111,10 @@ app.use("/api", backupHttpRouter);
 // Admin SSO forward-auth gate (Grafana/MinIO on sibling subdomains). Plain GET
 // redirects + an auth_request verify endpoint; mounted before tRPC/REST.
 app.use("/api", ssoHttpRouter);
+
+// Google sign-in (user-facing OAuth). Plain GET redirects (consent + callback);
+// mounted before tRPC/REST so it owns these exact paths.
+app.use("/api", authOauthHttpRouter);
 
 // Multipart attachment upload/download. Mounted before the /api JSON body parser
 // and tRPC so these multipart routes are never touched by express.json().

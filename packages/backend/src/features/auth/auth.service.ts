@@ -158,6 +158,7 @@ async function toPublicUser(
     is_superuser: boolean;
     role_id: string | null;
     email_verified: boolean;
+    oauth_provider: string | null;
   },
 ): Promise<PublicUser> {
   const { isSuperuser, perms } = await findUserGlobalPerms(db, row.id);
@@ -167,6 +168,7 @@ async function toPublicUser(
     isSuperuser,
     roleId: row.role_id,
     emailVerified: row.email_verified,
+    oauthProvider: row.oauth_provider,
     permissions: [...perms],
   };
 }
@@ -341,6 +343,44 @@ export async function login(
 
   await repo.resetFailedLogin(deps.db, user.id);
   await logEvent(deps, { userId: user.id, event: "login", outcome: "success" });
+  return issueTokens(deps.db, await toPublicUser(deps.db, user));
+}
+
+// Google sign-in / sign-up. Trusts only Google's verified email. Links to an
+// existing verified password account by email; rejects an unverified one (the
+// real owner must verify first, blocking email takeover). Otherwise creates a
+// new account with a random unusable password (email pre-verified by Google).
+export async function loginWithGoogle(
+  deps: AuthDeps,
+  profile: { sub: string; email: string; emailVerified: boolean },
+): Promise<AuthTokens> {
+  if (!profile.emailVerified) {
+    throw new TRPCError({ code: "FORBIDDEN", message: AuthError.OAUTH_FAILED });
+  }
+
+  let user = await repo.findUserByOauthSub(deps.db, "google", profile.sub);
+  if (!user) {
+    const byEmail = await repo.findUserByEmail(deps.db, profile.email);
+    if (byEmail) {
+      if (!byEmail.email_verified) {
+        throw new TRPCError({ code: "FORBIDDEN", message: AuthError.EMAIL_NOT_VERIFIED });
+      }
+      await repo.linkOauth(deps.db, byEmail.id, "google", profile.sub);
+      user = { ...byEmail, oauth_provider: "google", oauth_sub: profile.sub };
+    } else {
+      const randomPassword = crypto.randomBytes(32).toString("base64url");
+      user = await repo.createOauthUser(deps.db, {
+        email: profile.email,
+        passwordHash: await hashPassword(randomPassword),
+        provider: "google",
+        sub: profile.sub,
+      });
+      // Apply any pending invites addressed to this email (best-effort).
+      await invite.consumeForEmail(deps.db, user.id, user.email);
+    }
+  }
+
+  await logEvent(deps, { userId: user.id, event: "oauth_login", outcome: "google" });
   return issueTokens(deps.db, await toPublicUser(deps.db, user));
 }
 
