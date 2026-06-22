@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react";
+import { Paperclip, Trash2 } from "lucide-react";
 import type { Attachment, BoardData } from "shared";
 import { useTRPC } from "../../../lib/trpc";
 import { attachmentErrorMessage } from "../attachmentErrors";
 import { formatBytes } from "../utils";
 import { AttachmentUpload } from "./AttachmentUpload";
+import { SectionHeading } from "./SectionHeading";
 
 interface Props {
   boardId: string;
@@ -65,7 +66,7 @@ export function AttachmentList({ boardId, cardId, canEdit, currentUserId, isOwne
 
   return (
     <section className="mt-5">
-      <h3 className="text-sm font-semibold text-foreground/80">Attachments</h3>
+      <SectionHeading icon={Paperclip}>Attachments</SectionHeading>
 
       {listQuery.error ? (
         <p className="mt-2 text-xs text-red-600">{attachmentErrorMessage(listQuery.error)}</p>

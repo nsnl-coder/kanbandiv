@@ -8,25 +8,29 @@ interface Props {
 
 export function DueFilterBar({ value, onChange }: Props) {
   return (
-    <div className="flex flex-wrap items-center gap-1.5" aria-label="filter by due">
-      <span className="text-xs font-medium text-muted">Due:</span>
-      {DUE_FILTER_OPTIONS.map((opt) => {
-        const on = value === opt.value;
-        return (
-          <button
-            key={opt.label}
-            type="button"
-            aria-label={`due ${opt.label}`}
-            aria-pressed={on}
-            onClick={() => onChange(opt.value)}
-            className={`rounded-full border px-2 py-0.5 text-xs font-medium ${
-              on ? "border-indigo-600 bg-indigo-600 text-white" : "bg-surface text-foreground/70"
-            }`}
-          >
-            {opt.label}
-          </button>
-        );
-      })}
+    <div className="flex items-center gap-2" aria-label="filter by due">
+      <span className="w-16 shrink-0 text-xs font-medium text-muted">Due</span>
+      <div className="inline-flex items-center gap-0.5 rounded-full bg-surface-muted p-0.5">
+        {DUE_FILTER_OPTIONS.map((opt) => {
+          const on = value === opt.value;
+          return (
+            <button
+              key={opt.label}
+              type="button"
+              aria-label={`due ${opt.label}`}
+              aria-pressed={on}
+              onClick={() => onChange(opt.value)}
+              className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
+                on
+                  ? "bg-surface text-indigo-700 shadow-sm"
+                  : "text-foreground/55 hover:text-foreground/80"
+              }`}
+            >
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

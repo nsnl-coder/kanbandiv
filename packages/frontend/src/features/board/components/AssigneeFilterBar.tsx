@@ -25,24 +25,35 @@ export function AssigneeFilterBar({
   const membersQuery = useQuery(trpc.assignees.boardMembers.queryOptions({ boardId }));
   const members = membersQuery.data ?? [];
 
-  if (members.length === 0) return null;
-
   const toggle = (id: string) =>
     onChange(selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id]);
 
   const hasFilter = selected.length > 0 || assignedToMe;
 
+  // Hide when there's nobody worth filtering by (just the owner or empty), but
+  // keep it visible if a filter is still active so it can be cleared.
+  if (members.length <= 1 && !hasFilter) return null;
+
   return (
     <div className="flex flex-wrap items-center gap-1.5" aria-label="filter by assignees">
-      <span className="text-xs font-medium text-muted">Members:</span>
+      <span className="flex w-16 shrink-0 items-center gap-1 text-xs font-medium text-muted">
+        Members
+        {selected.length > 0 ? (
+          <span className="rounded-full bg-indigo-100 px-1 text-[10px] font-semibold tabular-nums text-indigo-700">
+            {selected.length}
+          </span>
+        ) : null}
+      </span>
       {currentUserId ? (
         <button
           type="button"
           aria-label="filter assigned to me"
           aria-pressed={assignedToMe}
           onClick={() => onAssignedToMeChange(!assignedToMe)}
-          className={`rounded-full border px-2 py-0.5 text-xs font-medium ${
-            assignedToMe ? "border-indigo-600 bg-indigo-600 text-white" : "bg-surface text-foreground/70"
+          className={`rounded-full border px-2 py-0.5 text-xs font-medium transition ${
+            assignedToMe
+              ? "border-indigo-600 bg-indigo-600 text-white"
+              : "border-border bg-surface text-foreground/70 hover:border-indigo-300 hover:text-foreground/90"
           }`}
         >
           Assigned to me
@@ -58,8 +69,10 @@ export function AssigneeFilterBar({
             aria-pressed={on}
             title={member.email}
             onClick={() => toggle(member.id)}
-            className={`rounded-full border px-2 py-0.5 text-xs font-medium ${
-              on ? "border-indigo-600 bg-indigo-600 text-white" : "bg-surface text-foreground/70"
+            className={`rounded-full border px-2 py-0.5 text-xs font-medium transition ${
+              on
+                ? "border-indigo-600 bg-indigo-600 text-white"
+                : "border-border bg-surface text-foreground/70 hover:border-indigo-300 hover:text-foreground/90"
             }`}
           >
             {assigneeDisplayName(member.email)}

@@ -1,9 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { X } from "lucide-react";
+import { Clock, X } from "lucide-react";
 import type { BoardData, Card } from "shared";
 import { useTRPC } from "../../../lib/trpc";
 import { boardErrorMessage } from "../errors";
 import { REMINDER_OPTIONS } from "../utils";
+import { SectionHeading } from "./SectionHeading";
 
 interface Props {
   boardId: string;
@@ -71,7 +72,7 @@ export function DueDatePicker({ boardId, card, editable }: Props) {
 
   return (
     <div className="mt-4">
-      <h3 className="text-sm font-semibold text-foreground/80">Due date</h3>
+      <SectionHeading icon={Clock}>Due date</SectionHeading>
       {updateMutation.error ? (
         <p className="mt-1 text-xs text-red-600">{boardErrorMessage(updateMutation.error)}</p>
       ) : null}

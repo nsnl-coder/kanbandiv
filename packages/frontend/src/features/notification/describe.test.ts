@@ -48,6 +48,18 @@ describe("describeNotification", () => {
     expect(icon).toBe(Bug);
   });
 
+  it("BOARD_SHARED names the actor and board", () => {
+    expect(
+      describeNotification(make(NotificationType.BOARD_SHARED, { title: "Roadmap" })).text,
+    ).toBe('alice shared the board "Roadmap" with you');
+  });
+
+  it("PROJECT_SHARED names the actor and project", () => {
+    expect(
+      describeNotification(make(NotificationType.PROJECT_SHARED, { title: "Acme" })).text,
+    ).toBe('alice shared the project "Acme" with you');
+  });
+
   it("an unknown type hits the default without throwing", () => {
     expect(() => describeNotification(make("FUTURE_TYPE"))).not.toThrow();
     expect(describeNotification(make("FUTURE_TYPE")).text.length).toBeGreaterThan(0);
