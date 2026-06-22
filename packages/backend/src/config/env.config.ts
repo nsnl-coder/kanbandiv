@@ -122,6 +122,14 @@ const schema = z.object({
   // MinIO bucket(s) to mirror, comma-separated. Empty -> mirror skipped.
   MINIO_BACKUP_BUCKETS: z.string().default(''),
 
+  // --- Google sign-in (user-facing OAuth, Authorization Code flow) ---
+  // OAuth client (Google Cloud console). Empty -> Google sign-in disabled.
+  GOOGLE_CLIENT_ID: z.string().default(''),
+  GOOGLE_CLIENT_SECRET: z.string().default(''),
+  // Public callback URL the proxy routes to /api/auth/oauth/google/callback.
+  // Must match a URI registered in the Google console, so it stays an env input.
+  GOOGLE_REDIRECT_URI: z.string().default(''),
+
   // --- Admin SSO (forward-auth gate for Grafana/MinIO behind the proxy) ---
   // HMAC secret for SSO transfer/session tokens. Empty -> falls back to JWT_ACCESS_SECRET.
   SSO_SECRET: z.string().default(''),

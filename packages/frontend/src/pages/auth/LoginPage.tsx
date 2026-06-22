@@ -10,8 +10,14 @@ import { AuthError, loginInput, type LoginInput } from "shared";
 import { useTRPC } from "../../lib/trpc";
 import { useAuthStore } from "../../hooks/useAuthStore";
 import { AuthForm } from "../../features/auth/components/AuthForm";
+import { GoogleButton } from "../../features/auth/components/GoogleButton";
+import { AuthDivider } from "../../features/auth/components/AuthDivider";
 import { PasswordField } from "../../features/auth/components/PasswordField";
-import { authErrorKey, authErrorMessage } from "../../features/auth/utils";
+import {
+  authErrorKey,
+  authErrorMessage,
+  oauthErrorMessage,
+} from "../../features/auth/utils";
 import { homeFor } from "../../features/rbac/utils";
 
 export function LoginPage() {
@@ -39,6 +45,7 @@ export function LoginPage() {
   });
 
   const errKey = mutation.error ? authErrorKey(mutation.error) : null;
+  const oauthError = params.get("error");
 
   return (
     <div className="flex flex-1 items-center justify-center p-4">
@@ -46,7 +53,13 @@ export function LoginPage() {
         title="Log in"
         submitLabel="Log in"
         submitting={mutation.isPending}
-        error={mutation.error ? authErrorMessage(mutation.error) : null}
+        error={
+          mutation.error
+            ? authErrorMessage(mutation.error)
+            : oauthError
+              ? oauthErrorMessage(oauthError)
+              : null
+        }
         onSubmit={onSubmit}
       >
         {errKey === AuthError.EMAIL_NOT_VERIFIED ? (
@@ -81,6 +94,9 @@ export function LoginPage() {
           error={errors.password?.message}
           {...register("password")}
         />
+
+        <AuthDivider />
+        <GoogleButton label="Continue with Google" />
 
         <div className="flex justify-between text-sm text-foreground/70">
           <Link to="/register" className="font-medium text-foreground underline">

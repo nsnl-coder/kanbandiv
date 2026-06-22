@@ -5,6 +5,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { z, registerInput } from "shared";
 import { useTRPC } from "../../lib/trpc";
 import { AuthForm } from "../../features/auth/components/AuthForm";
+import { GoogleButton } from "../../features/auth/components/GoogleButton";
+import { AuthDivider } from "../../features/auth/components/AuthDivider";
 import { PasswordField } from "../../features/auth/components/PasswordField";
 import { authErrorMessage } from "../../features/auth/utils";
 
@@ -74,6 +76,9 @@ export function RegisterPage() {
           error={errors.confirm?.message}
           {...register("confirm")}
         />
+
+        <AuthDivider />
+        <GoogleButton label="Sign up with Google" />
 
         <p className="text-sm text-foreground/70">
           Already have an account?{" "}

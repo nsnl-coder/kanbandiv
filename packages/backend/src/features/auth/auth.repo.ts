@@ -4,7 +4,7 @@ import type { Database } from "../../db/types.js";
 
 export type Db = Kysely<Database>;
 
-const PUBLIC_USER = ["id", "email", "is_superuser", "role_id", "email_verified"] as const;
+const PUBLIC_USER = ["id", "email", "is_superuser", "role_id", "email_verified", "oauth_provider"] as const;
 
 export function findUserByEmail(db: Db, email: string) {
   return db
@@ -49,6 +49,42 @@ export function createUser(
     .values({
       email: input.email,
       password_hash: input.passwordHash,
+    })
+    .returningAll()
+    .executeTakeFirstOrThrow();
+}
+
+// --- OAuth (Google sign-in) ---
+
+export function findUserByOauthSub(db: Db, provider: string, sub: string) {
+  return db
+    .selectFrom("users")
+    .selectAll()
+    .where("oauth_provider", "=", provider)
+    .where("oauth_sub", "=", sub)
+    .executeTakeFirst();
+}
+
+export function linkOauth(db: Db, userId: string, provider: string, sub: string) {
+  return db
+    .updateTable("users")
+    .set({ oauth_provider: provider, oauth_sub: sub, updated_at: new Date() })
+    .where("id", "=", userId)
+    .execute();
+}
+
+export function createOauthUser(
+  db: Db,
+  input: { email: string; passwordHash: string; provider: string; sub: string },
+) {
+  return db
+    .insertInto("users")
+    .values({
+      email: input.email,
+      password_hash: input.passwordHash,
+      email_verified: true,
+      oauth_provider: input.provider,
+      oauth_sub: input.sub,
     })
     .returningAll()
     .executeTakeFirstOrThrow();
