@@ -1,23 +1,36 @@
 const env = import.meta.env;
 
+// Deployment tier = the Vite mode (no env var needed):
+//   `vite --mode local`     -> local (dev server)
+//   `vite build --mode dev`  -> dev
+//   `vite build --mode prod` -> prod
+const appEnv: "local" | "dev" | "prod" =
+  env.MODE === "prod" ? "prod" : env.MODE === "dev" ? "dev" : "local";
+const isLocal = appEnv === "local";
+
+// Per-tier API origin: the only value that differs per tier (dev is
+// cross-origin; local/prod are same-origin). Literal refs so Vite can inline.
+const apiUrl =
+  appEnv === "prod"
+    ? (env.VITE_API_URL_PROD as string | undefined) ?? "/trpc"
+    : appEnv === "dev"
+      ? (env.VITE_API_URL_DEV as string | undefined) ?? "/trpc"
+      : (env.VITE_API_URL_LOCAL as string | undefined) ?? "/trpc";
+
 export const config = {
-  apiUrl: (env.VITE_API_URL as string | undefined) ?? "/trpc",
+  apiUrl,
   // SSE/OpenAPI base. tRPC lives at `<base>/trpc`; the REST/SSE routes live at
   // `<base>/api`. Derive by swapping the trailing `/trpc` so no new env var is
   // needed (local: backend-origin/api; prod same-origin: /api).
-  apiBaseUrl:
-    ((env.VITE_API_URL as string | undefined) ?? "/trpc").replace(
-      /\/trpc$/,
-      "",
-    ) + "/api",
-  // Deployment tier. Same VPS_ENV concept as the backend; Vite requires the
-  // VITE_ prefix to expose it to the bundle.
-  appEnv: (env.VITE_VPS_ENV as string | undefined) ?? "local",
+  apiBaseUrl: apiUrl.replace(/\/trpc$/, "") + "/api",
+  appEnv,
   isDev: env.DEV,
-  // Public OTLP path (nginx -> Tempo). Empty -> no trace export (local).
-  otelEndpoint: (env.VITE_OTEL_ENDPOINT as string | undefined) ?? "",
-  // Sentry DSN. Empty -> Sentry disabled (local).
-  sentryDsn: (env.VITE_SENTRY_DSN as string | undefined) ?? "",
+  // Public OTLP path (nginx -> Tempo). Empty locally -> no trace export.
+  otelEndpoint: isLocal ? "" : "/otlp",
+  // Public Sentry DSN (same on every tier). Sentry stays disabled locally via
+  // the appEnv check in sentry.ts.
+  sentryDsn:
+    "https://e05fe1792d0a2a4073c48522cfdb47f7@o4511595557486592.ingest.us.sentry.io/4511595562336256",
 } as const;
 
 export type AppConfig = typeof config;
