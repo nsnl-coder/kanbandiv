@@ -82,7 +82,7 @@ services:
       db:
         condition: service_healthy
     env_file:
-      - path: ../backend/.env.prod
+      - path: ../backend/.env
         required: true
     environment:
       # VPS_ENV is the only tier knob; NODE_ENV is derived from it in tracing.ts.
@@ -100,7 +100,7 @@ services:
       - SSO_ALLOWED_HOSTS=${GRAFANA_DOMAIN:-dev-grafana.trello-clone.shop},${MINIO_DOMAIN:-dev-minio.trello-clone.shop}
       - SSO_APP_ORIGIN=https://${APP_DOMAIN:-dev-app.trello-clone.shop}
       # Backup: staging dir + MinIO creds for `mc` mirror. GDRIVE_*, APP_BASE_URL,
-      # and BACKUP_ENCRYPTION_PASSPHRASE come from backend/.env.prod (env_file).
+      # and BACKUP_ENCRYPTION_PASSPHRASE come from backend/.env (env_file).
       - BACKUP_WORK_DIR=/var/backups/work
       - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
       - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}

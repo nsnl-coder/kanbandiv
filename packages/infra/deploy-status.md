@@ -35,7 +35,7 @@ _Last updated: 2026-06-21_
 
 ## Dev environment notes
 
-- Mailtrap creds added to `backend/.env.prod` so the live backend sends OTP to
+- Mailtrap creds added to `backend/.env` so the live backend sends OTP to
   the sandbox.
 - Test accounts seeded with `is_test=true`: `e2e@thatnails.com`,
   `e2eresetemail@thatnails.com`.
@@ -46,5 +46,5 @@ _Last updated: 2026-06-21_
 - [x] Prod e2e (non-destructive subset) green via `run-e2e.sh`; test accounts
       seeded with `is_test=true`, `E2E_*` env set.
 - [ ] Convert the skipped admin-backup e2e to the live-user model.
-- [ ] Optional: set `MAIL_USER/PASS` in prod `backend/.env.prod` if prod should
+- [ ] Optional: set `MAIL_USER/PASS` in `backend/.env` if prod should
       send invite/verify emails (currently unset → those app emails won't send).

@@ -7,7 +7,7 @@ import { env } from "../config/env.config.js";
 // is_test=true so they bypass the auth rate limiter. Emails come from the shared
 // TEST_USERS list; the shared password comes from E2E_PASSWORD. Run on each test
 // environment after migrations:
-//   tsx --env-file=.env.<tier> src/scripts/seedTestUsers.script.ts
+//   VPS_ENV=<tier> tsx --env-file=.env src/scripts/seedTestUsers.script.ts
 const password = process.env.E2E_PASSWORD;
 if (!password) {
   console.error("E2E_PASSWORD not set; cannot seed test users.");

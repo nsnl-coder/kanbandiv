@@ -12,7 +12,6 @@ export default defineConfig({
       NODE_ENV: "test",
       JWT_ACCESS_SECRET: "test_access_secret_0123456789abcdef0123456789",
       JWT_REFRESH_SECRET: "test_refresh_secret_0123456789abcdef0123456789",
-      COOKIE_SECURE: "false",
     },
   },
 });

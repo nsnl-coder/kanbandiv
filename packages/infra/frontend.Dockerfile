@@ -14,7 +14,8 @@ RUN pnpm install --frozen-lockfile --filter frontend...
 COPY . .
 # Build shared first so its dist/types resolve during the frontend tsc step.
 RUN pnpm --filter shared build
-# prod vps: build (mode prod -> .env.prod); dev vps: build:dev (mode dev -> .env.dev)
+# Single .env for all tiers; the build mode selects the tier (prod vps: build ->
+# mode prod; dev vps: build:dev -> mode dev). See frontend src/config/env.config.ts.
 ARG FRONTEND_BUILD=build
 ARG SENTRY_RELEASE=dev
 # Token via BuildKit secret (not baked into the image). The Sentry vite plugin
