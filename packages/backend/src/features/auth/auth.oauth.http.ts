@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { Router } from "express";
 import { parse as parseCookie } from "cookie";
+import { trace } from "@opentelemetry/api";
 import { AuthError } from "shared";
 import { appDb } from "../../db/index.js";
 import { env } from "../../config/env.config.js";
@@ -65,7 +66,14 @@ authOauthHttpRouter.get("/auth/oauth/google", (_req, res) => {
 // session, then redirect into the SPA (which re-hydrates via /auth/refresh).
 authOauthHttpRouter.get("/auth/oauth/google/callback", async (req, res) => {
   const appBase = env.APP_BASE_URL || "";
-  const fail = (e: string) => res.redirect(302, `${appBase}/login?error=${e}`);
+  // Carry the active OTel traceId into the redirect so the login page can show
+  // it (OAuth errors are redirects, not tRPC responses, so the client otherwise
+  // has no trace ref to quote in a bug report).
+  const fail = (e: string) => {
+    const traceId = trace.getActiveSpan()?.spanContext().traceId;
+    const ref = traceId ? `&ref=${traceId}` : "";
+    return res.redirect(302, `${appBase}/login?error=${e}${ref}`);
+  };
 
   const cookieState = cookiesOf(req)[STATE_COOKIE];
   res.clearCookie(STATE_COOKIE, { path: STATE_PATH });

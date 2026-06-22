@@ -17,12 +17,15 @@ const MESSAGES: Record<AuthError, string> = {
   [AuthError.SESSION_EXPIRED]: "Your session expired. Please log in again.",
 };
 
-// Maps an `?error=` code (set by the Google OAuth callback redirect) to a message.
-export function oauthErrorMessage(code: string): string {
+// Maps an `?error=` code (set by the Google OAuth callback redirect) to a
+// message. `ref` is the traceId the callback appends as `?ref=`; shown so users
+// can quote it when reporting a failed sign-in.
+export function oauthErrorMessage(code: string, ref?: string | null): string {
   if (code === AuthError.EMAIL_NOT_VERIFIED) {
     return "An account with this email already exists. Log in with your password first.";
   }
-  return MESSAGES[AuthError.OAUTH_FAILED];
+  const base = MESSAGES[AuthError.OAUTH_FAILED];
+  return ref ? `${base} (Ref: ${ref})` : base;
 }
 
 export function authErrorKey(err: unknown): AuthError | null {

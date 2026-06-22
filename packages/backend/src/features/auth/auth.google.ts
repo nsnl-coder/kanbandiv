@@ -10,11 +10,22 @@ const SCOPES = [
 ];
 
 function oauthClient() {
-  return new google.auth.OAuth2(
+  const client = new google.auth.OAuth2(
     env.GOOGLE_CLIENT_ID,
     env.GOOGLE_CLIENT_SECRET,
     env.GOOGLE_REDIRECT_URI,
   );
+  // gaxios's bundled node-fetch throws ERR_STREAM_PREMATURE_CLOSE gunzipping
+  // Google's token response on this Node/Alpine image. Ask for an uncompressed
+  // body to bypass that path (token payloads are tiny, so no real cost).
+  client.transporter.defaults = {
+    ...client.transporter.defaults,
+    headers: {
+      ...client.transporter.defaults?.headers,
+      "Accept-Encoding": "identity",
+    },
+  };
+  return client;
 }
 
 export const googleSignInEnabled = !!env.GOOGLE_CLIENT_ID;

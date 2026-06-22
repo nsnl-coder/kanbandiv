@@ -57,7 +57,7 @@ export function LoginPage() {
           mutation.error
             ? authErrorMessage(mutation.error)
             : oauthError
-              ? oauthErrorMessage(oauthError)
+              ? oauthErrorMessage(oauthError, params.get("ref"))
               : null
         }
         onSubmit={onSubmit}
