@@ -209,6 +209,7 @@ export interface SeedUserOpts {
   verified?: boolean;
   lockedUntil?: Date | null;
   failedLoginCount?: number;
+  isTest?: boolean;
 }
 
 export async function seedUser(db: TestDb, opts: SeedUserOpts = {}) {
@@ -223,6 +224,7 @@ export async function seedUser(db: TestDb, opts: SeedUserOpts = {}) {
       role_id: opts.roleId ?? null,
       failed_login_count: opts.failedLoginCount ?? 0,
       locked_until: opts.lockedUntil ?? null,
+      is_test: opts.isTest ?? false,
     })
     .returningAll()
     .executeTakeFirstOrThrow();

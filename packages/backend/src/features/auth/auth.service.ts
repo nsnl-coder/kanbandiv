@@ -233,7 +233,11 @@ async function enforceResendLimit(
   db: Db,
   userId: string,
   purpose: OtpPurpose,
+  isTest = false,
 ): Promise<void> {
+  // Dedicated e2e accounts bypass the resend cap, same as the per-IP limiter,
+  // so repeated test runs aren't throttled by the anti-abuse window.
+  if (isTest) return;
   const since = new Date(Date.now() - AUTH_CONSTANTS.RESEND_WINDOW_MS);
   const count = await repo.countOtpSince(db, userId, purpose, since);
   if (count >= AUTH_CONSTANTS.RESEND_CAP) {
@@ -254,7 +258,7 @@ export async function register(
     }
     // Unverified re-register: re-issue a fresh verify OTP (account recovery).
     // Resend cap bounds OTP re-minting so it can't reset the per-OTP attempt limit.
-    await enforceResendLimit(deps.db, existing.id, OtpPurpose.VerifyEmail);
+    await enforceResendLimit(deps.db, existing.id, OtpPurpose.VerifyEmail, existing.is_test);
     const code = await issueOtp(deps, existing.id, OtpPurpose.VerifyEmail);
     try {
       await deps.email.sendVerifyOtp(existing.email, code);
@@ -304,7 +308,7 @@ export async function resendVerifyOtp(
   const user = await repo.findUserByEmail(deps.db, input.email);
   // Silent for unknown email (no enumeration).
   if (!user || user.email_verified) return { ok: true };
-  await enforceResendLimit(deps.db, user.id, OtpPurpose.VerifyEmail);
+  await enforceResendLimit(deps.db, user.id, OtpPurpose.VerifyEmail, user.is_test);
   const code = await issueOtp(deps, user.id, OtpPurpose.VerifyEmail);
   await deps.email.sendVerifyOtp(user.email, code);
   return { ok: true };
@@ -434,7 +438,7 @@ export async function forgotPassword(
 ): Promise<{ ok: true }> {
   const user = await repo.findUserByEmail(deps.db, input.email);
   if (!user) return { ok: true }; // no enumeration
-  await enforceResendLimit(deps.db, user.id, OtpPurpose.ResetPassword);
+  await enforceResendLimit(deps.db, user.id, OtpPurpose.ResetPassword, user.is_test);
   const code = await issueOtp(deps, user.id, OtpPurpose.ResetPassword);
   await deps.email.sendResetOtp(user.email, code);
   return { ok: true };

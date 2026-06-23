@@ -82,6 +82,14 @@ describe("auth.forgotPassword", () => {
     ).rejects.toMatchObject({ message: AuthError.RATE_LIMITED });
   });
 
+  it("does not rate-limit a dedicated test account (is_test)", async () => {
+    await seedUser(db, { email: "e2e@example.com", isTest: true });
+    for (let i = 0; i < AUTH_CONSTANTS.RESEND_CAP + 2; i++) {
+      const res = await caller().auth.forgotPassword({ email: "e2e@example.com" });
+      expect(res).toEqual({ ok: true });
+    }
+  });
+
   it("does not change the user's password_hash", async () => {
     const user = await seedUser(db, { email: "keep@example.com" });
     await caller().auth.forgotPassword({ email: "keep@example.com" });
