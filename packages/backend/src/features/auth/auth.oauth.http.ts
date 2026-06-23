@@ -81,6 +81,13 @@ authOauthHttpRouter.get("/auth/oauth/google/callback", async (req, res) => {
   try {
     const state = req.query.state;
     if (!cookieState || typeof state !== "string" || state !== cookieState) {
+      // Silent until now: log the host + which half is missing so a domain
+      // mismatch (state cookie set on a different host than the callback) is
+      // diagnosable instead of an invisible OAUTH_FAILED.
+      logger.warn(
+        { host: req.get("host"), hasCookie: !!cookieState, hasState: typeof state === "string" },
+        "google oauth state mismatch",
+      );
       return fail(AuthError.OAUTH_FAILED);
     }
     if (typeof req.query.error === "string") return fail(AuthError.OAUTH_FAILED);
