@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { COMMENT_BODY_MAX } from "shared";
 import type { MentionMember } from "../utils";
+import { MentionAutocomplete, type MentionAutocompleteHandle } from "./MentionAutocomplete";
 
 interface Props {
   members: MentionMember[];
@@ -24,6 +25,7 @@ export function CommentComposer({
   const [body, setBody] = useState(initialBody);
   const [query, setQuery] = useState<string | null>(null);
   const ref = useRef<HTMLTextAreaElement>(null);
+  const acRef = useRef<MentionAutocompleteHandle>(null);
 
   if (!editable) return null;
 
@@ -36,10 +38,14 @@ export function CommentComposer({
     setQuery(m ? m[1] : null);
   };
 
-  const suggestions =
-    query === null
-      ? []
-      : members.filter((m) => m.name.toLowerCase().startsWith(query.toLowerCase())).slice(0, 6);
+  // Route arrow/enter/esc to the popover so the textarea caret stays put.
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (query === null) return;
+    if (acRef.current?.onKeyDown(e)) {
+      e.preventDefault();
+      if (e.key === "Escape") setQuery(null);
+    }
+  };
 
   const applyMention = (name: string) => {
     const caret = ref.current?.selectionStart ?? body.length;
@@ -69,26 +75,16 @@ export function CommentComposer({
         placeholder={placeholder}
         maxLength={COMMENT_BODY_MAX}
         onChange={(e) => onChange(e.target.value)}
+        onKeyDown={onKeyDown}
         className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-indigo-500"
       />
-      {suggestions.length > 0 ? (
-        <ul
-          aria-label="mention suggestions"
-          className="absolute z-10 mt-1 w-48 rounded-lg border border-border bg-surface shadow-lg"
-        >
-          {suggestions.map((m) => (
-            <li key={m.name}>
-              <button
-                type="button"
-                aria-label={`mention ${m.name}`}
-                onClick={() => applyMention(m.name)}
-                className="block w-full px-3 py-1.5 text-left text-sm text-foreground/80 hover:bg-surface-muted"
-              >
-                @{m.name}
-              </button>
-            </li>
-          ))}
-        </ul>
+      {query !== null ? (
+        <MentionAutocomplete
+          ref={acRef}
+          members={members}
+          query={query}
+          onSelect={applyMention}
+        />
       ) : null}
       <div className="mt-2 flex gap-2">
         <button
