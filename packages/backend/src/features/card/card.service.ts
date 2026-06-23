@@ -12,6 +12,7 @@ import {
   type UpdateCardInput,
 } from "shared";
 import { record } from "../activity/activity.recorder.js";
+import { onCardMoved } from "../automation/automation.engine.js";
 import { bus } from "../realtime/realtime.bus.js";
 import * as attachmentRepo from "../attachment/attachment.repo.js";
 import type { AttachmentRow } from "../attachment/attachment.repo.js";
@@ -375,6 +376,13 @@ export async function moveCard(
       actorId: user.id,
       type: ActivityType.CARD_MOVED,
       meta: { fromColumn: column.name, toColumn: target.name, cardTitle: updated.title },
+    });
+    // Fire card.moved automation rules (best-effort; never blocks the move).
+    await onCardMoved(db, {
+      boardId: column.board_id,
+      cardId: id,
+      actorId: user.id,
+      toColumnName: target.name,
     });
   } else {
     // Same-column reorder does not record activity; publish so other viewers refetch.

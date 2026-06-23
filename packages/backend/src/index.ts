@@ -28,6 +28,7 @@ import { openApiDocument } from "./openapi.js";
 import { appDb } from "./db/index.js";
 import { startScheduler } from "./features/backup/backup.scheduler.js";
 import { startReminderScheduler } from "./features/card/card.reminder.scheduler.js";
+import { startAutomationScheduler } from "./features/automation/automation.scheduler.js";
 import { loadMaintenanceFlag } from "./features/backup/backup.service.js";
 import { seedSuperAdmin } from "./scripts/seedSuperAdmin.js";
 
@@ -164,6 +165,7 @@ app.listen(env.PORT, () => {
     logger.error({ err }, "failed to start backup scheduler"),
   );
   startReminderScheduler(appDb);
+  startAutomationScheduler(appDb);
   // Best-effort: create the attachments bucket if storage is configured.
   storage.ensureBucket().catch((err) =>
     logger.error({ err }, "ensure attachments bucket failed"),
