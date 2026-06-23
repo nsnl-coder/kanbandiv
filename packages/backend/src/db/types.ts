@@ -1,6 +1,9 @@
 import type { ColumnType, Generated } from "kysely";
 import type {
   ActivityMeta,
+  AutomationAction,
+  AutomationRunDetail,
+  AutomationTrigger,
   CardTemplatePayload,
   NotificationPayload,
   BoardViewConfig,
@@ -347,6 +350,31 @@ export interface CardTemplatesTable {
   updated_at: GeneratedTimestamp;
 }
 
+export interface AutomationRulesTable {
+  id: Generated<string>;
+  board_id: string;
+  name: string;
+  enabled: Generated<boolean>;
+  // jsonb: select returns a parsed object; INSERT/UPDATE MUST send JSON TEXT (the
+  // repo JSON.stringify's it — node-pg sends a raw object as "[object Object]"
+  // and corrupts the row, mirror activity audit B1).
+  trigger: ColumnType<AutomationTrigger, string, string>;
+  actions: ColumnType<AutomationAction[], string, string>;
+  created_by: string | null;
+  created_at: GeneratedTimestamp;
+  updated_at: GeneratedTimestamp;
+}
+
+export interface AutomationRunsTable {
+  id: Generated<string>;
+  rule_id: string;
+  card_id: string | null;
+  status: string;
+  // jsonb: select returns a parsed object; INSERT MUST send JSON TEXT.
+  detail: ColumnType<AutomationRunDetail, string, string>;
+  created_at: GeneratedTimestamp;
+}
+
 export interface Database {
   users: UsersTable;
   roles: RolesTable;
@@ -379,4 +407,6 @@ export interface Database {
   bug_reports: BugReportsTable;
   bug_report_attachments: BugReportAttachmentsTable;
   card_templates: CardTemplatesTable;
+  automation_rules: AutomationRulesTable;
+  automation_runs: AutomationRunsTable;
 }

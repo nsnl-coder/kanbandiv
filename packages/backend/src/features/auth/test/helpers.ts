@@ -37,6 +37,7 @@ import { up as up027 } from "../../../migrations/027.project-position.js";
 import { up as up028 } from "../../../migrations/028.board-position.js";
 import { up as up029 } from "../../../migrations/029.project-user-order.js";
 import { up as up030 } from "../../../migrations/030.oauth.js";
+import { up as up031 } from "../../../migrations/031.automation.js";
 import type { EmailPort } from "../../email/email.service.js";
 
 export type TestDb = Kysely<Database>;
@@ -84,6 +85,7 @@ export async function newTestDb(): Promise<TestDb> {
   await up028(db);
   await up029(db);
   await up030(db);
+  await up031(db);
   // pg-mem DEFECT: a partial index `(user_id) WHERE read_at IS NULL` is wrongly
   // applied to plain `WHERE user_id = ?` queries, hiding rows once read_at is set
   // (real Postgres only uses it when the query implies the partial predicate).

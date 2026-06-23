@@ -11,6 +11,7 @@ import {
 import type { CtxUser } from "../board/board.service.js";
 import { loadBoardFor } from "../board/board.service.js";
 import { cardTitle, record } from "../activity/activity.recorder.js";
+import { onLabelAdded } from "../automation/automation.engine.js";
 import { bus } from "../realtime/realtime.bus.js";
 import * as repo from "./label.repo.js";
 import type { Db } from "./label.repo.js";
@@ -174,6 +175,13 @@ export async function attachLabel(
       labelColor: label.color,
       cardTitle: await cardTitle(db, input.cardId),
     },
+  });
+  // Fire label.added automation rules (best-effort; never blocks the attach).
+  await onLabelAdded(db, {
+    boardId,
+    cardId: input.cardId,
+    actorId: user.id,
+    labelId: input.labelId,
   });
   return cardLabels(db, input.cardId);
 }

@@ -9,6 +9,7 @@ export const NotificationType = {
   BUG_REPORT_NEW: "BUG_REPORT_NEW",
   BOARD_SHARED: "BOARD_SHARED",
   PROJECT_SHARED: "PROJECT_SHARED",
+  AUTOMATION: "AUTOMATION",
 } as const;
 export type NotificationTypeValue =
   (typeof NotificationType)[keyof typeof NotificationType];

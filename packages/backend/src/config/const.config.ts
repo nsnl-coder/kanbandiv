@@ -25,6 +25,9 @@ export const LogEvent = {
   RealtimeRedisError: "realtime.redis.error",
   RealtimeEventParseFailed: "realtime.event.parse.failed",
   CacheError: "cache.error",
+  AutomationRan: "automation.ran",
+  AutomationFailed: "automation.failed",
+  AutomationSkipped: "automation.skipped",
 } as const;
 export type LogEvent = (typeof LogEvent)[keyof typeof LogEvent];
 

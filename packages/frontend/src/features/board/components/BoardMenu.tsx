@@ -5,6 +5,7 @@ import {
   History,
   Tag,
   LayoutTemplate,
+  Zap,
   Archive,
   Users,
   Maximize2,
@@ -21,6 +22,7 @@ interface Props {
   onHistory: () => void;
   onLabels: () => void;
   onTemplates: () => void;
+  onAutomation: () => void;
   onArchived: () => void;
   onAccess: () => void;
   onArchive: () => void;
@@ -40,6 +42,7 @@ export function BoardMenu({
   onHistory,
   onLabels,
   onTemplates,
+  onAutomation,
   onArchived,
   onAccess,
   onArchive,
@@ -82,6 +85,10 @@ export function BoardMenu({
               <DropdownMenu.Item className={ITEM} onSelect={onTemplates}>
                 <LayoutTemplate className={ICON} />
                 Card templates
+              </DropdownMenu.Item>
+              <DropdownMenu.Item className={ITEM} onSelect={onAutomation}>
+                <Zap className={ICON} />
+                Automation
               </DropdownMenu.Item>
               <DropdownMenu.Item className={ITEM} onSelect={onArchived}>
                 <Archive className={ICON} />

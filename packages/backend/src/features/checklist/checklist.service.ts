@@ -14,6 +14,7 @@ import {
 import type { CtxUser } from "../board/board.service.js";
 import { loadBoardFor } from "../board/board.service.js";
 import { cardTitle, record } from "../activity/activity.recorder.js";
+import { onChecklistCompleted } from "../automation/automation.engine.js";
 import { bus } from "../realtime/realtime.bus.js";
 import { computePosition } from "../column/column.service.js";
 import * as repo from "./checklist.repo.js";
@@ -280,6 +281,24 @@ export async function updateItem(
         : ActivityType.CHECKLIST_ITEM_UNCHECKED,
       meta: { text: updated.text, cardTitle: await cardTitle(db, checklist.card_id) },
     });
+    // When the last open item on the card is checked, fire checklist.completed
+    // automation rules (best-effort; never blocks the toggle).
+    if (updated.is_done) {
+      const remaining = await db
+        .selectFrom("checklist_items")
+        .innerJoin("checklists", "checklists.id", "checklist_items.checklist_id")
+        .select((eb) => eb.fn.countAll().as("n"))
+        .where("checklists.card_id", "=", checklist.card_id)
+        .where("checklist_items.is_done", "=", false)
+        .executeTakeFirst();
+      if (Number(remaining?.n ?? 0) === 0) {
+        await onChecklistCompleted(db, {
+          boardId,
+          cardId: checklist.card_id,
+          actorId: user.id,
+        });
+      }
+    }
   } else {
     // Text-only edit records no activity; publish so other viewers refetch.
     publishCardActivity(boardId, checklist.card_id, user.id);

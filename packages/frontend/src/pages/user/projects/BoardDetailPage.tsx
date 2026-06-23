@@ -30,6 +30,7 @@ import { CardEditor } from "../../../features/board/components/CardEditor";
 import { BoardAccessPanel } from "../../../features/board/components/BoardAccessPanel";
 import { LabelManager } from "../../../features/board/components/LabelManager";
 import { TemplatesManager } from "../../../features/board/components/TemplatesManager";
+import { AutomationManager } from "../../../features/automation/components/AutomationManager";
 import { BoardActivityPanel } from "../../../features/board/components/BoardActivityPanel";
 import { ArchivedItemsPanel } from "../../../features/board/components/ArchivedItemsPanel";
 import { LabelFilterBar } from "../../../features/board/components/LabelFilterBar";
@@ -116,6 +117,7 @@ export function BoardDetailPage() {
   const [showAccess, setShowAccess] = useState(false);
   const [showLabels, setShowLabels] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [showAutomation, setShowAutomation] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [showActivity, setShowActivity] = useState(false);
   const [labelFilter, setLabelFilter] = useState<string[]>([]);
@@ -521,6 +523,7 @@ export function BoardDetailPage() {
               onHistory={() => setShowActivity(true)}
               onLabels={() => setShowLabels(true)}
               onTemplates={() => setShowTemplates(true)}
+              onAutomation={() => setShowAutomation(true)}
               onArchived={() => setShowArchived(true)}
               onAccess={() => setShowAccess(true)}
               onArchive={() => setConfirmArchive(true)}
@@ -688,6 +691,21 @@ export function BoardDetailPage() {
           widthClassName="max-w-lg"
         >
           <TemplatesManager boardId={board.id} editable={editable} />
+        </Modal>
+      ) : null}
+
+      {editable ? (
+        <Modal
+          open={showAutomation}
+          onClose={() => setShowAutomation(false)}
+          title="Automation"
+          widthClassName="max-w-2xl"
+        >
+          <AutomationManager
+            boardId={board.id}
+            editable={editable}
+            columns={board.columns.map((c) => ({ id: c.id, name: c.name }))}
+          />
         </Modal>
       ) : null}
 
