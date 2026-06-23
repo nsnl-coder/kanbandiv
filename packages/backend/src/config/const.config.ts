@@ -24,5 +24,11 @@ export const LogEvent = {
   RealtimePublishFailed: "realtime.publish.failed",
   RealtimeRedisError: "realtime.redis.error",
   RealtimeEventParseFailed: "realtime.event.parse.failed",
+  CacheError: "cache.error",
 } as const;
 export type LogEvent = (typeof LogEvent)[keyof typeof LogEvent];
+
+// Cache TTLs (seconds). Short windows bound staleness so explicit invalidation
+// only has to cover the high-value mutations.
+export const AUTH_CACHE_TTL_SEC = 30;
+export const NOTIF_UNREAD_TTL_SEC = 60;

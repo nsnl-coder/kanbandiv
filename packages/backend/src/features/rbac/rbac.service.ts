@@ -13,8 +13,14 @@ import {
   type UpdateRoleInput,
   type UpdateRolePermissionsInput,
 } from "shared";
+import { cache, cacheKeys } from "../../cache/cache.js";
 import * as repo from "./rbac.repo.js";
 import type { Db } from "./rbac.repo.js";
+
+// Drop cached identity+perms so the next request rebuilds from the DB.
+async function invalidateAuthCache(userIds: string[]): Promise<void> {
+  if (userIds.length > 0) await cache.del(...userIds.map(cacheKeys.authUser));
+}
 
 type RoleRow = {
   id: string;
@@ -175,6 +181,8 @@ export async function setRolePermissions(
   const role = await repo.findRoleById(db, roleId);
   if (!role) throw roleNotFound();
   await repo.setRolePermissions(db, roleId, input.permissions);
+  // Perms are role-derived: every holder's cached perms are now stale.
+  await invalidateAuthCache(await repo.listUserIdsByRole(db, roleId));
   return toRole(db, role);
 }
 
@@ -219,6 +227,7 @@ export async function assignRole(
     assertCanGrant(actor, rolePerms.map((p) => p.permission));
   }
   await repo.assignUserRole(db, userId, input.roleId);
+  await invalidateAuthCache([userId]);
   const row = await repo.findAdminUserById(db, userId);
   if (!row) throw new TRPCError({ code: "NOT_FOUND" });
   return toAdminUser(row);

@@ -18,6 +18,7 @@ import {
   type ResetPasswordInput,
 } from "shared";
 import { env } from "../../config/env.config.js";
+import { cache, cacheKeys } from "../../cache/cache.js";
 import type { EmailPort } from "../email/email.service.js";
 import { findUserGlobalPerms } from "../rbac/rbac.repo.js";
 import * as invite from "../invite/invite.service.js";
@@ -314,6 +315,8 @@ export async function verifyEmail(
   }
   await consumeValidOtp(deps, user.id, OtpPurpose.VerifyEmail, input.otp);
   await repo.setEmailVerified(deps.db, user.id);
+  // email_verified gates authedProcedure; drop any stale cached identity.
+  await cache.del(cacheKeys.authUser(user.id));
   // Apply any pending invites addressed to this email (best-effort, never throws).
   await invite.consumeForEmail(deps.db, user.id, user.email);
   return { ok: true };
@@ -354,6 +357,7 @@ export async function login(
         ? new Date(Date.now() + AUTH_CONSTANTS.LOCK_MS)
         : null;
     await repo.setFailedLogin(deps.db, user.id, count, lock);
+    if (lock) await cache.del(cacheKeys.authUser(user.id));
     await logEvent(deps, { userId: user.id, event: "login", outcome: "fail" });
     if (lock) await deps.email.sendAccountLocked(user.email);
     throw invalidCredentials();
