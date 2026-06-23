@@ -28,7 +28,11 @@ function fakeRedis() {
       ttl.set(key, sec);
       return 1;
     },
-    on() {},
+    // Cache gates ops on the "ready" event; fire it so the fake is usable.
+    on(event: string, cb: () => void) {
+      if (event === "ready") cb();
+    },
+    async connect() {},
     async quit() {
       return "OK";
     },
@@ -76,7 +80,10 @@ describe("cache - redis backend", () => {
   it("is best-effort: a throwing client never throws", async () => {
     const throwing = {
       client: {
-        on() {},
+        on(event: string, cb: () => void) {
+          if (event === "ready") cb();
+        },
+        async connect() {},
         get() {
           throw new Error("down");
         },
