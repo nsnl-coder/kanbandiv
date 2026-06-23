@@ -35,7 +35,10 @@ test.describe("board sharing", () => {
     // also exposes role=button with the same name, so disambiguate on that.
     // force: a non-editable (shared) project sits in a dnd wrapper marked
     // aria-disabled, which Playwright treats as disabled though the toggle works.
-    await page.locator("button[aria-expanded]", { hasText: projectName }).click({ force: true });
+    // Wait for the sidebar entry to render first so the click can't race the list.
+    const ownerToggle = page.locator("button[aria-expanded]", { hasText: projectName });
+    await expect(ownerToggle).toBeVisible();
+    await ownerToggle.click({ force: true });
     await page.getByRole("button", { name: "New board" }).click();
     const boardInput = page.getByRole("textbox", { name: "Board name" });
     await boardInput.fill(boardName);
@@ -61,7 +64,10 @@ test.describe("board sharing", () => {
     // also exposes role=button with the same name, so disambiguate on that.
     // force: a non-editable (shared) project sits in a dnd wrapper marked
     // aria-disabled, which Playwright treats as disabled though the toggle works.
-    await page.locator("button[aria-expanded]", { hasText: projectName }).click({ force: true });
+    // Wait for the sidebar entry to render first so the click can't race the list.
+    const sharedToggle = page.locator("button[aria-expanded]", { hasText: projectName });
+    await expect(sharedToggle).toBeVisible();
+    await sharedToggle.click({ force: true });
     await expect(page.getByRole("link", { name: boardName })).toBeVisible();
 
     await page.getByRole("button", { name: /Notifications/ }).click();

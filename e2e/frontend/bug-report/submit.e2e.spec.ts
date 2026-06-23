@@ -30,6 +30,9 @@ test.describe("bug report", () => {
     // loads before auth and the list query runs unauthenticated (empty).
     await expect(page).toHaveURL(/\/admin/);
     await page.goto("/admin/bugs");
+    // Let the list query settle before interacting, else a second render can
+    // detach the row mid-click (admin-list race under parallel load).
+    await page.waitForLoadState("networkidle");
     const row = page.getByRole("row", { name: new RegExp(title) });
     await expect(row).toBeVisible();
 

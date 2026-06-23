@@ -50,7 +50,10 @@ export default defineConfig({
   testDir: ".",
   testMatch: "**/*.e2e.spec.ts",
   fullyParallel: parallel,
-  workers: isLocal ? "75%" : parallel ? 4 : 1,
+  // LOCAL goes widest (no network hop). A live tier adds round-trip latency and
+  // runs N headless Chromium on one host, so cap to 2 there - higher counts
+  // starve CPU and flake timing-sensitive redirects/reloads.
+  workers: isLocal ? "75%" : parallel ? 2 : 1,
   // Parallel runs can briefly burst (Mailtrap "emails/second" cap on the one
   // real-email spec, or a transient CF-IP limit); a retry runs after it clears.
   forbidOnly: !!process.env.CI,
