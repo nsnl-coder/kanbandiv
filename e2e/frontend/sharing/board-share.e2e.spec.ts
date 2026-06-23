@@ -31,7 +31,7 @@ test.describe("board sharing", () => {
 
     // The new project lands collapsed in the sidebar; expand it to reveal its
     // inline "New board" affordance.
-    await page.getByRole("button", { name: projectName }).click();
+    await page.getByRole("button", { name: projectName, exact: true }).click();
     await page.getByRole("button", { name: "New board" }).click();
     const boardInput = page.getByRole("textbox", { name: "Board name" });
     await boardInput.fill(boardName);
@@ -53,7 +53,7 @@ test.describe("board sharing", () => {
     // The shared board's parent project now appears under "Shared with me";
     // expanding it reveals the single board the recipient was granted.
     await page.getByRole("button", { name: "Shared with me" }).click();
-    await page.getByRole("button", { name: projectName }).click();
+    await page.getByRole("button", { name: projectName, exact: true }).click();
     await expect(page.getByRole("link", { name: boardName })).toBeVisible();
 
     await page.getByRole("button", { name: /Notifications/ }).click();

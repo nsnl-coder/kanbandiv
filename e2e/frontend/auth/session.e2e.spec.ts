@@ -47,7 +47,9 @@ test.describe("session", () => {
     await login(page, u.email, u.password);
     await expect(page).toHaveURL(/\/projects(\/|$)/);
 
-    await page.getByRole("button", { name: "Log out" }).click();
+    // "Log out" lives in the account dropdown at the bottom of the sidebar.
+    await page.getByRole("button", { name: u.email }).click();
+    await page.getByRole("menuitem", { name: "Log out" }).click();
     // logout returns to the public marketing home
     await expect(page).toHaveURL(/\/$/);
 

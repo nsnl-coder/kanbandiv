@@ -18,7 +18,8 @@ test.describe("bug report", () => {
     await page.getByLabel("Description").fill("Submitted by the e2e suite.");
     await page.getByLabel("Severity").selectOption("low");
     await page.getByRole("button", { name: "Submit report" }).click();
-    await expect(page.getByText("Bug reported, thanks")).toBeVisible();
+    // exact: the toast text also appears in a screen-reader status announcer.
+    await expect(page.getByText("Bug reported, thanks", { exact: true })).toBeVisible();
 
     const a = admin();
     await login(page, a.email, a.password);
