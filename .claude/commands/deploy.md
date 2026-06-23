@@ -75,15 +75,16 @@ make dev       # docker compose up
 make health    # smoke test
 
 # e2e against the LIVE site (this tier's domain) as a pre-seeded test user. No
-# test DB/MinIO; OTP via Mailtrap sandbox. Exit code = pass/fail.
-bash packages/infra/deploy-scripts/run-e2e.sh
+# test DB/MinIO; OTP via Mailtrap sandbox. Playwright runs directly (NO Docker);
+# specs hit the public URL so they run from the VPS, locally, or CI. Exit = pass/fail.
+pnpm --filter e2e-frontend e2e   # locally: npx playwright install chromium once + set E2E_* env
 ```
 
 **Verification checklist:**
 
 - [ ] DB migrations ran without error
 - [ ] `GET /health` → `{"status":"ok"}`
-- [ ] all tests are passed including: frontend tests, backend tests, landing tests & e2e tests (login/logout and other flows are covered by e2e, not a manual mcp check). e2e runs via `run-e2e.sh` against the live site as a pre-seeded test user (no test DB; OTP via Mailtrap sandbox).
+- [ ] all tests are passed including: frontend tests, backend tests, landing tests & e2e tests (login/logout and other flows are covered by e2e, not a manual mcp check). e2e runs Playwright directly (no Docker) via `pnpm --filter e2e-frontend e2e` against the live site as a pre-seeded test user (no test DB; OTP via Mailtrap sandbox); runnable from the VPS, locally, or CI.
 - [ ] New feature behaves per spec
 - [ ] No regression on existing features
 

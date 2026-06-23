@@ -26,7 +26,7 @@ Notes:
 
 - Local: no docker. Postgres runs natively; observability stack (Vector/Loki/Tempo/Prometheus/Grafana) and Sentry are off. OTel SDK still loads but uses a console exporter.
 - E2E tests: real (non-mocked) against the **live deployed site** (dev/prod domain), driving a pre-seeded test user via the real UI. No separate test DB or MinIO - the test account (and unique throwaway sign-up emails) keep runs from disturbing real users. All e2e specs live in `e2e/` (moved out of `packages/frontend`).
-- Runner: a small Playwright container (`packages/infra/docker-compose.e2e.yml`, built only on demand) launched by `deploy-scripts/run-e2e.sh` in its own compose project (`trelloclone3-e2e`); it hits the public URL and is removed after. `E2E_BASE_URL` + the `E2E_*` test-account creds + `MAILTRAP_API_TOKEN` come from `packages/infra/.env`.
+- Runner: Playwright runs directly, **no Docker**. Because the specs hit the public URL, they run from anywhere with network access - locally, on the VPS, or in CI - with `pnpm --filter e2e-frontend e2e` (run `npx playwright install chromium` once first). `E2E_BASE_URL` + the `E2E_*` test-account creds + `MAILTRAP_API_TOKEN` come from `packages/infra/.env` on the VPS, or from your shell/`.env` when running locally.
 - OTP-dependent flows (sign-up/verify/forgot) read codes from the **Mailtrap sandbox**, which both dev and prod use for outbound mail.
 - Dev + Prod VPS: full stack via docker compose. Same config; Dev uses shorter log/trace retention (7d vs 30d).
 - Three pillars: Loki (logs) + Tempo (traces) + Prometheus (metrics).

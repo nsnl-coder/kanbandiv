@@ -76,5 +76,5 @@ E2E tests live outside this package in `e2e/frontend/<feature>/<flow>.e2e.spec.t
 
 - e2e tests are real (non-mocked): they drive the LIVE deployed site (dev/prod domain, `E2E_BASE_URL`) as a pre-seeded test user. No DB/network mocking, no separate test DB
 - OTP flows read codes from the Mailtrap sandbox (dev + prod both use it); destructive flows use throwaway sign-up emails / a dedicated reset account
-- e2e tests live in `e2e/frontend/`, not in this package; run via `packages/infra/deploy-scripts/run-e2e.sh` on the VPS
+- e2e tests live in `e2e/frontend/`, not in this package. They target the public URL, so run them anywhere (locally, VPS, or CI) with Playwright directly - **no Docker**. Locally: `npx playwright install chromium` once, set the `E2E_*` env vars, then `pnpm --filter e2e-frontend e2e`
 - unit tests (vitest) stay in this package
