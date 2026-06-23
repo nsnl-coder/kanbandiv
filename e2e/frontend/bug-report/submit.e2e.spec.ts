@@ -26,6 +26,9 @@ test.describe("bug report", () => {
     await page.context().clearCookies();
     const a = admin();
     await login(page, a.email, a.password);
+    // Wait for the admin session to land before navigating, else /admin/bugs
+    // loads before auth and the list query runs unauthenticated (empty).
+    await expect(page).toHaveURL(/\/admin/);
     await page.goto("/admin/bugs");
     const row = page.getByRole("row", { name: new RegExp(title) });
     await expect(row).toBeVisible();

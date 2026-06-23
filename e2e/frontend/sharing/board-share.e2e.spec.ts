@@ -33,7 +33,9 @@ test.describe("board sharing", () => {
     // inline "New board" affordance.
     // The project toggle is the button carrying aria-expanded; the dnd wrapper
     // also exposes role=button with the same name, so disambiguate on that.
-    await page.locator("button[aria-expanded]", { hasText: projectName }).click();
+    // force: a non-editable (shared) project sits in a dnd wrapper marked
+    // aria-disabled, which Playwright treats as disabled though the toggle works.
+    await page.locator("button[aria-expanded]", { hasText: projectName }).click({ force: true });
     await page.getByRole("button", { name: "New board" }).click();
     const boardInput = page.getByRole("textbox", { name: "Board name" });
     await boardInput.fill(boardName);
@@ -57,7 +59,9 @@ test.describe("board sharing", () => {
     await page.getByRole("button", { name: "Shared with me" }).click();
     // The project toggle is the button carrying aria-expanded; the dnd wrapper
     // also exposes role=button with the same name, so disambiguate on that.
-    await page.locator("button[aria-expanded]", { hasText: projectName }).click();
+    // force: a non-editable (shared) project sits in a dnd wrapper marked
+    // aria-disabled, which Playwright treats as disabled though the toggle works.
+    await page.locator("button[aria-expanded]", { hasText: projectName }).click({ force: true });
     await expect(page.getByRole("link", { name: boardName })).toBeVisible();
 
     await page.getByRole("button", { name: /Notifications/ }).click();
