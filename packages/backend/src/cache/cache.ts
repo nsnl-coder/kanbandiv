@@ -38,7 +38,9 @@ function defaultMakeRedis(url: string): Redis {
 }
 
 function logCacheError(err: unknown): void {
-  logger.error({ err, event: LogEvent.CacheError }, LogEvent.CacheError);
+  // warn, not error: a degraded cache is non-fatal (callers fall back to DB),
+  // so it must not page or flood Sentry.
+  logger.warn({ err, event: LogEvent.CacheError }, LogEvent.CacheError);
 }
 
 export function createCache(deps: CacheDeps = {}): Cache {
@@ -62,20 +64,43 @@ export function createCache(deps: CacheDeps = {}): Cache {
     };
   }
 
-  // ----- Redis backend (lazy; mirrors realtime.bus.ts client options) -----
+  // ----- Redis backend -----
+  // lazyConnect + enableOfflineQueue:false make any command issued before the
+  // socket is open throw ("Stream isn't writeable"). On a hot path that is error
+  // spam on every restart plus an uncached cold window. So we connect eagerly
+  // and gate every op on a `ready` flag: until the connection is open (or after
+  // it drops) we skip Redis and let the caller hit the DB - no doomed command,
+  // no log spam, instant fallback when Redis is down.
   let client: Redis | null = null;
+  let ready = false;
 
   function get(): Redis {
     if (!client) {
-      client = makeRedis(redisUrl);
-      client.on("error", logCacheError);
+      const c = makeRedis(redisUrl);
+      c.on("ready", () => {
+        ready = true;
+      });
+      c.on("end", () => {
+        ready = false;
+      });
+      c.on("error", (err) => {
+        ready = false;
+        logCacheError(err);
+      });
+      client = c;
+      // Kick off the (lazy) connection now so the cache is warm before traffic.
+      c.connect().catch(() => {});
     }
     return client;
   }
 
+  // Start connecting at construction (no-op factories in tests just set ready).
+  get();
+
   return {
     enabled: true,
     async getJson<T>(key: string): Promise<T | undefined> {
+      if (!ready) return undefined;
       try {
         const raw = await get().get(key);
         return raw == null ? undefined : (JSON.parse(raw) as T);
@@ -85,6 +110,7 @@ export function createCache(deps: CacheDeps = {}): Cache {
       }
     },
     async setJson(key, value, ttlSec) {
+      if (!ready) return;
       try {
         await get().set(key, JSON.stringify(value), "EX", ttlSec);
       } catch (err) {
@@ -92,7 +118,7 @@ export function createCache(deps: CacheDeps = {}): Cache {
       }
     },
     async del(...keys) {
-      if (keys.length === 0) return;
+      if (!ready || keys.length === 0) return;
       try {
         await get().del(...keys);
       } catch (err) {
@@ -100,6 +126,7 @@ export function createCache(deps: CacheDeps = {}): Cache {
       }
     },
     async incrWithTtl(key, ttlSec) {
+      if (!ready) return 0;
       try {
         const n = await get().incr(key);
         if (n === 1) await get().expire(key, ttlSec);
@@ -110,6 +137,7 @@ export function createCache(deps: CacheDeps = {}): Cache {
       }
     },
     async delByPrefix(prefix) {
+      if (!ready) return;
       try {
         const c = get();
         let cursor = "0";
@@ -126,6 +154,7 @@ export function createCache(deps: CacheDeps = {}): Cache {
       if (!client) return;
       const c = client;
       client = null;
+      ready = false;
       await c.quit().catch(() => {});
     },
   };
