@@ -13,6 +13,8 @@ import {
   type UnreadCount,
 } from "shared";
 import type { CtxUser } from "../board/board.service.js";
+import { cache, cacheKeys } from "../../cache/cache.js";
+import { NOTIF_UNREAD_TTL_SEC } from "../../config/const.config.js";
 import * as repo from "./notification.repo.js";
 import type { Db } from "./notification.repo.js";
 
@@ -43,7 +45,12 @@ export async function list(
 }
 
 export async function unreadCount(db: Db, user: CtxUser): Promise<UnreadCount> {
-  return { count: await repo.countUnread(db, user.id) };
+  const key = cacheKeys.notifUnread(user.id);
+  const cached = await cache.getJson<number>(key);
+  if (cached !== undefined) return { count: cached };
+  const count = await repo.countUnread(db, user.id);
+  await cache.setJson(key, count, NOTIF_UNREAD_TTL_SEC);
+  return { count };
 }
 
 export async function markRead(
@@ -56,11 +63,14 @@ export async function markRead(
     throw new TRPCError({ code: "NOT_FOUND", message: NotificationError.NOT_FOUND });
   }
   await repo.markRead(db, user.id, id);
+  await cache.del(cacheKeys.notifUnread(user.id));
   return { ok: true };
 }
 
 export async function markAllRead(db: Db, user: CtxUser): Promise<MarkAllResult> {
-  return { updated: await repo.markAllRead(db, user.id) };
+  const updated = await repo.markAllRead(db, user.id);
+  await cache.del(cacheKeys.notifUnread(user.id));
+  return { updated };
 }
 
 // Returns one row per notification type; types with no stored row resolve to the

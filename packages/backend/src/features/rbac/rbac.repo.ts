@@ -106,6 +106,15 @@ export async function setRolePermissions(
   });
 }
 
+export async function listUserIdsByRole(db: Db, roleId: string): Promise<string[]> {
+  const rows = await db
+    .selectFrom("users")
+    .select("id")
+    .where("role_id", "=", roleId)
+    .execute();
+  return rows.map((r) => r.id);
+}
+
 export async function countRoleMembers(db: Db, roleId: string): Promise<number> {
   const row = await db
     .selectFrom("users")

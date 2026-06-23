@@ -5,6 +5,7 @@ import {
   UserEventKind,
 } from "shared";
 import { LogEvent } from "../../config/const.config.js";
+import { cache, cacheKeys } from "../../cache/cache.js";
 import { logger } from "../../logger.js";
 import type { Bus } from "../realtime/realtime.bus.js";
 import * as repo from "./notification.repo.js";
@@ -58,6 +59,9 @@ export async function create(db: Db, bus: Bus, input: CreateInput): Promise<void
         payload: JSON.stringify(payload),
       })
       .execute();
+    // A new unread row invalidates the cached count before the bus nudge so the
+    // client's refetch reads a fresh value.
+    await cache.del(cacheKeys.notifUnread(input.userId));
     bus.publishUser({
       userId: input.userId,
       kind: UserEventKind.NOTIFICATION,
