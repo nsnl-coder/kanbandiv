@@ -1,4 +1,4 @@
-import { TEST_USERS } from "shared";
+import { TEST_USERS, TEST_EMAIL_DOMAIN } from "shared";
 
 // Test accounts for live-domain e2e. The account list is the shared single
 // source of truth (packages/shared/test-user.ts), seeded by the backend
@@ -39,6 +39,12 @@ export const admin = () => ({
   password: need("E2E_ADMIN_PASSWORD"),
 });
 
-/** A fresh, unique email for sign-up/verify flows. */
+/** A fresh, unique email for sign-up/verify flows. @example.com is NOT a test
+ *  domain, so the backend sends a real verification email (read via Mailtrap). */
 export const freshEmail = (tag = "signup") =>
   `e2e-${tag}-${Date.now()}-${Math.floor(Math.random() * 1e4)}@example.com`;
+
+/** Like freshEmail but on the test domain (TEST_EMAIL_DOMAIN): the backend
+ *  auto-flags it is_test, so it mints a fixed OTP and skips the email. */
+export const freshTestEmail = (tag = "verify") =>
+  `e2e-${tag}-${Date.now()}-${Math.floor(Math.random() * 1e4)}@${TEST_EMAIL_DOMAIN}`;

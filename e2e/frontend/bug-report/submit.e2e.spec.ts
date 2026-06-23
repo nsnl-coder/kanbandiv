@@ -36,6 +36,6 @@ test.describe("bug report", () => {
     page.once("dialog", (d) => d.accept());
     await row.click();
     await page.getByRole("button", { name: "Delete" }).click();
-    await expect(page.getByText("Bug report deleted")).toBeVisible();
+    await expect(page.getByText("Bug report deleted", { exact: true })).toBeVisible();
   });
 });

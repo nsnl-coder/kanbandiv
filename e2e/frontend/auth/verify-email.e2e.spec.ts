@@ -1,10 +1,13 @@
 import { test, expect } from "../support/fixtures";
 import { PW } from "./helpers";
-import { freshEmail, allowDestructive } from "../support/users";
+import { freshTestEmail, allowDestructive } from "../support/users";
 
 // Register a fresh, unverified account and return its email (on /verify-email).
+// Uses the test domain so the backend skips the real email (fixed OTP), keeping
+// this off Mailtrap. The resend/rate-limit path needs real emails + a non-test
+// user, so it lives in the backend integration tests, not here.
 async function registerFresh(page: import("@playwright/test").Page): Promise<string> {
-  const email = freshEmail("verify");
+  const email = freshTestEmail("verify");
   await page.goto("/register");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password", { exact: true }).fill(PW);
@@ -17,20 +20,6 @@ async function registerFresh(page: import("@playwright/test").Page): Promise<str
 test.describe("verify email", () => {
   // Every test here registers a fresh user -> destructive, dev-only.
   test.skip(!allowDestructive, "registers users (no delete-user API); dev-only");
-
-  test("resend then rate-limit message", async ({ page }) => {
-    await registerFresh(page); // register already minted OTP #1
-
-    // RESEND_CAP is 3 per window; register=1, two resends ok, the third trips it.
-    await page.getByRole("button", { name: "Resend code" }).click();
-    await expect(page.getByText("A new code has been sent.")).toBeVisible({ timeout: 20_000 });
-
-    await page.getByRole("button", { name: "Resend code" }).click();
-    await expect(page.getByText("A new code has been sent.")).toBeVisible({ timeout: 20_000 });
-
-    await page.getByRole("button", { name: "Resend code" }).click();
-    await expect(page.getByRole("alert")).toContainText("Too many requests", { timeout: 20_000 });
-  });
 
   test("wrong code is rejected, no redirect", async ({ page }) => {
     await registerFresh(page);

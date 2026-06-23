@@ -1,6 +1,6 @@
 import { test, expect } from "../support/fixtures";
 import { resetEmail, allowDestructive } from "../support/users";
-import { fetchOtp } from "../support/mailtrap";
+import { TEST_OTP_RESET } from "shared";
 
 test.describe("forgot password", () => {
   test("request reset -> reset -> login with new password", async ({ page }) => {
@@ -9,14 +9,15 @@ test.describe("forgot password", () => {
     // New password drifts each run; that's fine - forgot only needs the email,
     // never the current password, so the dedicated reset account stays usable.
     const newPw = `Reset-${Date.now()}aA1`;
-    const t0 = Date.now();
 
     await page.goto("/forgot-password");
     await page.getByLabel("Email").fill(email);
     await page.getByRole("button", { name: "Send reset code" }).click();
     await expect(page.getByText(/reset code has been sent/i)).toBeVisible();
 
-    const code = await fetchOtp(email, 8, t0);
+    // resetEmail() is a test account, so the backend minted the fixed OTP
+    // instead of sending one - no Mailtrap round-trip.
+    const code = TEST_OTP_RESET;
     await page.goto(`/reset-password?email=${encodeURIComponent(email)}`);
     await page.getByLabel("Reset code").fill(code);
     await page.getByLabel("New password", { exact: true }).fill(newPw);

@@ -42,13 +42,14 @@ export function findPublicUserById(db: Db, id: string) {
 
 export function createUser(
   db: Db,
-  input: { email: string; passwordHash: string },
+  input: { email: string; passwordHash: string; isTest?: boolean },
 ) {
   return db
     .insertInto("users")
     .values({
       email: input.email,
       password_hash: input.passwordHash,
+      ...(input.isTest ? { is_test: true } : {}),
     })
     .returningAll()
     .executeTakeFirstOrThrow();

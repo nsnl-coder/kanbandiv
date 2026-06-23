@@ -7,6 +7,9 @@ import {
   OtpPurpose,
   RESET_OTP_LENGTH,
   VERIFY_OTP_LENGTH,
+  TEST_OTP_RESET,
+  TEST_OTP_VERIFY,
+  isTestEmailAddress,
   type AuthTokens,
   type ChangePasswordInput,
   type LoginInput,
@@ -185,11 +188,18 @@ async function issueOtp(
   deps: AuthDeps,
   userId: string,
   purpose: OtpPurpose,
+  isTest = false,
 ): Promise<string> {
   const length =
     purpose === OtpPurpose.ResetPassword ? RESET_OTP_LENGTH : VERIFY_OTP_LENGTH;
   await repo.invalidateOtps(deps.db, userId, purpose);
-  const code = generateOtp(length);
+  // Test accounts get a deterministic code (and skip the email), so the e2e
+  // suite never has to poll Mailtrap.
+  const code = isTest
+    ? purpose === OtpPurpose.ResetPassword
+      ? TEST_OTP_RESET
+      : TEST_OTP_VERIFY
+    : generateOtp(length);
   await repo.insertOtp(deps.db, {
     userId,
     codeHash: await hashOtp(code),
@@ -259,24 +269,32 @@ export async function register(
     // Unverified re-register: re-issue a fresh verify OTP (account recovery).
     // Resend cap bounds OTP re-minting so it can't reset the per-OTP attempt limit.
     await enforceResendLimit(deps.db, existing.id, OtpPurpose.VerifyEmail, existing.is_test);
-    const code = await issueOtp(deps, existing.id, OtpPurpose.VerifyEmail);
-    try {
-      await deps.email.sendVerifyOtp(existing.email, code);
-    } catch (cause) {
-      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: AuthError.EMAIL_SEND_FAILED, cause });
+    const code = await issueOtp(deps, existing.id, OtpPurpose.VerifyEmail, existing.is_test);
+    if (!existing.is_test) {
+      try {
+        await deps.email.sendVerifyOtp(existing.email, code);
+      } catch (cause) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: AuthError.EMAIL_SEND_FAILED, cause });
+      }
     }
     return { ok: true };
   }
 
+  // Non-prod registrations on the test domain are flagged is_test, so OTP flows
+  // skip the real email send (and mint a fixed code) - keeps e2e off Mailtrap.
+  const isTest = env.VPS_ENV !== "prod" && isTestEmailAddress(input.email);
   const user = await repo.createUser(deps.db, {
     email: input.email,
     passwordHash: await hashPassword(input.password),
+    isTest,
   });
-  const code = await issueOtp(deps, user.id, OtpPurpose.VerifyEmail);
-  try {
-    await deps.email.sendVerifyOtp(user.email, code);
-  } catch (cause) {
-    throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: AuthError.EMAIL_SEND_FAILED, cause });
+  const code = await issueOtp(deps, user.id, OtpPurpose.VerifyEmail, user.is_test);
+  if (!user.is_test) {
+    try {
+      await deps.email.sendVerifyOtp(user.email, code);
+    } catch (cause) {
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: AuthError.EMAIL_SEND_FAILED, cause });
+    }
   }
   await logEvent(deps, { userId: user.id, event: "register", outcome: "success" });
   return { ok: true };
@@ -309,8 +327,8 @@ export async function resendVerifyOtp(
   // Silent for unknown email (no enumeration).
   if (!user || user.email_verified) return { ok: true };
   await enforceResendLimit(deps.db, user.id, OtpPurpose.VerifyEmail, user.is_test);
-  const code = await issueOtp(deps, user.id, OtpPurpose.VerifyEmail);
-  await deps.email.sendVerifyOtp(user.email, code);
+  const code = await issueOtp(deps, user.id, OtpPurpose.VerifyEmail, user.is_test);
+  if (!user.is_test) await deps.email.sendVerifyOtp(user.email, code);
   return { ok: true };
 }
 
@@ -439,8 +457,8 @@ export async function forgotPassword(
   const user = await repo.findUserByEmail(deps.db, input.email);
   if (!user) return { ok: true }; // no enumeration
   await enforceResendLimit(deps.db, user.id, OtpPurpose.ResetPassword, user.is_test);
-  const code = await issueOtp(deps, user.id, OtpPurpose.ResetPassword);
-  await deps.email.sendResetOtp(user.email, code);
+  const code = await issueOtp(deps, user.id, OtpPurpose.ResetPassword, user.is_test);
+  if (!user.is_test) await deps.email.sendResetOtp(user.email, code);
   return { ok: true };
 }
 

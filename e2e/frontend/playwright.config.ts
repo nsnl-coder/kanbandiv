@@ -36,11 +36,23 @@ if (process.env.E2E_ALLOW_DESTRUCTIVE === undefined) {
   process.env.E2E_ALLOW_DESTRUCTIVE = tier === "prod" ? "false" : "true";
 }
 
+// Parallelism is safe wherever the per-IP rate limiter can't bite: test-user
+// requests are is_test=true (limiter-exempt by email) and each login opens its
+// own refresh-token family. The only non-exempt calls are a few brand-new-email
+// registers + one forgot-unknown, all well under their per-IP caps (register=5,
+// forgot=5 / min). LOCAL has no Cloudflare hop, so it goes widest; DEV pools into
+// one CF IP, so cap workers to keep non-exempt registers (incl. retries) under 5.
+// PROD stays serial (it skips destructive specs and runs almost nothing anyway).
+const isLocal = /localhost|127\.0\.0\.1/.test(baseURL);
+const parallel = isLocal || tier !== "prod";
+
 export default defineConfig({
   testDir: ".",
   testMatch: "**/*.e2e.spec.ts",
-  fullyParallel: false,
-  workers: 1,
+  fullyParallel: parallel,
+  workers: isLocal ? "75%" : parallel ? 4 : 1,
+  // Parallel runs can briefly burst (Mailtrap "emails/second" cap on the one
+  // real-email spec, or a transient CF-IP limit); a retry runs after it clears.
   forbidOnly: !!process.env.CI,
   retries: 1,
   reporter: process.env.CI ? "github" : "list",
