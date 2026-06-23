@@ -21,6 +21,9 @@ test.describe("bug report", () => {
     // exact: the toast text also appears in a screen-reader status announcer.
     await expect(page.getByText("Bug reported, thanks", { exact: true })).toBeVisible();
 
+    // Drop the user session first: a signed-in visit to /login redirects into
+    // the app, so the login form never renders.
+    await page.context().clearCookies();
     const a = admin();
     await login(page, a.email, a.password);
     await page.goto("/admin/bugs");
