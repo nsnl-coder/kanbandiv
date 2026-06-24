@@ -1,9 +1,11 @@
-import { config } from "../../../config/env.config";
-
 // Full-page navigation to the backend OAuth start route (not a tRPC call): the
 // flow is server-driven 302 redirects through Google and back into the SPA.
 export function GoogleButton({ label }: { label: string }) {
-  const href = `${config.apiBaseUrl}/auth/oauth/google`;
+  // Must be SAME-ORIGIN as the OAuth callback (redirect_uri = the app origin),
+  // so the `g_oauth_state` cookie set on start is sent back on the callback.
+  // On dev the API is a separate subdomain (config.apiBaseUrl -> dev-api.*),
+  // which would set the cookie on the wrong host -> state mismatch -> OAUTH_FAILED.
+  const href = `/api/auth/oauth/google`;
   return (
     <a
       href={href}
