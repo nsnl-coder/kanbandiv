@@ -12,11 +12,23 @@ const SCOPES = [
 ];
 
 function oauthClient() {
-  return new google.auth.OAuth2(
+  const client = new google.auth.OAuth2(
     env.GDRIVE_CLIENT_ID,
     env.GDRIVE_CLIENT_SECRET,
     env.GDRIVE_REDIRECT_URI,
   );
+  // gaxios's bundled node-fetch throws ERR_STREAM_PREMATURE_CLOSE gunzipping
+  // Google's token response on this Node/Alpine image (broken IPv6 egress +
+  // Happy-Eyeballs). Ask for an uncompressed body to bypass that path. Mirrors
+  // the same workaround in auth.google.ts.
+  client.transporter.defaults = {
+    ...client.transporter.defaults,
+    headers: {
+      ...client.transporter.defaults?.headers,
+      "Accept-Encoding": "identity",
+    },
+  };
+  return client;
 }
 
 /** Consent URL: offline access + forced consent so we always get a refresh token.
