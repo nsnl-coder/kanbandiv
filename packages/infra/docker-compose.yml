@@ -204,6 +204,10 @@ services:
       GRAFANA_DOMAIN: ${GRAFANA_DOMAIN:-dev-grafana.trello-clone.shop}
       MINIO_DOMAIN: ${MINIO_DOMAIN:-dev-minio.trello-clone.shop}
       REDIS_DOMAIN: ${REDIS_DOMAIN:-dev-redis.trello-clone.shop}
+      # Host that holds the app session (access_token) cookie -> where the SSO
+      # bounce must land so authorize can read it. Dev is cross-origin (cookie
+      # on the API host); prod is same-origin (cookie on the app host).
+      SSO_SESSION_DOMAIN: ${SSO_SESSION_DOMAIN:-dev-api.trello-clone.shop}
       # Only substitute *DOMAIN* vars; leave $host, $remote_addr, etc. intact.
       NGINX_ENVSUBST_FILTER: DOMAIN
     volumes:
