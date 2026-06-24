@@ -99,9 +99,9 @@ server {
     proxy_pass http://backend:4000/api/sso/callback;
     proxy_set_header Host $host;
   }
-  # No/expired SSO cookie -> bounce to the app host to prove super-admin.
+  # No/expired SSO cookie -> bounce to the session host to prove super-admin.
   location @sso_signin {
-    return 302 https://${APP_DOMAIN}/api/sso/authorize?rd=$scheme://$host$request_uri;
+    return 302 https://${SSO_SESSION_DOMAIN}/api/sso/authorize?rd=$scheme://$host$request_uri;
   }
 
   location / {
@@ -144,7 +144,7 @@ server {
     proxy_set_header Host $host;
   }
   location @sso_signin {
-    return 302 https://${APP_DOMAIN}/api/sso/authorize?rd=$scheme://$host$request_uri;
+    return 302 https://${SSO_SESSION_DOMAIN}/api/sso/authorize?rd=$scheme://$host$request_uri;
   }
 
   location / {
@@ -181,7 +181,7 @@ server {
     proxy_set_header Host $host;
   }
   location @sso_signin {
-    return 302 https://${APP_DOMAIN}/api/sso/authorize?rd=$scheme://$host$request_uri;
+    return 302 https://${SSO_SESSION_DOMAIN}/api/sso/authorize?rd=$scheme://$host$request_uri;
   }
 
   location / {
