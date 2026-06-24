@@ -36,7 +36,7 @@ server {
 # All known hosts: redirect HTTP -> HTTPS.
 server {
   listen 80;
-  server_name ${APP_DOMAIN} ${API_DOMAIN} ${LANDING_DOMAIN} ${GRAFANA_DOMAIN} ${MINIO_DOMAIN};
+  server_name ${APP_DOMAIN} ${API_DOMAIN} ${LANDING_DOMAIN} ${GRAFANA_DOMAIN} ${MINIO_DOMAIN} ${REDIS_DOMAIN};
   return 301 https://$host$request_uri;
 }
 
@@ -155,6 +155,43 @@ server {
     proxy_set_header Upgrade    $http_upgrade;
     proxy_set_header Connection $connection_upgrade;
     proxy_pass http://minio:9001;
+  }
+}
+
+# RedisInsight UI (:5540). No login of its own, so it MUST stay behind the same
+# admin SSO forward-auth as Grafana/MinIO. Needs websockets (socket.io).
+server {
+  listen 443 ssl;
+  http2 on;
+  server_name ${REDIS_DOMAIN};
+  include /etc/nginx/snippets/ssl.conf;
+
+  access_log /dev/stdout proxy_json;
+  error_log  /dev/stderr;
+
+  location = /__sso/verify {
+    internal;
+    proxy_pass http://backend:4000/api/sso/verify;
+    proxy_set_header Host $host;
+    proxy_pass_request_body off;
+    proxy_set_header Content-Length "";
+  }
+  location = /__sso/callback {
+    proxy_pass http://backend:4000/api/sso/callback;
+    proxy_set_header Host $host;
+  }
+  location @sso_signin {
+    return 302 https://${APP_DOMAIN}/api/sso/authorize?rd=$scheme://$host$request_uri;
+  }
+
+  location / {
+    auth_request /__sso/verify;
+    error_page 401 = @sso_signin;
+
+    include /etc/nginx/snippets/proxy_headers.conf;
+    proxy_set_header Upgrade    $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+    proxy_pass http://redisinsight:5540;
   }
 }
 

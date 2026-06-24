@@ -36,6 +36,30 @@ services:
       timeout: 3s
       retries: 5
 
+  # RedisInsight UI (:5540). No auth of its own -> admin-gated by the same SSO
+  # forward-auth as Grafana/MinIO. Pre-accepts the EULA and auto-adds the local
+  # redis connection so the UI opens straight onto our instance.
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: trelloclone3-redisinsight
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      RI_APP_HOST: 0.0.0.0
+      RI_APP_PORT: "5540"
+      RI_REDIS_HOST: redis
+      RI_REDIS_PORT: "6379"
+      RI_REDIS_ALIAS: trelloclone
+    volumes:
+      - redisinsightdata:/data
+    expose:
+      - "5540"
+    labels:
+      com.project.service: redisinsight
+      com.project.env: ${VPS_ENV:-prod}
+
   minio:
     image: minio/minio:latest
     container_name: trelloclone3-minio
@@ -97,7 +121,7 @@ services:
       - CORS_ORIGINS=${CORS_ORIGINS:-https://dev-app.trello-clone.shop}
       # Admin SSO gate: hosts it may mint tokens for + the app origin for login.
       # SSO_SECRET is omitted on purpose -> backend falls back to JWT_ACCESS_SECRET.
-      - SSO_ALLOWED_HOSTS=${GRAFANA_DOMAIN:-dev-grafana.trello-clone.shop},${MINIO_DOMAIN:-dev-minio.trello-clone.shop}
+      - SSO_ALLOWED_HOSTS=${GRAFANA_DOMAIN:-dev-grafana.trello-clone.shop},${MINIO_DOMAIN:-dev-minio.trello-clone.shop},${REDIS_DOMAIN:-dev-redis.trello-clone.shop}
       - SSO_APP_ORIGIN=https://${APP_DOMAIN:-dev-app.trello-clone.shop}
       # Backup: staging dir + MinIO creds for `mc` mirror. GDRIVE_*, APP_BASE_URL,
       # and BACKUP_ENCRYPTION_PASSPHRASE come from backend/.env (env_file).
@@ -168,6 +192,7 @@ services:
       - landing
       - grafana
       - minio
+      - redisinsight
     ports:
       - "80:80"
       - "443:443"
@@ -178,6 +203,7 @@ services:
       LANDING_DOMAIN: ${LANDING_DOMAIN:-dev.trello-clone.shop}
       GRAFANA_DOMAIN: ${GRAFANA_DOMAIN:-dev-grafana.trello-clone.shop}
       MINIO_DOMAIN: ${MINIO_DOMAIN:-dev-minio.trello-clone.shop}
+      REDIS_DOMAIN: ${REDIS_DOMAIN:-dev-redis.trello-clone.shop}
       # Only substitute *DOMAIN* vars; leave $host, $remote_addr, etc. intact.
       NGINX_ENVSUBST_FILTER: DOMAIN
     volumes:
@@ -329,6 +355,7 @@ volumes:
   tempodata:
   promdata:
   grafanadata:
+  redisinsightdata:
 
 secrets:
   # Sentry org token for source-map upload at build time. Sourced from the
