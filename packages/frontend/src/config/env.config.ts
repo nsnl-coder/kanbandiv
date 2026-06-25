@@ -24,12 +24,19 @@ const apiUrl =
 
 // Observability/ops consoles on sibling subdomains (admin SSO-gated). null
 // locally (no such hosts); per-tier domains otherwise. Used by the admin nav.
+function consoleHosts(prefix: string) {
+  return {
+    grafana: `https://${prefix}grafana.trello-clone.shop`,
+    minio: `https://${prefix}minio.trello-clone.shop`,
+    redis: `https://${prefix}redis.trello-clone.shop`,
+    prometheus: `https://${prefix}prometheus.trello-clone.shop`,
+    cadvisor: `https://${prefix}cadvisor.trello-clone.shop`,
+    pgadmin: `https://${prefix}pgadmin.trello-clone.shop`,
+    portainer: `https://${prefix}portainer.trello-clone.shop`,
+  };
+}
 const opsConsoles =
-  appEnv === "prod"
-    ? { grafana: "https://grafana.trello-clone.shop", redis: "https://redis.trello-clone.shop" }
-    : appEnv === "dev"
-      ? { grafana: "https://dev-grafana.trello-clone.shop", redis: "https://dev-redis.trello-clone.shop" }
-      : null;
+  appEnv === "prod" ? consoleHosts("") : appEnv === "dev" ? consoleHosts("dev-") : null;
 
 export const config = {
   apiUrl,

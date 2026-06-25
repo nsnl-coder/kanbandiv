@@ -43,8 +43,9 @@ const constants = {
   MINIO_USE_SSL: false,
   MINIO_ATTACHMENTS_BUCKET: 'attachments',
   ATTACHMENT_MAX_BYTES: 10_485_760,
-  // SSO session cookie lifetime (bounds role-revocation lag).
-  SSO_SESSION_TTL: '1h',
+  // SSO session cookie lifetime. /sso/verify also re-checks super-admin on every
+  // request, so revocation is immediate; this just bounds idle re-auth.
+  SSO_SESSION_TTL: '15m',
   SENTRY_TRACES_SAMPLE_RATE: 0.1,
 };
 
@@ -145,6 +146,9 @@ const schema = z.object({
     ),
   // App origin used to bounce unauthenticated admins to the login page.
   SSO_APP_ORIGIN: z.string().default(''),
+  // Prometheus base URL for the admin Monitor proxy. Empty (local) -> Monitor
+  // metrics are disabled and the page degrades to ops-console links only.
+  PROMETHEUS_URL: z.string().default(''),
 });
 
 const parsed = schema.safeParse(tiered(schema.shape));

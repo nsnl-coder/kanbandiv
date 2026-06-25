@@ -64,7 +64,24 @@ every subdomain on both tiers.
 | landing  | `trello-clone.shop` (apex) | `dev.trello-clone.shop`        |
 | grafana  | `grafana.trello-clone.shop`| `dev-grafana.trello-clone.shop`|
 | minio    | `minio.trello-clone.shop`  | `dev-minio.trello-clone.shop`  |
+| redis    | `redis.trello-clone.shop`  | `dev-redis.trello-clone.shop`  |
+| prometheus | `prometheus.trello-clone.shop` | `dev-prometheus.trello-clone.shop` |
+| cadvisor | `cadvisor.trello-clone.shop` | `dev-cadvisor.trello-clone.shop` |
+| pgadmin  | `pgadmin.trello-clone.shop` | `dev-pgadmin.trello-clone.shop` |
+| portainer | `portainer.trello-clone.shop` | `dev-portainer.trello-clone.shop` |
 
+All ops subdomains (grafana, minio, redis, prometheus, cadvisor, pgadmin,
+portainer) sit behind the **admin SSO forward-auth** gate: nginx `auth_request`
+-> backend `/api/sso/verify`, which re-checks super-admin on every request.
+Grafana/Prometheus/cAdvisor/RedisInsight have no login of their own (SSO is the
+only gate; Grafana's own form is disabled). MinIO/pgAdmin/Portainer keep their
+own login on top (no header-trust mode). Portainer reaches Docker only via the
+`dockerproxy` socket-proxy. The app admin dashboard links to all of them from the
+super-admin **Monitor** tab, which also renders native charts off the backend
+Prometheus proxy (`monitoring.overview`).
+
+- The `*_DOMAIN` for db is never set (internal only); redis now has a domain for
+  the RedisInsight UI but the redis server itself stays internal.
 - Each `*_DOMAIN` is set in `packages/infra/.env` on the box; the proxy template
   (`packages/infra/proxy/default.conf.template`) renders one server block per
   domain via nginx envsubst (`NGINX_ENVSUBST_FILTER=DOMAIN`).

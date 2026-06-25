@@ -6,6 +6,7 @@ import {
   SSO_CALLBACK_PATH,
   SSO_COOKIE,
   isAllowedHost,
+  isStillSuperAdmin,
   resolveAdmin,
   signSessionToken,
   signTransferToken,
@@ -79,8 +80,10 @@ ssoHttpRouter.get("/sso/callback", (req, res) => {
 });
 
 // Step 3 - nginx auth_request target on each protected host. 200 + identity
-// header when the SSO cookie is valid for this host, else 401.
-ssoHttpRouter.get("/sso/verify", (req, res) => {
+// header when the SSO cookie is valid for this host AND the subject is still a
+// super-admin (re-checked against the DB so revocation takes effect at once,
+// not after the cookie TTL), else 401.
+ssoHttpRouter.get("/sso/verify", async (req, res) => {
   const host = hostOf(req);
   const token = cookiesOf(req)[SSO_COOKIE];
   if (!token) {
@@ -89,6 +92,10 @@ ssoHttpRouter.get("/sso/verify", (req, res) => {
   }
   try {
     const claims = verifySsoToken(token, host);
+    if (!(await isStillSuperAdmin(appDb, claims.sub))) {
+      res.status(401).end();
+      return;
+    }
     res.setHeader("X-Sso-User", claims.email);
     res.status(200).end();
   } catch {

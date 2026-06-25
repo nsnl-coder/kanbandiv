@@ -27,6 +27,7 @@ import { RoleFormPage } from "./pages/admin/roles/RoleFormPage";
 import { UsersListPage } from "./pages/admin/users/UsersListPage";
 import { BackupPage } from "./pages/admin/backup/BackupPage";
 import { BugReportsPage } from "./pages/admin/bugs/BugReportsPage";
+import { MonitorPage } from "./pages/admin/monitor/MonitorPage";
 import { MaintenanceScreen } from "./components/MaintenanceScreen";
 import { useCan } from "./features/rbac/hooks/useCan";
 import { ADMIN_READ_PERMS } from "./features/rbac/constants";
@@ -127,6 +128,9 @@ export function App() {
           </Route>
           <Route element={<PermissionRoute perm={Permission.AdminBugsRead} />}>
             <Route path="bugs" element={<BugReportsPage />} />
+          </Route>
+          <Route element={<PermissionRoute superuser />}>
+            <Route path="monitor" element={<MonitorPage />} />
           </Route>
         </Route>
       </Route>

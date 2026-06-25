@@ -120,8 +120,12 @@ services:
       # Prod must override (comma-separated origins) in packages/infra/.env.
       - CORS_ORIGINS=${CORS_ORIGINS:-https://dev-app.trello-clone.shop}
       # Admin SSO gate: hosts it may mint tokens for + the app origin for login.
-      # SSO_SECRET is omitted on purpose -> backend falls back to JWT_ACCESS_SECRET.
-      - SSO_ALLOWED_HOSTS=${GRAFANA_DOMAIN:-dev-grafana.trello-clone.shop},${MINIO_DOMAIN:-dev-minio.trello-clone.shop},${REDIS_DOMAIN:-dev-redis.trello-clone.shop}
+      # SSO_SECRET: set a distinct value per tier in infra/.env. Empty -> backend
+      # falls back to JWT_ACCESS_SECRET (prior behavior).
+      - SSO_SECRET=${SSO_SECRET:-}
+      - SSO_ALLOWED_HOSTS=${GRAFANA_DOMAIN:-dev-grafana.trello-clone.shop},${MINIO_DOMAIN:-dev-minio.trello-clone.shop},${REDIS_DOMAIN:-dev-redis.trello-clone.shop},${PROMETHEUS_DOMAIN:-dev-prometheus.trello-clone.shop},${CADVISOR_DOMAIN:-dev-cadvisor.trello-clone.shop},${PGADMIN_DOMAIN:-dev-pgadmin.trello-clone.shop},${PORTAINER_DOMAIN:-dev-portainer.trello-clone.shop}
+      # Prometheus base for the admin Monitor proxy (read-only query API).
+      - PROMETHEUS_URL=http://prometheus:9090
       - SSO_APP_ORIGIN=https://${APP_DOMAIN:-dev-app.trello-clone.shop}
       # Backup: staging dir + MinIO creds for `mc` mirror. GDRIVE_*, APP_BASE_URL,
       # and BACKUP_ENCRYPTION_PASSPHRASE come from backend/.env (env_file).
@@ -193,6 +197,10 @@ services:
       - grafana
       - minio
       - redisinsight
+      - prometheus
+      - cadvisor
+      - pgadmin
+      - portainer
     ports:
       - "80:80"
       - "443:443"
@@ -204,6 +212,10 @@ services:
       GRAFANA_DOMAIN: ${GRAFANA_DOMAIN:-dev-grafana.trello-clone.shop}
       MINIO_DOMAIN: ${MINIO_DOMAIN:-dev-minio.trello-clone.shop}
       REDIS_DOMAIN: ${REDIS_DOMAIN:-dev-redis.trello-clone.shop}
+      PROMETHEUS_DOMAIN: ${PROMETHEUS_DOMAIN:-dev-prometheus.trello-clone.shop}
+      CADVISOR_DOMAIN: ${CADVISOR_DOMAIN:-dev-cadvisor.trello-clone.shop}
+      PGADMIN_DOMAIN: ${PGADMIN_DOMAIN:-dev-pgadmin.trello-clone.shop}
+      PORTAINER_DOMAIN: ${PORTAINER_DOMAIN:-dev-portainer.trello-clone.shop}
       # Host that holds the app session (access_token) cookie -> where the SSO
       # bounce must land so authorize can read it. Dev is cross-origin (cookie
       # on the API host); prod is same-origin (cookie on the app host).
@@ -262,6 +274,82 @@ services:
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.retention.time=15d
+    # UI published at the prometheus subdomain (admin SSO-gated); no native auth.
+    expose:
+      - "9090"
+
+  # pgAdmin (:80). Postgres admin UI. Admin SSO-gated AND keeps its own login
+  # (no header-trust mode), so reaching it still needs the pgAdmin credentials.
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: trelloclone3-pgadmin
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@trello-clone.shop}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-pgadmin}
+      PGADMIN_CONFIG_SERVER_MODE: "True"
+      # Behind the proxy at the pgadmin subdomain (TLS terminated upstream).
+      PGADMIN_CONFIG_PROXY_X_HOST_COUNT: "1"
+      PGADMIN_CONFIG_PROXY_X_PREFIX_COUNT: "1"
+    volumes:
+      - pgadmindata:/var/lib/pgadmin
+    expose:
+      - "80"
+    labels:
+      com.project.service: pgadmin
+      com.project.env: ${VPS_ENV:-prod}
+
+  # Filtered Docker API for Portainer. Mounts the real socket read-only and only
+  # exposes the verbs Portainer needs, so a Portainer compromise is not automatic
+  # host-root. Portainer talks to this over tcp, never to the raw socket.
+  dockerproxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: trelloclone3-dockerproxy
+    restart: unless-stopped
+    privileged: true
+    environment:
+      CONTAINERS: "1"
+      IMAGES: "1"
+      NETWORKS: "1"
+      VOLUMES: "1"
+      SERVICES: "1"
+      TASKS: "1"
+      NODES: "1"
+      INFO: "1"
+      VERSION: "1"
+      EVENTS: "1"
+      PING: "1"
+      # Leave POST/EXEC off: read-mostly management surface.
+      POST: "0"
+      EXEC: "0"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    expose:
+      - "2375"
+    labels:
+      com.project.service: dockerproxy
+      com.project.env: ${VPS_ENV:-prod}
+
+  # Portainer (:9000). Docker management UI. Admin SSO-gated AND keeps its own
+  # login. Talks to the socket-proxy, never the raw socket. Admin password is
+  # preset (bcrypt) so the initial-admin window can't be claimed via SSO.
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: trelloclone3-portainer
+    restart: unless-stopped
+    depends_on:
+      - dockerproxy
+    command: -H tcp://dockerproxy:2375 --admin-password "${PORTAINER_ADMIN_PASSWORD_HASH:-}"
+    volumes:
+      - portainerdata:/data
+    expose:
+      - "9000"
+    labels:
+      com.project.service: portainer
+      com.project.env: ${VPS_ENV:-prod}
 
   grafana:
     image: grafana/grafana:11.4.0
@@ -283,6 +371,10 @@ services:
       GF_AUTH_PROXY_ENABLE_LOGIN_TOKEN: "false"
       GF_AUTH_PROXY_WHITELIST: 172.28.0.10
       GF_AUTH_PROXY_SYNC_TTL: "60"
+      # Lock down to SSO only: no login form, no basic auth. The SSH-tunnel
+      # fallback can no longer log in; recovery = unset these + redeploy.
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_AUTH_BASIC_ENABLED: "false"
       # SSO'd users pass the super-admin gate, so grant them Grafana Admin.
       GF_USERS_AUTO_ASSIGN_ORG_ROLE: Admin
       # Telegram alert credentials, interpolated into alerting provisioning.
@@ -338,6 +430,9 @@ services:
       - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
+    # UI published at the cadvisor subdomain (admin SSO-gated); no native auth.
+    expose:
+      - "8080"
 
 networks:
   # Fixed subnet so the proxy can hold a stable IP for Grafana's auth-proxy
@@ -360,6 +455,8 @@ volumes:
   promdata:
   grafanadata:
   redisinsightdata:
+  pgadmindata:
+  portainerdata:
 
 secrets:
   # Sentry org token for source-map upload at build time. Sourced from the

@@ -72,6 +72,16 @@ export function targetHostFromReturnUrl(rd: string): string | null {
   }
 }
 
+/**
+ * Re-check that an SSO subject is still a super-admin. Used on every /sso/verify
+ * so a demoted/deleted admin loses console access at once, not after the cookie
+ * TTL (revocation defense for Portainer/pgAdmin/Grafana behind the gate).
+ */
+export async function isStillSuperAdmin(db: Db, sub: string): Promise<boolean> {
+  const { isSuperuser } = await findUserGlobalPerms(db, sub);
+  return isSuperuser;
+}
+
 export type AdminResolution =
   | { status: "unauthenticated" }
   | { status: "forbidden"; sub: string; email: string }

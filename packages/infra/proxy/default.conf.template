@@ -36,7 +36,7 @@ server {
 # All known hosts: redirect HTTP -> HTTPS.
 server {
   listen 80;
-  server_name ${APP_DOMAIN} ${API_DOMAIN} ${LANDING_DOMAIN} ${GRAFANA_DOMAIN} ${MINIO_DOMAIN} ${REDIS_DOMAIN};
+  server_name ${APP_DOMAIN} ${API_DOMAIN} ${LANDING_DOMAIN} ${GRAFANA_DOMAIN} ${MINIO_DOMAIN} ${REDIS_DOMAIN} ${PROMETHEUS_DOMAIN} ${CADVISOR_DOMAIN} ${PGADMIN_DOMAIN} ${PORTAINER_DOMAIN};
   return 301 https://$host$request_uri;
 }
 
@@ -192,6 +192,150 @@ server {
     proxy_set_header Upgrade    $http_upgrade;
     proxy_set_header Connection $connection_upgrade;
     proxy_pass http://redisinsight:5540;
+  }
+}
+
+# Prometheus UI (:9090). No login of its own -> admin SSO forward-auth only.
+server {
+  listen 443 ssl;
+  http2 on;
+  server_name ${PROMETHEUS_DOMAIN};
+  include /etc/nginx/snippets/ssl.conf;
+
+  access_log /dev/stdout proxy_json;
+  error_log  /dev/stderr;
+
+  location = /__sso/verify {
+    internal;
+    proxy_pass http://backend:4000/api/sso/verify;
+    proxy_set_header Host $host;
+    proxy_pass_request_body off;
+    proxy_set_header Content-Length "";
+  }
+  location = /__sso/callback {
+    proxy_pass http://backend:4000/api/sso/callback;
+    proxy_set_header Host $host;
+  }
+  location @sso_signin {
+    return 302 https://${SSO_SESSION_DOMAIN}/api/sso/authorize?rd=$scheme://$host$request_uri;
+  }
+
+  location / {
+    auth_request /__sso/verify;
+    error_page 401 = @sso_signin;
+
+    include /etc/nginx/snippets/proxy_headers.conf;
+    proxy_pass http://prometheus:9090;
+  }
+}
+
+# cAdvisor UI (:8080). No login of its own -> admin SSO forward-auth only.
+server {
+  listen 443 ssl;
+  http2 on;
+  server_name ${CADVISOR_DOMAIN};
+  include /etc/nginx/snippets/ssl.conf;
+
+  access_log /dev/stdout proxy_json;
+  error_log  /dev/stderr;
+
+  location = /__sso/verify {
+    internal;
+    proxy_pass http://backend:4000/api/sso/verify;
+    proxy_set_header Host $host;
+    proxy_pass_request_body off;
+    proxy_set_header Content-Length "";
+  }
+  location = /__sso/callback {
+    proxy_pass http://backend:4000/api/sso/callback;
+    proxy_set_header Host $host;
+  }
+  location @sso_signin {
+    return 302 https://${SSO_SESSION_DOMAIN}/api/sso/authorize?rd=$scheme://$host$request_uri;
+  }
+
+  location / {
+    auth_request /__sso/verify;
+    error_page 401 = @sso_signin;
+
+    include /etc/nginx/snippets/proxy_headers.conf;
+    proxy_pass http://cadvisor:8080;
+  }
+}
+
+# pgAdmin (:80). Admin SSO-gated; pgAdmin keeps its own login on top. Allows
+# large SQL imports (no edge body cap) like the MinIO console.
+server {
+  listen 443 ssl;
+  http2 on;
+  server_name ${PGADMIN_DOMAIN};
+  include /etc/nginx/snippets/ssl.conf;
+
+  access_log /dev/stdout proxy_json;
+  error_log  /dev/stderr;
+
+  client_max_body_size 0;
+
+  location = /__sso/verify {
+    internal;
+    proxy_pass http://backend:4000/api/sso/verify;
+    proxy_set_header Host $host;
+    proxy_pass_request_body off;
+    proxy_set_header Content-Length "";
+  }
+  location = /__sso/callback {
+    proxy_pass http://backend:4000/api/sso/callback;
+    proxy_set_header Host $host;
+  }
+  location @sso_signin {
+    return 302 https://${SSO_SESSION_DOMAIN}/api/sso/authorize?rd=$scheme://$host$request_uri;
+  }
+
+  location / {
+    auth_request /__sso/verify;
+    error_page 401 = @sso_signin;
+
+    include /etc/nginx/snippets/proxy_headers.conf;
+    proxy_set_header Upgrade    $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+    proxy_pass http://pgadmin:80;
+  }
+}
+
+# Portainer (:9000). Admin SSO-gated; Portainer keeps its own login on top.
+# Needs websockets (container console/stats stream).
+server {
+  listen 443 ssl;
+  http2 on;
+  server_name ${PORTAINER_DOMAIN};
+  include /etc/nginx/snippets/ssl.conf;
+
+  access_log /dev/stdout proxy_json;
+  error_log  /dev/stderr;
+
+  location = /__sso/verify {
+    internal;
+    proxy_pass http://backend:4000/api/sso/verify;
+    proxy_set_header Host $host;
+    proxy_pass_request_body off;
+    proxy_set_header Content-Length "";
+  }
+  location = /__sso/callback {
+    proxy_pass http://backend:4000/api/sso/callback;
+    proxy_set_header Host $host;
+  }
+  location @sso_signin {
+    return 302 https://${SSO_SESSION_DOMAIN}/api/sso/authorize?rd=$scheme://$host$request_uri;
+  }
+
+  location / {
+    auth_request /__sso/verify;
+    error_page 401 = @sso_signin;
+
+    include /etc/nginx/snippets/proxy_headers.conf;
+    proxy_set_header Upgrade    $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+    proxy_pass http://portainer:9000;
   }
 }
 
