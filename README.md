@@ -4,11 +4,11 @@ A full kanban board (boards → lists → cards) built to practice running a rea
 production: every request is traced, metered, and logged, and the ops tooling ships with the
 app itself.
 
-**Live:** [trello-clone.shop](https://trello-clone.shop) · Built by
+**Live:** [kanbandiv.com](https://kanbandiv.com) · Built by
 [Long Nguyen](https://github.com/nsnl-coder) — see also [fxdrill](https://github.com/nsnl-coder/fxdrill),
 my flagship project.
 
-**Try it — one click, no sign-up:** [app.trello-clone.shop/api/auth/demo](https://app.trello-clone.shop/api/auth/demo)
+**Try it — one click, no sign-up:** [app.kanbandiv.com/api/auth/demo](https://app.kanbandiv.com/api/auth/demo)
 drops you onto a pre-seeded board with a throwaway demo account (swept automatically after 7 days).
 
 ![The demo board](docs/board-demo.png)

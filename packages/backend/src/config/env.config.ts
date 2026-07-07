@@ -48,7 +48,7 @@ const constants = {
   REFRESH_TTL_MS: 7 * 24 * 60 * 60 * 1000,
   BCRYPT_COST: 12,
   MAIL_PORT: 2525,
-  MAIL_FROM: 'admin@trello-clone.shop',
+  MAIL_FROM: 'admin@kanbandiv.com',
   // MinIO sits behind the proxy (internal HTTP), same bucket/port everywhere.
   MINIO_PORT: 9000,
   MINIO_USE_SSL: false,

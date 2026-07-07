@@ -15,8 +15,8 @@ import {
   verifySsoToken,
 } from "../sso.service.js";
 
-const MON = "monitor.trello-clone.shop";
-const MIN = "minio.trello-clone.shop";
+const MON = "monitor.kanbandiv.com";
+const MIN = "minio.kanbandiv.com";
 
 function accessTokenFor(id: string, email: string): string {
   return signAccessToken({ id, email } as PublicUser);

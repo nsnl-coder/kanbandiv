@@ -30,8 +30,8 @@ const tier = process.env.VPS_ENV ?? "stage";
 const baseURL =
   process.env.E2E_BASE_URL ??
   (tier === "prod"
-    ? "https://app.trello-clone.shop"
-    : "https://stage-app.trello-clone.shop");
+    ? "https://app.kanbandiv.com"
+    : "https://stage-app.kanbandiv.com");
 if (process.env.E2E_ALLOW_DESTRUCTIVE === undefined) {
   process.env.E2E_ALLOW_DESTRUCTIVE = tier === "prod" ? "false" : "true";
 }

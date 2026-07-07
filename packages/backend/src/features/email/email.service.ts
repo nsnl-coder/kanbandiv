@@ -45,7 +45,7 @@ export function esc(v: string): string {
 
 // Email clients require an absolute https image; relative/app-local paths never
 // load. Served by the landing site at the apex domain.
-const LOGO_URL = "https://trello-clone.shop/logo.png";
+const LOGO_URL = "https://kanbandiv.com/logo.png";
 const logoSection = `
         <mj-section padding-bottom="8px">
           <mj-column>

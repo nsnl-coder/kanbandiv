@@ -53,22 +53,22 @@ Notes:
 ## Domain rule
 
 All public services sit behind the nginx `proxy` on per-tier subdomains of
-`trello-clone.shop`, fronted by Cloudflare (proxied/orange-cloud, SSL mode Full
-strict). The wildcard Cloudflare Origin CA cert (`*.trello-clone.shop`) covers
+`kanbandiv.com`, fronted by Cloudflare (proxied/orange-cloud, SSL mode Full
+strict). The wildcard Cloudflare Origin CA cert (`*.kanbandiv.com`) covers
 every subdomain on both tiers.
 
 | Service  | Prod                       | Dev                            |
 | -------- | -------------------------- | ------------------------------ |
-| frontend | `app.trello-clone.shop`    | `dev-app.trello-clone.shop`    |
-| backend  | `api.trello-clone.shop`    | `dev-api.trello-clone.shop`    |
-| landing  | `trello-clone.shop` (apex) | `dev.trello-clone.shop`        |
-| grafana  | `grafana.trello-clone.shop`| `dev-grafana.trello-clone.shop`|
-| minio    | `minio.trello-clone.shop`  | `dev-minio.trello-clone.shop`  |
-| redis    | `redis.trello-clone.shop`  | `dev-redis.trello-clone.shop`  |
-| prometheus | `prometheus.trello-clone.shop` | `dev-prometheus.trello-clone.shop` |
-| cadvisor | `cadvisor.trello-clone.shop` | `dev-cadvisor.trello-clone.shop` |
-| pgadmin  | `pgadmin.trello-clone.shop` | `dev-pgadmin.trello-clone.shop` |
-| portainer | `portainer.trello-clone.shop` | `dev-portainer.trello-clone.shop` |
+| frontend | `app.kanbandiv.com`    | `dev-app.kanbandiv.com`    |
+| backend  | `api.kanbandiv.com`    | `dev-api.kanbandiv.com`    |
+| landing  | `kanbandiv.com` (apex) | `dev.kanbandiv.com`        |
+| grafana  | `grafana.kanbandiv.com`| `dev-grafana.kanbandiv.com`|
+| minio    | `minio.kanbandiv.com`  | `dev-minio.kanbandiv.com`  |
+| redis    | `redis.kanbandiv.com`  | `dev-redis.kanbandiv.com`  |
+| prometheus | `prometheus.kanbandiv.com` | `dev-prometheus.kanbandiv.com` |
+| cadvisor | `cadvisor.kanbandiv.com` | `dev-cadvisor.kanbandiv.com` |
+| pgadmin  | `pgadmin.kanbandiv.com` | `dev-pgadmin.kanbandiv.com` |
+| portainer | `portainer.kanbandiv.com` | `dev-portainer.kanbandiv.com` |
 
 All ops subdomains (grafana, minio, redis, prometheus, cadvisor, pgadmin,
 portainer) sit behind the **admin SSO forward-auth** gate: nginx `auth_request`
