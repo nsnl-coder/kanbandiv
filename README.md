@@ -8,6 +8,9 @@ app itself.
 [Long Nguyen](https://github.com/nsnl-coder) — see also [fxdrill](https://github.com/nsnl-coder/fxdrill),
 my flagship project.
 
+**Try it — one click, no sign-up:** [app.trello-clone.shop/api/auth/demo](https://app.trello-clone.shop/api/auth/demo)
+drops you onto a pre-seeded board with a throwaway demo account (swept automatically after 7 days).
+
 ## Features
 
 - Drag-and-drop boards, lists, and cards (dnd-kit) with Markdown card descriptions

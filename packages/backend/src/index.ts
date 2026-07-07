@@ -18,6 +18,7 @@ import { clientLogRouter } from "./features/health/client-log.http.js";
 import { backupHttpRouter } from "./features/backup/backup.http.js";
 import { ssoHttpRouter } from "./features/sso/sso.http.js";
 import { authOauthHttpRouter } from "./features/auth/auth.oauth.http.js";
+import { demoHttpRouter } from "./features/demo/demo.http.js";
 import { attachmentHttpRouter } from "./features/attachment/attachment.http.js";
 import { bugReportHttpRouter } from "./features/bug-report/bug-report.http.js";
 import { realtimeHttpRouter } from "./features/realtime/realtime.http.js";
@@ -29,6 +30,7 @@ import { appDb } from "./db/index.js";
 import { startScheduler } from "./features/backup/backup.scheduler.js";
 import { startReminderScheduler } from "./features/card/card.reminder.scheduler.js";
 import { startAutomationScheduler } from "./features/automation/automation.scheduler.js";
+import { startDemoCleanupScheduler } from "./features/demo/demo.scheduler.js";
 import { loadMaintenanceFlag } from "./features/backup/backup.service.js";
 import { seedSuperAdmin } from "./scripts/seedSuperAdmin.js";
 
@@ -117,6 +119,10 @@ app.use("/api", ssoHttpRouter);
 // mounted before tRPC/REST so it owns these exact paths.
 app.use("/api", authOauthHttpRouter);
 
+// One-click demo sessions (plain GET: mint a throwaway account + seeded board,
+// set cookies, 302 onto the board). Mounted before tRPC/REST like OAuth.
+app.use("/api", demoHttpRouter);
+
 // Multipart attachment upload/download. Mounted before the /api JSON body parser
 // and tRPC so these multipart routes are never touched by express.json().
 app.use("/api", attachmentHttpRouter);
@@ -166,6 +172,7 @@ app.listen(env.PORT, () => {
   );
   startReminderScheduler(appDb);
   startAutomationScheduler(appDb);
+  startDemoCleanupScheduler(appDb);
   // Best-effort: create the attachments bucket if storage is configured.
   storage.ensureBucket().catch((err) =>
     logger.error({ err }, "ensure attachments bucket failed"),

@@ -4,7 +4,7 @@ import type { Database } from "../../db/types.js";
 
 export type Db = Kysely<Database>;
 
-const PUBLIC_USER = ["id", "email", "is_superuser", "role_id", "email_verified", "oauth_provider"] as const;
+const PUBLIC_USER = ["id", "email", "is_superuser", "role_id", "email_verified", "oauth_provider", "is_demo"] as const;
 
 export function findUserByEmail(db: Db, email: string) {
   return db

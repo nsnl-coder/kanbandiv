@@ -28,6 +28,10 @@ export const LogEvent = {
   AutomationRan: "automation.ran",
   AutomationFailed: "automation.failed",
   AutomationSkipped: "automation.skipped",
+  DemoSessionCreated: "demo.session.created",
+  DemoSessionFailed: "demo.session.failed",
+  DemoUsersSwept: "demo.users.swept",
+  DemoSweepFailed: "demo.sweep.failed",
 } as const;
 export type LogEvent = (typeof LogEvent)[keyof typeof LogEvent];
 

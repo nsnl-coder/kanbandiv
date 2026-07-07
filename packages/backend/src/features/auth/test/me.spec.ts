@@ -28,6 +28,7 @@ describe("auth.me", () => {
         roleId: null,
         emailVerified: true,
         oauthProvider: null,
+        isDemo: false,
         permissions: [],
         impersonator: null,
       });
@@ -43,6 +44,7 @@ describe("auth.me", () => {
         "emailVerified",
         "id",
         "impersonator",
+        "isDemo",
         "isSuperuser",
         "oauthProvider",
         "permissions",

@@ -163,6 +163,7 @@ async function toPublicUser(
     role_id: string | null;
     email_verified: boolean;
     oauth_provider: string | null;
+    is_demo: boolean;
   },
 ): Promise<PublicUser> {
   const { isSuperuser, perms } = await findUserGlobalPerms(db, row.id);
@@ -173,11 +174,14 @@ async function toPublicUser(
     roleId: row.role_id,
     emailVerified: row.email_verified,
     oauthProvider: row.oauth_provider,
+    isDemo: row.is_demo,
     permissions: [...perms],
   };
 }
 
-async function issueTokens(db: Db, user: PublicUser): Promise<AuthTokens> {
+// Exported for the demo feature, which mints a normal session (same cookies,
+// same rotating refresh family) for a freshly created throwaway account.
+export async function issueTokens(db: Db, user: PublicUser): Promise<AuthTokens> {
   const familyId = crypto.randomUUID();
   const refreshToken = await issueRefreshToken(db, user.id, familyId, null);
   return { accessToken: signAccessToken(user), refreshToken, user };

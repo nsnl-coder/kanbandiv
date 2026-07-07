@@ -13,6 +13,7 @@ import { useNotificationsRealtime } from "../features/notification/hooks/useNoti
 import { ThemeToggle } from "./ThemeToggle";
 import { Sidebar, MobileNav } from "./Sidebar";
 import { ImpersonationBanner } from "./ImpersonationBanner";
+import { DemoBanner } from "./DemoBanner";
 
 // Shell for signed-in app pages: fixed-height row of [sidebar | content].
 // Content scrolls on its own so the sidebar stays put while navigating.
@@ -34,6 +35,7 @@ export function AppLayout() {
       <MobileNav />
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         <ImpersonationBanner />
+        <DemoBanner />
         {!online ? (
           <div
             role="status"

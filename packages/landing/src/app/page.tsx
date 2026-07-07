@@ -73,6 +73,9 @@ const proofStats = [
 
 const loginUrl = `${env.appUrl}/login`;
 const registerUrl = `${env.appUrl}/register`;
+// One-click demo: the API mints a throwaway account, seeds a board, and lands
+// the visitor on it — no sign-up. Plain link, so it works as a top-level nav.
+const demoUrl = `${env.appUrl}/api/auth/demo`;
 
 export default function Home() {
   return (
@@ -125,8 +128,15 @@ export default function Home() {
                 <ArrowRight className="h-4 w-4" />
               </a>
               <a
-                href={loginUrl}
+                href={demoUrl}
                 className="inline-flex items-center gap-2 rounded-lg border border-border px-5 py-3 font-medium text-foreground transition hover:bg-canvas"
+              >
+                Try the live demo
+                <ArrowRight className="h-4 w-4" />
+              </a>
+              <a
+                href={loginUrl}
+                className="inline-flex items-center gap-2 rounded-lg px-5 py-3 font-medium text-foreground/70 transition hover:text-foreground"
               >
                 See how teams use it
               </a>

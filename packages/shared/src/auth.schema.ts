@@ -95,6 +95,10 @@ export const publicUserSchema = z.object({
   emailVerified: z.boolean(),
   // Set when the account is linked to an external identity provider (e.g. "google").
   oauthProvider: z.string().nullable().optional(),
+  // Set for throwaway one-click demo accounts (GET /api/auth/demo) so the UI
+  // can show the "Demo mode" banner. Demo users and their content are swept
+  // after the retention window.
+  isDemo: z.boolean().optional(),
   permissions: z.array(permissionSchema),
   // Set only while a superuser is impersonating this account. Identifies the
   // original admin so the UI can show a banner and offer "stop impersonating".

@@ -29,6 +29,7 @@ export interface UsersTable {
   email_verified: Generated<boolean>;
   is_superuser: Generated<boolean>;
   is_test: Generated<boolean>;
+  is_demo: Generated<boolean>;
   role_id: string | null;
   oauth_provider: string | null;
   oauth_sub: string | null;
