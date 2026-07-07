@@ -24,14 +24,14 @@ if (existsSync(envFile)) {
 }
 
 // Default the target site + destructive flag from the tier (VPS_ENV) unless set.
-// Destructive specs (user creation / password change) run on dev only; prod NEVER
+// Destructive specs (user creation / password change) run on stage only; prod NEVER
 // runs them, so an accidental prod run can't disturb real users.
-const tier = process.env.VPS_ENV ?? "dev";
+const tier = process.env.VPS_ENV ?? "stage";
 const baseURL =
   process.env.E2E_BASE_URL ??
   (tier === "prod"
     ? "https://app.trello-clone.shop"
-    : "https://dev-app.trello-clone.shop");
+    : "https://stage-app.trello-clone.shop");
 if (process.env.E2E_ALLOW_DESTRUCTIVE === undefined) {
   process.env.E2E_ALLOW_DESTRUCTIVE = tier === "prod" ? "false" : "true";
 }
